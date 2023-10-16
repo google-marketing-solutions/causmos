@@ -1,0 +1,102 @@
+/**
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+body {
+  font-family: "helvetica", sans-serif;
+  text-align: center;
+}
+
+.main-window {
+  width: 1000px;
+  background-color: #FFF;
+}
+
+.dd-width {
+  width: 220px;
+}
+
+.align-left {
+  text-align: left;
+}
+.align-right {
+  text-align: right;
+}
+
+.align-middle {
+  display : flex;
+  align-items : center;
+}
+
+.rounded-outline {
+  border: solid 1px;
+  border-radius: 5px;
+  border-color: #ddd;
+  margin: 5px 5px 5px 5px;
+  height: 400px;
+}
+
+.final-datasource {
+  border: solid 1px;
+  border-radius: 5px;
+  border-color: #ddd;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.float-right {
+  float: right;
+}
+
+.left-padding {
+  padding-left: 10px;
+}
+.confirm-box {
+  display: inline-block;
+  width: 400px;
+}
+
+.single-level {
+  padding: 10px;
+}
+
+.raw-data {
+  text-align: center;
+}
+
+.table-border {
+  border-bottom:1px solid #aaa;
+  height: 10px;
+}
+@keyframes spinner {
+  to {transform: rotate(360deg);}
+}
+ 
+.spinner:before {
+  content: '';
+  box-sizing: border-box;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  margin-top: -15px;
+  margin-left: -15px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  border-top-color: #07d;
+  animation: spinner .6s linear infinite;
+}
+

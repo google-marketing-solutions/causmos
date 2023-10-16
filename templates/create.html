@@ -1,0 +1,1256 @@
+{% include "_header.html" %}
+
+<h1 class="title">Causal Impact Insights</h1>
+
+<div class="columns">
+  <div class="column">
+  </div>
+  <div class="column">
+    <div id="all_content" class="align-left main-window">
+      <div class="dropdown">
+        <div class="dropdown-trigger">
+          <button class="button is-success" aria-haspopup="true" aria-controls="dropdown-menu">
+            <span class="material-symbols-outlined">
+              add_box
+            </span>
+            <span>Add New Datasource</span>
+          </button>
+        </div>
+        <div class="dropdown-menu" id="dropdown-menu" role="menu">
+          <div class="dropdown-content">
+            <a href="#" onclick="addGoogleAdsDatasource();" class="dropdown-item">
+              Google Ads
+            </a>
+            <a href="#" onclick="addGa4Datasource();" class="dropdown-item">
+              Google Analytics 4
+            </a>
+            <a href="#" onclick="addCsvDatasource();" class="dropdown-item">
+              Upload CSV
+            </a>
+          </div>
+        </div>
+      </div>
+      <div id="final_gads" class="is-hidden final-datasource">
+        <div><strong>Google Ads Datasource</strong>
+          <div class="float-right">
+            <button class="button is-info" onclick="addGoogleAdsDatasource();">
+              <span class="material-symbols-outlined">
+                edit
+              </span>
+            </button>
+            <button class="button is-danger" onclick="deleteGoogleAdsDatasource();">
+              <span class="material-symbols-outlined">
+                delete_forever
+              </span>
+            </button>
+          </div>
+        </div>
+        <div id="final_gads_details"></div>
+      </div>
+      <div id="final_ga4" class="is-hidden final-datasource">
+        <div><strong>Google Analytics Datasource</strong>
+          <div class="float-right">
+            <button class="button is-info" onclick="addGa4Datasource();">
+              <span class="material-symbols-outlined">
+                edit
+              </span>
+            </button>
+            <button class="button is-danger" onclick="deleteGa4Datasource();">
+              <span class="material-symbols-outlined">
+                delete_forever
+              </span>
+            </button>
+          </div>
+        </div>
+        <div id="final_ga4_details"></div>
+      </div>
+
+      <div id="final_csv" class="is-hidden final-datasource">
+        <div><strong>CSV Datasource</strong>
+          <div class="float-right">
+            <button class="button is-info" onclick="addCsvDatasource();">
+              <span class="material-symbols-outlined">
+                edit
+              </span>
+            </button>
+            <button class="button is-danger" onclick="deleteCsvDatasource();">
+              <span class="material-symbols-outlined">
+                delete_forever
+              </span>
+            </button>
+          </div>
+        </div>
+        <div id="final_csv_details"></div>
+      </div>
+
+
+      <div id="no_datasources" class="final-datasource">
+        <i>There are no datasources currently added</i>
+      </div>
+      <div id="general_settings" class="final-datasource">
+        <div class="level">
+          <div class="columns align-middle">
+            <div class="column is-narrow">
+              <label for="from_date">Date From</label>
+            </div>
+            <div class="column">
+              <input id="from_date" class="input" type="date" onchange="validation();">
+            </div>
+            <div class="column is-narrow"></div>
+            <div class="column is-narrow">
+              <label for="to_date">Date To</label>
+            </div>
+            <div class="column">
+              <input id="to_date" class="input" type="date" onchange="validation();">
+            </div>
+            <div class="column">
+              <span id='date_error' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                Date From must be before Date To
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="level">
+          <div class="columns align-middle">
+            <div class="column is-narrow">
+              <label for="event_date">Event Date</label>
+            </div>
+            <div class="column">
+              <input id="event_date" class="input" type="date" onchange="validation();">
+            </div>
+            <div class="column is-narrow"></div>
+            <div class="column is-narrow">
+              <label for="target_event_dd">Target Event</label>
+            </div>
+            <div class="column">
+              <div id="target_event_div" class="select">
+                <select class="dd-width" id="target_event_dd" onchange="validation();">
+                </select>
+              </div>
+            </div>
+            <div class="column">
+              <span id='event_date_error' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                Event Date must be within selected date range
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="align-right single-level">
+        <span id='three_metrics_error' class="tag is-danger is-hidden">
+          <span class="material-symbols-outlined">
+            warning
+          </span>
+          Please select at least 3 metrics to run analysis
+        </span>
+        <div>
+          <button class="button is-danger" onclick="resetAnalysis();">Reset Analysis</button>
+          <form class="float-right left-padding" id="run_analysis_form" method="post" action="/report">
+            <input type="hidden" id="data_to_send" name="data_to_send">
+            <input type="submit" id="run_analysis" class="button is-success" value="Run Analysis" disabled>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="column">
+  </div>
+</div>
+
+<div id="google_ads_datasource_tab" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Google Ads Datasource</p>
+    </header>
+    <section class="modal-card-body">
+      <div class="field align-left columns level-left">
+        <div class="column is-narrow">
+          <label for="gads_mcc_id_dd" class="label">MCC ID</label>
+        </div>
+        <div class="control column">
+          <div id="gads_mcc_div" class="select">
+            <select class="dd-width" onchange="getGadsCustomerList();" id="gads_mcc_id_dd">
+            </select>
+          </div>
+          <span id="gads_locked" class="tag is-warning is-light is-hidden">
+            <span class="material-symbols-outlined">
+              info
+            </span>
+            Can only use 1 MCC account per analysis due to data privacy</span>
+        </div>
+      </div>
+      <div class="columns">
+        <div class="column is-three-fifths rounded-outline">
+          <div class="level">
+            <div class="level-item has-text-centered">
+              <div>
+                <label for="gads_customer_dd" class="label">Customer</label>
+                <div id="gads_customer_div" class="select">
+                  <select class="dd-width" onchange="getCampaignList();" id="gads_customer_dd">
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="level-item has-text-centered">
+              <div>
+                <label for="gads_campaign_dd" class="label">Campaign</label>
+                <div id="gads_campaign_div" class="select">
+                  <select class="dd-width" onchange="" id="gads_campaign_dd">
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="level-item has-text-centered">
+              <div>
+                <button onclick="addGadsCustomerCampaign();" class="button is-info">
+                  <span class="material-symbols-outlined">
+                    add_box
+                  </span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="level">
+            Selected Customer(s) and Campaign(s)
+          </div>
+          <div class="level">
+            <div id="gads_customer_boxes" class="align-left"></div>
+          </div>
+        </div>
+        <div class="column rounded-outline">
+          <div class="level">
+            <div class="level-item has-text-centered">
+              <div>
+                <label for="gads_metric_dd" class="label">Metric</label>
+                <div class="select">
+                  <select class="dd-width" onchange="" id="gads_metric_dd">
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="level-item has-text-centered">
+              <div>
+                <button onclick="addGadsMetric();" class="button is-info">
+                  <span class="material-symbols-outlined">
+                    add_box
+                  </span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="level">
+            Selected Metrics
+          </div>
+          <div class="level">
+            <div id="gads_metrics_boxes" class="align-left"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+      <button id="gads_save_button" onclick="saveGoogleAdsDatasource();" class="button is-success">Save
+        Datasource</button>
+      <button onclick="cancelGoogleAdsDatasouce();" class="button">Cancel</button>
+      <span id='gads_selection_error' class="tag is-danger is-hidden">
+        <span class="material-symbols-outlined">
+          warning
+        </span>
+        Must have 1 of each type selected or nothing selected to Save
+      </span>
+    </footer>
+  </div>
+</div>
+
+<div id="google_analytics_datasource_tab" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Google Analytics Datasource</p>
+    </header>
+    <section class="modal-card-body">
+      <div class="field align-left columns level-left">
+        <div class="column is-narrow">
+          <label for="ga4_account_id_dd" class="label">Account</label>
+        </div>
+        <div class="control column">
+          <div id="ga4_account_div" class="select">
+            <select class="dd-width" onchange="getGa4PropertyList();" id="ga4_account_id_dd">
+            </select>
+          </div>
+        </div>
+
+        <div class="column is-narrow">
+          <label for="ga4_property_id_dd" class="label">Property</label>
+        </div>
+        <div class="control column">
+          <div id="ga4_property_div" class="select">
+            <select class="dd-width" onchange="" id="ga4_property_id_dd">
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="columns">
+        <div class="column rounded-outline">
+          <div class="level">
+            <div class="level-item is-narrow">
+              <div>
+                <label for="ga4_metric_dd" class="label">Metric</label>
+                <div class="select">
+                  <select class="dd-width" onchange="" id="ga4_metric_dd">
+                  </select>
+                </div>
+              </div>
+              <div class="single-level">
+                <button onclick="addGa4Metric();" class="button is-info">
+                  <span class="material-symbols-outlined">
+                    add_box
+                  </span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="level">
+            Selected Metrics
+          </div>
+          <div class="level">
+            <div id="ga4_metrics_boxes" class="align-left"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+      <button id="ga4_save_button" onclick="saveGa4Datasource();" class="button is-success">Save Datasource</button>
+      <button onclick="cancelGa4Datasource();" class="button">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+<div id="csv_datasource_tab" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">CSV Datasource</p>
+    </header>
+    <section class="modal-card-body">
+      <div class="align-middle">
+        <form id="file_upload_form">
+          <input type="file" name="file">
+        </form>
+        <button class="button is-info" onclick="uploadFile();">Upload</button>
+        <div id="uploading_div" class="left-padding"></div>
+        <div clsss="left-padding">
+          <span id='csv_upload_error' class="tag is-danger is-hidden">
+            <span class="material-symbols-outlined">
+              warning
+            </span>
+            <span id="csv_upload_error_msg"></span>
+          </span>
+        </div>
+      </div>
+      <br><br>
+      <div id="csv_options" class="columns is-hidden">
+        <div class="column rounded-outline">
+          <div class="level">
+            <div>
+              <label for="csv_date_dd" class="label">Date Column</label>
+              <div class="select">
+                <select class="dd-width" id="csv_date_dd" onchange="checkDateColumn();">
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="level">
+            <div class="level-item is-narrow">
+              <div>
+                <label for="csv_metric_dd" class="label">Metric</label>
+                <div class="select">
+                  <select class="dd-width" id="csv_metric_dd">
+                  </select>
+                </div>
+              </div>
+              <div class="single-level">
+                <button onclick="addCsvMetric();" class="button is-info">
+                  <span class="material-symbols-outlined">
+                    add_box
+                  </span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="level">
+            Selected Metrics
+          </div>
+          <div class="level">
+            <div id="csv_metrics_boxes" class="align-left"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+      <button id="csv_save_button" onclick="saveCsvDatasource();" class="button is-success">Save Datasource</button>
+      <button onclick="cancelCsvDatastore();" class="button">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+<div id="confirm_box" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p id="confirm_title" class="modal-card-title"></p>
+    </header>
+    <section class="modal-card-body">
+      <p id="confirm_message"></p>
+    </section>
+    <footer class="modal-card-foot">
+      <button id='confirm_yes' class="button is-success">Yes</button>
+      <button id='confirm_no' class="button is-danger">No</button>
+    </footer>
+  </div>
+</div>
+
+<div id="loading_modal" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-content">
+    <section class="modal-card-body">
+      <br><br><br>Please wait. Your datasources are loading and the results will be shown soon...
+      <div class="spinner"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+  //Google Ads global variables
+  var mcc_ids;
+  var gads_data = { 'mcc_id': "", 'query': {}, 'metrics': [] };
+  var tmp_gads_data = {};
+  var gads_customer_lkup = {};
+  var gads_campaign_lkup = {};
+  var gads_metrics_lkup = {
+    "average_cost": "Avg. Cost",
+    "average_cpc": "Avg. CPC",
+    "clicks": "Clicks",
+    "conversions": "Conversions",
+    "cost_micros": "Cost",
+    "ctr": "Click Through Rate (CTR)",
+    "impressions": "Impressions",
+    "value_per_conversion": "Value Per Conversion",
+    "video_views": "Video Views",
+    "view_through_conversions": "View Through conversions"
+  };
+
+  //GA4 global variables
+  var account_ids;
+  var ga4_data = { 'account': "", 'property': "", 'metrics': [] };
+  var tmp_ga4_data = {};
+  var ga4_account_lkup = {};
+  var ga4_property_lkup = {};
+  var ga4_metrics_lkup = {
+    "bounceRate": "Bounce Rate",
+    "conversions": "Conversions",
+    "firstTimePurchasers": "First Time Purchasers",
+    "newUsers": "New Users",
+    "screenPageViews": "Page Views",
+    "purchaseRevenue": "Revenue (Purchases)",
+    "totalRevenue": "Revenue (Total)",
+    "sessions": "Sessions",
+    "transactions": "Transactions",
+    "userEngagementDuration": "Time on Site"
+  };
+
+  //CSV global variables
+  var csv_data = { 'date_column': "", 'metrics': [] };
+  var tmp_csv_data = {};
+  var csv_metrics = [];
+  var csv_from_date = "";
+  var csv_to_date = "";
+  var csv_items_loaded = false;
+
+  //Google Ads code
+  function addGoogleAdsDatasource() {
+    tmp_gads_data = JSON.parse(JSON.stringify(gads_data));
+
+    if (mcc_ids == null) {
+      const api_url = "/_get_gads_mcc_ids";
+      addDDSpinner('gads_mcc_div');
+      fetch(api_url)
+        .then(response => response.json())
+        .then(data => {
+          mcc_ids = data.result;
+          _populateMccIds();
+          removeDDSpinner('gads_mcc_div');
+        });
+    }
+    openPopup('google_ads_datasource_tab');
+    _renderGoogleAdsBoxes();
+    _renderGoogleAdsMetricsBoxes();
+  }
+
+  function _populateMccIds(mcc_id = 0) {
+    if (mcc_ids != "error") {
+      var first = true;
+      var gads_mcc_id_dd = document.getElementById('gads_mcc_id_dd');
+      mcc_ids.forEach((value) => {
+        var newOption = new Option(value, value);
+        gads_mcc_id_dd.add(newOption);
+        if (mcc_id != 0 && first) {
+          getGadsCustomerList(mcc_id);
+          first = false;
+        }
+        else if (first) {
+          getGadsCustomerList(value);
+          first = false;
+        }
+      });
+    }
+  }
+
+  function _populateGadsMetrics() {
+    gads_metric_dd = document.getElementById('gads_metric_dd');
+    for (const [metric_id, metric_name] of Object.entries(gads_metrics_lkup)) {
+      var newOption = new Option(metric_name, metric_id);
+      gads_metric_dd.add(newOption);
+    }
+  }
+
+  function getGadsCustomerList(mcc_id = 0) {
+    addDDSpinner('gads_customer_div');
+    addDDSpinner('gads_campaign_div');
+    mcc_dd = document.getElementById('gads_mcc_id_dd');
+    mcc_dd.disabled = true;
+    if (mcc_id == 0) {
+      var mcc_id = mcc_dd.value;
+    }
+    const api_url = "/_get_gads_customer_ids?mcc_id=" + mcc_id;
+    var first = true;
+    gads_customer_dd = document.getElementById('gads_customer_dd');
+    gads_customer_dd.innerHTML = "";
+    gads_campaign_dd = document.getElementById('gads_campaign_dd');
+    gads_campaign_dd.innerHTML = "";
+    fetch(api_url)
+      .then(response => response.json())
+      .then(data => {
+        customers = data.result;
+        if (customers != "error") {
+          customers.forEach((value) => {
+            var newOption = new Option(value[0] + " (" + value[1] + ")", value[1]);
+            gads_customer_dd.add(newOption);
+            if (first) {
+              getCampaignList(mcc_id, value[1]);
+              first = false;
+            }
+          })
+        }
+        mcc_dd.disabled = false;
+        removeDDSpinner('gads_customer_div');
+      });
+  }
+
+  function getCampaignList(mcc_id = 0, customer_id = 0) {
+    if (mcc_id == 0 && customer_id == 0) {
+      mcc_id = document.getElementById('gads_mcc_id_dd').value;
+      customer_id = document.getElementById('gads_customer_dd').value;
+    }
+    addDDSpinner('gads_campaign_div');
+    if (mcc_id == 0) {
+      var mcc_id = document.getElementById('gads_mcc_id_dd').value;
+    }
+    const api_url = "/_get_gads_campaigns?mcc_id=" + mcc_id + "&customer_id=" + customer_id;
+    gads_campaign_dd = document.getElementById('gads_campaign_dd');
+    gads_campaign_dd.innerHTML = "";
+    fetch(api_url)
+      .then(response => response.json())
+      .then(data => {
+        campaigns = data.result;
+        if (campaigns != "error") {
+          var newOption = new Option("-- All --", customer_id + "-0");
+          gads_campaign_dd.add(newOption);
+          campaigns.forEach((value) => {
+            var newOption = new Option(value[0], value[1]);
+            gads_campaign_dd.add(newOption);
+          })
+        }
+        removeDDSpinner('gads_campaign_div');
+      });
+  }
+
+  function addGadsCustomerCampaign() {
+    const customer_id_dd = document.getElementById('gads_customer_dd');
+    const campaign_id_dd = document.getElementById('gads_campaign_dd');
+
+    if (customer_id_dd.options[customer_id_dd.selectedIndex] != null && campaign_id_dd.options[campaign_id_dd.selectedIndex] != null) {
+      const customer_id = customer_id_dd.value;
+      const customer_name = customer_id_dd.options[customer_id_dd.selectedIndex].text;
+
+      const campaign_id = campaign_id_dd.value;
+      const campaign_name = campaign_id_dd.options[campaign_id_dd.selectedIndex].text;
+
+      if (gads_data.query[customer_id] == null) {
+        gads_data.query[customer_id] = [];
+        gads_customer_lkup[customer_id] = customer_name;
+      }
+      if (!gads_data.query[customer_id].includes(campaign_id)) {
+        if ((gads_data.query[customer_id].length > 0 && campaign_id == customer_id + "-0") || (gads_data.query[customer_id].includes(customer_id + "-0"))) {
+          gads_data.query[customer_id] = [campaign_id];
+        }
+        else {
+          gads_data.query[customer_id].push(campaign_id);
+        }
+        gads_campaign_lkup[campaign_id] = campaign_name;
+      }
+      gads_data.mcc_id = document.getElementById('gads_mcc_id_dd').value;
+      _renderGoogleAdsBoxes();
+    }
+  }
+
+  function addGadsMetric() {
+    const gads_metric_dd = document.getElementById('gads_metric_dd');
+    const gads_metric = gads_metric_dd.value;
+    const gads_metric_name = gads_metric_dd.options[gads_metric_dd.selectedIndex].text;
+
+    if (!gads_data.metrics.includes(gads_metric)) {
+      gads_data.metrics.push(gads_metric);
+    }
+    _renderGoogleAdsMetricsBoxes();
+  }
+
+  function deleteGadsMetric(metric) {
+    gads_data.metrics.splice(gads_data.metrics.indexOf(metric), 1);
+    _renderGoogleAdsMetricsBoxes();
+  }
+
+  function deleteGadsItem(customer_id, campaign_id = 0) {
+    if (gads_data.query[customer_id].length == 1 || campaign_id == 0) {
+      delete gads_data.query[customer_id];
+    }
+    else {
+      gads_data.query[customer_id].splice(gads_data.query[customer_id].indexOf(campaign_id), 1);
+    }
+    _renderGoogleAdsBoxes();
+  }
+
+  function saveGoogleAdsDatasource() {
+    const final_gads_details = document.getElementById('final_gads_details');
+
+    if (Object.keys(gads_data.query).length == 0 && Object.keys(gads_data.metrics).length == 0) {
+      closePopup('final_gads');
+      closePopup('google_ads_datasource_tab');
+      closePopup('gads_selection_error');
+      final_gads_details.innerHTML = "";
+    }
+    else if (Object.keys(gads_data.query).length == 0 || Object.keys(gads_data.metrics).length == 0) {
+      openPopup('gads_selection_error');
+    }
+    else {
+      closePopup('gads_selection_error');
+      _renderGoogleAdsDataSourceBoxes();
+
+      sessionStorage.setItem('gads_data', JSON.stringify(gads_data));
+      sessionStorage.setItem('mcc_ids', JSON.stringify(mcc_ids));
+      sessionStorage.setItem('gads_customer_lkup', JSON.stringify(gads_customer_lkup));
+      sessionStorage.setItem('gads_campaign_lkup', JSON.stringify(gads_campaign_lkup));
+      sessionStorage.setItem('gads_metrics_lkup', JSON.stringify(gads_metrics_lkup));
+      closePopup('google_ads_datasource_tab');
+    }
+    cleanUp();
+  }
+
+  function _renderGoogleAdsDataSourceBoxes() {
+    const final_gads_details = document.getElementById('final_gads_details');
+    final_gads_details.innerHTML = "Customer(s) and Campaign(s)<br>";
+
+    for (const [customer_id, campaign_ids] of Object.entries(gads_data.query)) {
+      final_gads_details.innerHTML += "<span class='tag is-info'>" + gads_customer_lkup[customer_id] + "</span> ";
+      campaign_ids.forEach((campaign_id) => {
+        final_gads_details.innerHTML += "<span class='tag is-info is-light'>" + gads_campaign_lkup[campaign_id] + "(" + campaign_id + ")</span> ";
+      })
+      final_gads_details.innerHTML += "<br>"
+    }
+
+    final_gads_details.innerHTML += "<br>Metric(s)<br>";
+    gads_data.metrics.forEach((metric) => {
+      final_gads_details.innerHTML += "<span class='tag is-info'>" + gads_metrics_lkup[metric] + "</span> ";
+    });
+    openPopup('final_gads');
+  }
+
+  function cancelGoogleAdsDatasouce() {
+    gads_data = JSON.parse(JSON.stringify(tmp_gads_data));
+    closePopup('gads_selection_error');
+    closePopup('google_ads_datasource_tab');
+    cleanUp();
+  }
+
+  function deleteGoogleAdsDatasource() {
+    confirmBox("Delete Google Ads Datasource",
+      "Are you sure you want to delete the Google Ads datasource?",
+      function () {
+        gads_data = { 'query': {}, 'metrics': [] };
+        tmp_gads_data = {};
+        closePopup('final_gads');
+        sessionStorage.removeItem('gads_data');
+        cleanUp();
+      },
+      function () { });
+  }
+
+  function resetAnalysis() {
+    confirmBox("Reset Analysis form",
+      "Are you sure you want to reset all the settings and delete datasources?",
+      function () {
+        sessionStorage.clear();
+        location.reload();
+      },
+      function () { });
+  }
+
+  function _renderGoogleAdsMetricsBoxes() {
+    gads_metrics_boxes = document.getElementById('gads_metrics_boxes');
+    gads_metrics_boxes.innerHTML = "";
+
+    gads_data.metrics.forEach((item) => {
+      gads_metrics_boxes.innerHTML += "<span class='tag is-info'>" + gads_metrics_lkup[item] + "<button onClick='deleteGadsMetric(\"" + item + "\");' class='delete is-small'></button></span> ";
+    })
+  }
+
+  function _renderGoogleAdsBoxes() {
+    const mcc_id = document.getElementById('gads_mcc_id_dd');
+    const customer_boxes = document.getElementById('gads_customer_boxes');
+
+    if (Object.keys(gads_data.query).length > 0) {
+      mcc_id.disabled = true;
+    }
+    else {
+      mcc_id.disabled = false;
+    }
+    customer_boxes.innerHTML = "";
+    for (const [customer_id, campaign_ids] of Object.entries(gads_data.query)) {
+      customer_boxes.innerHTML += "<span class='tag is-info'>" + gads_customer_lkup[customer_id] + "<button onclick='deleteGadsItem(\"" + customer_id + "\");' class='delete is-small'></button></span> ";
+      campaign_ids.forEach((campaign_id) => {
+        customer_boxes.innerHTML += "<span class='tag is-info is-light'>" + gads_campaign_lkup[campaign_id] + "(" + campaign_id + ")<button onclick='deleteGadsItem(\"" + customer_id + "\",\"" + campaign_id + "\");' class='delete is-small'></button></span> ";
+      })
+      customer_boxes.innerHTML += "<br><br>"
+    }
+  }
+
+  function _getValueBetweenBrackets(string) {
+    const openingIndex = string.indexOf('(');
+    const closingIndex = string.indexOf(')');
+
+    if (openingIndex < 0 || closingIndex < 0) {
+      return '';
+    }
+    return string.substring(openingIndex + 1, closingIndex);
+  }
+
+
+  //Google Analytics code
+  function addGa4Datasource() {
+    tmp_ga4_data = JSON.parse(JSON.stringify(ga4_data));
+    if (account_ids == null) {
+      const api_url = "/_get_ga4_account_ids";
+      addDDSpinner('ga4_account_div');
+      addDDSpinner('ga4_property_div');
+      fetch(api_url)
+        .then(response => response.json())
+        .then(data => {
+          account_ids = data.result;
+          _populateGa4Accounts();
+          removeDDSpinner('ga4_account_div');
+        });
+    }
+    _renderGa4MetricsBoxes();
+    openPopup('google_analytics_datasource_tab');
+  }
+
+  function _populateGa4Accounts(acc_id = 0) {
+    var first = true;
+    if (account_ids != "error") {
+      ga4_account_id_dd = document.getElementById('ga4_account_id_dd');
+      account_ids.forEach((value) => {
+        var newOption = new Option(value[1] + " (" + value[0] + ")", value[0]);
+        ga4_account_id_dd.add(newOption);
+        if (acc_id != 0 && first) {
+          getGa4PropertyList(acc_id);
+          first = false;
+        }
+        if (first) {
+          getGa4PropertyList(value[0]);
+          first = false;
+        }
+      })
+      if (ga4_data.account) {
+        document.getElementById('ga4_account_id_dd').value = ga4_data.account;
+      }
+    }
+  }
+
+  function _populateGa4Metrics() {
+    ga4_metric_dd = document.getElementById('ga4_metric_dd');
+    for (const [metric_id, metric_name] of Object.entries(ga4_metrics_lkup)) {
+      var newOption = new Option(metric_name, metric_id);
+      ga4_metric_dd.add(newOption);
+    }
+  }
+
+  function getGa4PropertyList(account_id = 0) {
+    if (account_id == 0) {
+      account_id = document.getElementById('ga4_account_id_dd').value;
+    }
+    const api_url = "/_get_ga4_property_ids?account_id=" + account_id;
+    ga4_property_id_dd = document.getElementById('ga4_property_id_dd');
+    addDDSpinner('ga4_property_div');
+    ga4_property_id_dd.innerHTML = "";
+    fetch(api_url)
+      .then(response => response.json())
+      .then(data => {
+        ga4_property_ids = data.result;
+        if (ga4_property_ids != "error") {
+          ga4_property_ids.forEach((value) => {
+            var newOption = new Option(value[1] + " (" + value[0] + ")", value[0]);
+            ga4_property_id_dd.add(newOption);
+          })
+        }
+        if (ga4_data.property) {
+          document.getElementById('ga4_property_id_dd').value = ga4_data.property;
+        }
+        removeDDSpinner('ga4_property_div');
+      });
+  }
+
+  function addGa4Metric() {
+    const ga4_metric = document.getElementById('ga4_metric_dd').value;
+    if (!ga4_data.metrics.includes(ga4_metric)) {
+      ga4_data.metrics.push(ga4_metric);
+    }
+    _renderGa4MetricsBoxes();
+  }
+
+  function _renderGa4MetricsBoxes() {
+    ga4_metrics_boxes = document.getElementById('ga4_metrics_boxes');
+    ga4_metrics_boxes.innerHTML = "";
+
+    ga4_data.metrics.forEach((item) => {
+      ga4_metrics_boxes.innerHTML += "<span class='tag is-info'>" + ga4_metrics_lkup[item] + "<button onClick='deleteGa4Metric(\"" + item + "\");' class='delete is-small'></button></span> ";
+    })
+  }
+
+  function deleteGa4Metric(metric) {
+    ga4_data.metrics.splice(ga4_data.metrics.indexOf(metric), 1);
+    _renderGa4MetricsBoxes();
+  }
+
+  function saveGa4Datasource() {
+    if (ga4_data.metrics.length > 0) {
+      const ga4_account_dd = document.getElementById('ga4_account_id_dd');
+      var final_ga4_account = ga4_account_dd.options[ga4_account_dd.selectedIndex].text;
+
+      const ga4_property_dd = document.getElementById('ga4_property_id_dd');
+      var final_ga4_property = ga4_property_dd.options[ga4_property_dd.selectedIndex].text;
+
+      ga4_data.account = ga4_account_dd.value;
+      ga4_data.property = ga4_property_dd.value;
+
+      ga4_account_lkup[ga4_data.account] = final_ga4_account;
+      ga4_property_lkup[ga4_data.property] = final_ga4_property;
+
+      sessionStorage.setItem('ga4_data', JSON.stringify(gads_data));
+      sessionStorage.setItem('ga4_account_lkup', JSON.stringify(ga4_account_lkup));
+      sessionStorage.setItem('ga4_property_lkup', JSON.stringify(ga4_property_lkup));
+      sessionStorage.setItem('account_ids', JSON.stringify(account_ids));
+      _renderGa4DatasourceBox();
+    }
+    else {
+      closePopup('final_ga4');
+    }
+    sessionStorage.setItem('ga4_data', JSON.stringify(ga4_data));
+    closePopup('google_analytics_datasource_tab');
+    cleanUp();
+  }
+
+  function _renderGa4DatasourceBox() {
+    const final_ga4_details = document.getElementById('final_ga4_details');
+    final_ga4_details.innerHTML = "Account and Property<br>";
+    final_ga4_details.innerHTML += "<span class='tag is-info'>" + ga4_account_lkup[ga4_data.account] + "</span> <span class='tag is-info is-light'>" + ga4_property_lkup[ga4_data.property] + "</span><br><br>";
+    final_ga4_details.innerHTML += "Metric(s)<br>";
+
+    ga4_data.metrics.forEach((metric) => {
+      final_ga4_details.innerHTML += "<span class='tag is-info'>" + ga4_metrics_lkup[metric] + "</span> ";
+    })
+    openPopup('final_ga4');
+  }
+
+  function cancelGa4Datasource() {
+    ga4_data = JSON.parse(JSON.stringify(tmp_ga4_data));
+    closePopup('google_analytics_datasource_tab');
+    cleanUp();
+  }
+
+  function deleteGa4Datasource() {
+    confirmBox("Delete Google Analytics Datasource",
+      "Are you sure you want to delete the Google Analytics datasource?",
+      function () {
+        ga4_data = { 'account': [], 'property': [], 'metrics': [] };
+        tmp_ga4_data = {};
+        closePopup('final_ga4');
+        sessionStorage.removeItem('ga4_data');
+        cleanUp();
+      },
+      function () { });
+  }
+
+  //CSV Code
+  function addCsvDatasource() {
+    tmp_csv_data = JSON.parse(JSON.stringify(csv_data));
+    _renderCsvMetricsBoxes();
+    openPopup('csv_datasource_tab');
+  }
+
+  function saveCsvDatasource() {
+    csv_data.date_column = document.getElementById('csv_date_dd').value;
+    sessionStorage.setItem('csv_data', JSON.stringify(csv_data));
+    sessionStorage.setItem('csv_metrics', JSON.stringify(csv_metrics));
+    sessionStorage.setItem('csv_from_date', JSON.stringify(csv_from_date))
+    sessionStorage.setItem('csv_to_date', JSON.stringify(csv_to_date))
+
+    if (csv_data.metrics.length > 0) {
+      _renderCsvDatasourceBox();
+    }
+    else {
+      closePopup('final_csv');
+    }
+    closePopup('csv_datasource_tab');
+    cleanUp();
+  }
+
+  function _renderCsvDatasourceBox() {
+    const final_csv_details = document.getElementById('final_csv_details');
+    final_csv_details.innerHTML = "Date Column<br>";
+    final_csv_details.innerHTML += "<span class='tag is-info'>" + csv_data.date_column + "</span><br><br>";
+    final_csv_details.innerHTML += "Metric(s)<br>";
+
+    csv_data.metrics.forEach((metric) => {
+      final_csv_details.innerHTML += "<span class='tag is-info'>" + metric + "</span> ";
+    })
+    openPopup('final_csv');
+  }
+
+  function cancelCsvDatastore() {
+    if (tmp_csv_data.date_column == "") {
+      tmp_csv_data.date_column = csv_data.date_column;
+    }
+
+    if (csv_data.metrics.length == 0) {
+      csv_data.date_column = "";
+      csv_metrics = [];
+      csv_from_date = "";
+      csv_to_date = "";
+    }
+    csv_data = JSON.parse(JSON.stringify(tmp_csv_data));
+    closePopup('csv_datasource_tab');
+    cleanUp();
+  }
+
+  function checkDateColumn() {
+    const csv_date_dd = document.getElementById('csv_date_dd');
+    csv_data.date_column = csv_date_dd.value;
+    deleteCsvMetric(csv_date_dd.value);
+  }
+
+  function uploadFile() {
+    addDDSpinner('uploading_div');
+    const form = document.querySelector('#file_upload_form');
+    const fileInput = form.querySelector('input[type="file"]');
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    var fetchRequest = new Request('/upload_csv', {
+      method: 'POST',
+      body: formData
+    });
+
+    fetch(fetchRequest)
+      .then(response => response.json())
+      .then(data => {
+        if (data.result[0] == "ok") {
+          csv_data.date_column = data.result[1];
+          csv_metrics = data.result[2];
+          csv_from_date = data.result[3];
+          csv_to_date = data.result[4];
+          csv_items_loaded = false;
+          _renderCsvMetricsBoxes();
+          closePopup('csv_upload_error');
+          removeDDSpinner('uploading_div');
+        }
+        else {
+          document.getElementById('csv_upload_error_msg').innerHTML = data.result[1];
+          openPopup('csv_upload_error');
+        }
+      });
+  }
+
+  function addCsvMetric() {
+    const csv_metric = document.getElementById('csv_metric_dd').value;
+    const csv_date = document.getElementById('csv_date_dd').value;
+    if (!csv_data.metrics.includes(csv_metric) && csv_metric != csv_date) {
+      csv_data.metrics.push(csv_metric);
+      csv_data.date_column = csv_date;
+    }
+    _renderCsvMetricsBoxes();
+  }
+
+  function _renderCsvMetricsBoxes() {
+    const csv_date_dd = document.getElementById('csv_date_dd');
+    const csv_metric_dd = document.getElementById('csv_metric_dd');
+    if (csv_metrics.length > 0 && !csv_items_loaded) {
+      csv_date_dd.innerHTML = "";
+      csv_metric_dd.innerHTML = "";
+      csv_metrics.forEach((metric) => {
+        if (metric != csv_data.date_column) {
+          csv_metric_dd.add(new Option(metric, metric));
+        }
+        else {
+          csv_date_dd.add(new Option(metric, metric));
+        }
+        openPopup('csv_options');
+      });
+      csv_items_loaded = true;
+    }
+    if (csv_metrics.length == 0) {
+      csv_date_dd.innerHTML = "";
+      csv_metric_dd.innerHTML = "";
+      closePopup('csv_options');
+    }
+    csv_date_dd.value = csv_data.date_column;
+    csv_date_dd.disabled = true;
+    csv_metrics_boxes = document.getElementById('csv_metrics_boxes');
+    csv_metrics_boxes.innerHTML = "";
+
+    csv_data.metrics.forEach((item) => {
+      csv_metrics_boxes.innerHTML += "<span class='tag is-info'>" + item + "<button onClick='deleteCsvMetric(\"" + item + "\");' class='delete is-small'></button></span> ";
+    })
+  }
+
+  function deleteCsvMetric(metric) {
+    if (csv_data.metrics.includes(metric)) {
+      csv_data.metrics.splice(csv_data.metrics.indexOf(metric), 1);
+      _renderCsvMetricsBoxes();
+    }
+  }
+
+  function deleteCsvDatasource() {
+    confirmBox("Delete CSV Datasource",
+      "Are you sure you want to delete the CSV datasource?",
+      function () {
+        csv_data = { 'date_column': "", 'metrics': [] };
+        tmp_csv_data = {};
+        csv_metrics = [];
+        csv_from_date = "";
+        csv_to_date = "";
+        sessionStorage.removeItem('csv_data');
+        sessionStorage.removeItem('csv_metrics');
+        sessionStorage.removeItem('csv_from_date');
+        sessionStorage.removeItem('csv_to_date');
+        closePopup('final_csv');
+        cleanUp();
+      },
+      function () { });
+  }
+
+
+  //Run Analysis
+  function generateData() {
+    var data_to_send = {};
+
+    data_to_send['from_date'] = document.getElementById('from_date').value;
+    data_to_send['to_date'] = document.getElementById('to_date').value;
+    data_to_send['event_date'] = document.getElementById('event_date').value;
+    data_to_send['target_event'] = document.getElementById('target_event_dd').value;
+    if (gads_data.metrics.length > 0) {
+      data_to_send['gads'] = gads_data;
+    }
+    if (ga4_data.metrics.length > 0) {
+      data_to_send['ga4'] = ga4_data;
+    }
+    if (csv_data.metrics.length > 0) {
+      data_to_send['csv'] = csv_data;
+    }
+    document.getElementById('data_to_send').value = JSON.stringify(data_to_send);
+  }
+
+  //General helpers
+  function cleanUp() {
+    target_event_dd = document.getElementById('target_event_dd');
+    target_event_dd.innerHTML = "";
+    if (gads_data.metrics.length == 0 && ga4_data.metrics.length == 0 && csv_data.metrics.length == 0) {
+      openPopup('no_datasources');
+    }
+    else {
+      gads_data.metrics.forEach((metric) => {
+        var newOption = new Option("GAds : " + gads_metrics_lkup[metric], "gads_" + metric);
+        target_event_dd.add(newOption);
+      });
+      ga4_data.metrics.forEach((metric) => {
+        var newOption = new Option("GA4 : " + ga4_metrics_lkup[metric], "ga4_" + metric);
+        target_event_dd.add(newOption);
+      });
+      csv_data.metrics.forEach((metric) => {
+        var newOption = new Option("CSV : " + metric, "csv_" + metric);
+        target_event_dd.add(newOption);
+      });
+      if (sessionStorage.getItem('target_event')) { document.getElementById('target_event_dd').value = sessionStorage.getItem('target_event'); }
+      closePopup('no_datasources');
+    }
+    f_date = document.getElementById('from_date');
+    t_date = document.getElementById('to_date');
+    if (csv_from_date != "" && csv_to_date != "") {
+      f_date.value = csv_from_date;
+      t_date.value = csv_to_date;
+      f_date.disabled = true;
+      t_date.disabled = true;
+    }
+    else {
+      f_date.disabled = false;
+      t_date.disabled = false;
+    }
+    validation();
+  }
+
+  function validation() {
+    var from_date = document.getElementById('from_date').value;
+    var to_date = document.getElementById('to_date').value;
+    var event_date = document.getElementById('event_date').value;
+    var target_event = document.getElementById('target_event_dd');
+    var errors = 0;
+
+    sessionStorage.setItem('from_date', from_date);
+    sessionStorage.setItem('to_date', to_date);
+    sessionStorage.setItem('event_date', event_date);
+    sessionStorage.setItem('target_event', target_event.value);
+
+    if (from_date == "" || to_date == "" || event_date == "") {
+      errors++;
+    }
+    if (from_date > to_date && from_date != "" && to_date != "") {
+      openPopup('date_error');
+      errors++;
+    }
+    if (target_event.value == "") {
+      errors++;
+    }
+    else {
+      closePopup('date_error');
+    }
+
+    if (event_date != "" && (event_date < from_date || event_date > to_date)) {
+      openPopup('event_date_error');
+      errors++;
+    }
+    else {
+      closePopup('event_date_error');
+    }
+
+    if (gads_data.length == 0 && ga4_metrics.length == 0) {
+      errors++;
+    }
+
+    if (target_event.length < 3) {
+      openPopup('three_metrics_error');
+      errors++;
+    }
+    else {
+      closePopup('three_metrics_error');
+    }
+
+    var run_analysis = document.getElementById('run_analysis');
+    if (errors == 0) {
+      run_analysis.disabled = false;
+    }
+    else {
+      run_analysis.disabled = true;
+    }
+
+  }
+
+  function confirmBox(title, message, yesCallback, noCallback) {
+    document.getElementById('confirm_title').innerHTML = title;
+    document.getElementById('confirm_message').innerHTML = message;
+    document.getElementById('confirm_yes').onclick = function () {
+      closePopup('confirm_box');
+      yesCallback();
+    };
+    document.getElementById('confirm_no').onclick = function () {
+      closePopup('confirm_box');
+      noCallback();
+    };
+    openPopup('confirm_box');
+  }
+
+  function addDDSpinner(div_id) {
+    document.getElementById(div_id).classList.add('is-loading');
+
+  }
+  function removeDDSpinner(div_id) {
+    document.getElementById(div_id).classList.remove('is-loading');
+  }
+
+  document.forms.namedItem('run_analysis_form').addEventListener('submit', function () {
+    openPopup('loading_modal');
+    generateData();
+  });
+
+  window.onunload = function (event) {
+    closePopup('loading_modal');
+  }
+
+  if (sessionStorage.getItem('from_date')) { document.getElementById('from_date').value = sessionStorage.getItem('from_date'); }
+  if (sessionStorage.getItem('to_date')) { document.getElementById('to_date').value = sessionStorage.getItem('to_date'); }
+  if (sessionStorage.getItem('event_date')) { document.getElementById('event_date').value = sessionStorage.getItem('event_date'); }
+  count = 0;
+  if (sessionStorage.getItem('gads_data')) {
+    gads_data = JSON.parse(sessionStorage.getItem('gads_data'));
+    gads_customer_lkup = JSON.parse(sessionStorage.getItem('gads_customer_lkup'));
+    gads_campaign_lkup = JSON.parse(sessionStorage.getItem('gads_campaign_lkup'));
+    gads_metrics_lkup = JSON.parse(sessionStorage.getItem('gads_metrics_lkup'));
+    mcc_ids = JSON.parse(sessionStorage.getItem('mcc_ids'));
+    _populateMccIds(gads_data.mcc_id);
+    document.getElementById('gads_mcc_id_dd').value = gads_data.mcc_id
+    _renderGoogleAdsDataSourceBoxes();
+    count = +1
+  }
+  if (sessionStorage.getItem('ga4_data')) {
+    ga4_data = JSON.parse(sessionStorage.getItem('ga4_data'));
+    ga4_account_lkup = JSON.parse(sessionStorage.getItem('ga4_account_lkup'));
+    ga4_property_lkup = JSON.parse(sessionStorage.getItem('ga4_property_lkup'));
+    account_ids = JSON.parse(sessionStorage.getItem('account_ids'));
+    _populateGa4Accounts(ga4_data.account);
+    _renderGa4DatasourceBox();
+    count = +1
+  }
+  if (sessionStorage.getItem('csv_data')) {
+    csv_data = JSON.parse(sessionStorage.getItem('csv_data'));
+    csv_metrics = JSON.parse(sessionStorage.getItem('csv_metrics'));
+    csv_from_date = JSON.parse(sessionStorage.getItem('csv_from_date'));
+    csv_to_date = JSON.parse(sessionStorage.getItem('csv_to_date'));
+    _renderCsvDatasourceBox();
+    count = +1
+  }
+  if (count > 0) { cleanUp(); }
+  _populateGadsMetrics();
+  _populateGa4Metrics();
+
+</script>
+
+{% include "_footer.html" %}

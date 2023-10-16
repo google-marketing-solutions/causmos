@@ -1,0 +1,73 @@
+{% include "_header.html" %}
+
+<h1 class="title">Causal Impacts Insights</h1>
+
+<div class="columns">
+  <div class="column">
+  </div>
+  <div class="column">
+    <div id="all_content" class="align-left main-window">
+      <div>
+        <a href="/create"><button class="button is-info">Edit Analysis</button></a>
+        <button class="button is-success" onclick="showRawData();">View Raw Data</button>
+      </div>
+      <div>
+        <span id='warnings' class="tag is-warning is-hidden">
+          <span class="material-symbols-outlined">
+            warning
+          </span>
+          <span id="warnings_msg"></span>
+        </span>
+      </div>
+      <div class="summary-report">
+        <h4 class="title is-4">Summary Report</h4>
+        <table>
+        {% for x in summary[1:15] %}
+        <tr class="table-border">
+          {% for y in x %}
+              <td>{{y}}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+        </table>
+      </div>
+      <br><br>
+
+      <h4 class="title is-4">Plotted Results</h4>
+      {{chart|safe}}
+      <br><br>
+
+      <h4 class="title is-4">Detailed Report</h4>
+      {{report|safe}}
+      <br><br>
+    </div>
+  </div>
+  <div class="column">
+  </div>
+</div>
+
+<div id="raw_data" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-content">
+    <section class="modal-card-body">
+      {{raw_data|safe}}
+  </section>
+  </div>
+  <button class="modal-close is-large" onclick="closeRawData();" aria-label="close"></button>
+</div>
+
+<script>
+  function showRawData() {
+    openPopup('raw_data');
+  }
+  function closeRawData() {
+    closePopup('raw_data');
+  }
+  var warnings='{{warnings}}';
+  if(warnings!= "") {
+    document.getElementById('warnings_msg').innerHTML=warnings;
+    openPopup('warnings');
+  }
+</script>
+
+{% include "_footer.html" %}

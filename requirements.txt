@@ -1,0 +1,13 @@
+Flask
+google-analytics-data
+google-analytics-admin
+google-ads
+google-api-python-client
+oauth2client
+python-dotenv
+Flask-Session
+google-auth-httplib2
+tfp-causalimpact
+numpy
+pandas
+altair==4.2.2
