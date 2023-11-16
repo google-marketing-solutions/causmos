@@ -22,6 +22,10 @@ app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 app.config['SESSION_FILE_DIR'] = '/tmp'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 Session(app)
 
@@ -67,9 +71,6 @@ else:
 def add_header(response):
   response.headers['X-Content-Type-Options'] = 'nosniff'
   response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-  response.headers['SESSION_COOKIE_SECURE'] = True
-  response.headers['SESSION_COOKIE_HTTPONLY'] = True
-  response.headers['SESSION_COOKIE_SAMESITE'] = 'Lax'
   response.headers['Referrer-Policy'] = 'strict-origin'
   response.headers['Strict-Transport-Security'] = (
       'max-age=31536000; includeSubDomains'
