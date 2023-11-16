@@ -1,8 +1,14 @@
+"""A Flask server for running Causal Impact.
+
+This solution runs an analysis pulling information from Google Ads and Google
+Analytics. Information can be augmented by uploading a CSV file.
+"""
+
 from datetime import datetime, timedelta
 import json, os, socket, struct
 from causal import getCiChart, getCiObject, getCiReport, getCiSummary
 from csv_data import csv_get_date_range, csv_merge_data, get_csv_columns, get_csv_data
-from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, flash, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask_session import Session
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
@@ -16,7 +22,7 @@ app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 app.config['SESSION_FILE_DIR'] = '/tmp'
-app.secret_key = 'test_key'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 Session(app)
 
 SCOPES = [
@@ -55,6 +61,20 @@ if is_loopback('localhost'):
 else:
   PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
   _REDIRECT_URI = f'https://{PROJECT_ID}.ew.r.appspot.com/oauth_completed'
+
+
+@app.after_request
+def add_header(response):
+  response.headers['X-Content-Type-Options'] = 'nosniff'
+  response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+  response.headers['SESSION_COOKIE_SECURE'] = True
+  response.headers['SESSION_COOKIE_HTTPONLY'] = True
+  response.headers['SESSION_COOKIE_SAMESITE'] = 'Lax'
+  response.headers['Referrer-Policy'] = 'strict-origin'
+  response.headers['Strict-Transport-Security'] = (
+      'max-age=31536000; includeSubDomains'
+  )
+  return response
 
 
 @app.route('/')
