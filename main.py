@@ -25,6 +25,7 @@ app.config['SESSION_FILE_DIR'] = '/tmp'
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_NAME'] = '__Host-causal-impact-session'
 
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 Session(app)
