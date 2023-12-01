@@ -72,6 +72,11 @@ body {
   padding: 10px;
 }
 
+.info {
+  font-size: 10px;
+  font-style: italic;
+}
+
 .raw-data {
   text-align: center;
 }

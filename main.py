@@ -1,3 +1,17 @@
+# Copyright 2023 Google LLC..
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """A Flask server for running Causal Impact.
 
 This solution runs an analysis pulling information from Google Ads and Google
@@ -22,23 +36,7 @@ app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 app.config['SESSION_FILE_DIR'] = '/tmp'
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_NAME'] = '__Host-causal-impact-session'
-
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
-Session(app)
-
-SCOPES = [
-    'https://www.googleapis.com/auth/analytics.readonly',
-    'https://www.googleapis.com/auth/adwords',
-]
-CLIENT_SECRETS_PATH = os.getcwd() + '/client_secret.json'
-
-flow: Flow
-csv_data = {}
-
 
 def is_loopback(host):
   loopback_checker = {
@@ -58,15 +56,29 @@ def is_loopback(host):
         return False
   return True
 
-
 if is_loopback('localhost'):
   _SERVER = 'localhost'
   _PORT = 8080
   _REDIRECT_URI = f'http://{_SERVER}:{_PORT}/oauth_completed'
+  
 else:
   PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
   _REDIRECT_URI = f'https://{PROJECT_ID}.ew.r.appspot.com/oauth_completed'
+  app.config['SESSION_COOKIE_SECURE'] = True
+  app.config['SESSION_COOKIE_HTTPONLY'] = True
+  app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+  app.config['SESSION_COOKIE_NAME'] = '__Host-causal-impact-session'
 
+Session(app)
+
+SCOPES = [
+    'https://www.googleapis.com/auth/analytics.readonly',
+    'https://www.googleapis.com/auth/adwords',
+]
+CLIENT_SECRETS_PATH = os.getcwd() + '/client_secret.json'
+
+flow: Flow
+csv_data = {}
 
 @app.after_request
 def add_header(response):
@@ -81,13 +93,16 @@ def add_header(response):
 
 @app.route('/')
 def root():
-  return render_template('index.html')
+  authed = "false"
+  if 'credentials' in session:
+    authed="true"
+  return render_template('index.html', authed=authed)
 
 
 @app.route('/oauth')
 def oauth():
   if 'credentials' in session:
-    return redirect('create')
+    return redirect('/')
   else:
     flow = create_flow()
     authorization_url = flow.authorization_url(prompt='consent')
@@ -102,103 +117,90 @@ def oauth_complete():
     flow.fetch_token(code=code)
     credentials = flow.credentials
     session['credentials'] = credentials.to_json()
-    return redirect('create')
-  else:
-    return redirect('/')
-
-
-@app.route('/create')
-def create():
-  if 'credentials' in session:
-    return render_template('create.html')
-  else:
-    return redirect('/')
+  return redirect('/')
 
 
 @app.route('/report', methods=['POST'])
 def report():
-  if 'credentials' in session:
-    gads_responses = []
-    data = json.loads(request.form.get('data_to_send', 0, type=str))
-    raw_data = {}
-    warnings = ''
-    if 'gads' in data:
-      for key in data['gads']['query']:
-        gads_responses.append(
-            get_gads_data(
-                data['gads']['mcc_id'],
-                key,
-                data['gads']['query'][key],
-                data['from_date'],
-                data['to_date'],
-            )
-        )
-      raw_data = process_gads_responses(gads_responses, data['gads']['metrics'])
+  gads_responses = []
+  data = json.loads(request.form.get('data_to_send', 0, type=str))
+  raw_data = {}
+  warnings = ''
+  if 'gads' in data:
+    for key in data['gads']['query']:
+      gads_responses.append(
+          get_gads_data(
+              data['gads']['mcc_id'],
+              key,
+              data['gads']['query'][key],
+              data['from_date'],
+              data['to_date'],
+          )
+      )
+    raw_data = process_gads_responses(gads_responses, data['gads']['metrics'])
 
-    if 'ga4' in data:
-      raw_data = get_ga4_data(
-          data['ga4']['property'],
-          data['from_date'],
-          data['to_date'],
-          data['ga4']['metrics'],
-          raw_data,
+  if 'ga4' in data:
+    raw_data = get_ga4_data(
+        data['ga4']['property'],
+        data['from_date'],
+        data['to_date'],
+        data['ga4']['metrics'],
+        raw_data,
+    )
+
+  if 'csv' in data:
+    csv_data = session['csv_data']
+    raw_data = csv_merge_data(csv_data, data['csv'], raw_data)
+  if raw_data:
+    idx = pd.date_range(data['from_date'], data['to_date'])
+    df = pd.DataFrame.from_dict(raw_data).transpose()
+    df.replace(np.NaN, 0, inplace=True)
+    df = df.apply(pd.to_numeric, errors='ignore')
+
+    df.index = pd.DatetimeIndex(df.index)
+    df = df.reindex(idx, fill_value=0)  # fills in any blank dates
+    df = df[
+        [data['target_event']]
+        + [c for c in df if c not in [data['target_event']]]
+    ]  # Puts target event as first column
+
+    if 0 in df.values:
+      warnings = (
+          'Some values have 0 in them which are from your data or where dates'
+          ' were missing and were filled in automatically'
       )
 
-    if 'csv' in data:
-      csv_data = session['csv_data']
-      raw_data = csv_merge_data(csv_data, data['csv'], raw_data)
-    if raw_data:
-      idx = pd.date_range(data['from_date'], data['to_date'])
-      df = pd.DataFrame.from_dict(raw_data).transpose()
-      df.replace(np.NaN, 0, inplace=True)
-      df = df.apply(pd.to_numeric, errors='ignore')
+    from_d = datetime.strptime(data['from_date'], '%Y-%m-%d')
+    to_d = datetime.strptime(data['to_date'], '%Y-%m-%d')
+    event_d = datetime.strptime(data['event_date'], '%Y-%m-%d')
 
-      df.index = pd.DatetimeIndex(df.index)
-      df = df.reindex(idx, fill_value=0)  # fills in any blank dates
-      df = df[
-          [data['target_event']]
-          + [c for c in df if c not in [data['target_event']]]
-      ]  # Puts target event as first column
+    pre_delta = (event_d - from_d).days
+    post_delta = (to_d - event_d).days
 
-      if 0 in df.values:
-        warnings = (
-            'Some values have 0 in them which are from your data or where dates'
-            ' were missing and were filled in automatically'
-        )
+    pre_period = [0, pre_delta - 1]
+    post_period = [pre_delta, pre_delta + post_delta]
 
-      from_d = datetime.strptime(data['from_date'], '%Y-%m-%d')
-      to_d = datetime.strptime(data['to_date'], '%Y-%m-%d')
-      event_d = datetime.strptime(data['event_date'], '%Y-%m-%d')
+    impact = getCiObject(df, pre_period, post_period)
+    summary = getCiSummary(impact)
+    chart = getCiChart(impact)
+    report = getCiReport(impact)
 
-      pre_delta = (event_d - from_d).days
-      post_delta = (to_d - event_d).days
-
-      pre_period = [0, pre_delta - 1]
-      post_period = [pre_delta, pre_delta + post_delta]
-
-      impact = getCiObject(df, pre_period, post_period)
-      summary = getCiSummary(impact)
-      chart = getCiChart(impact)
-      report = getCiReport(impact)
-
-      return render_template(
-          'report.html',
-          summary=summary,
-          chart=chart,
-          report=report,
-          raw_data=df.to_html(),
-          warnings=warnings,
-      )
-    else:
-      return render_template(
-          'report.html',
-          summary='No data in datasources!',
-          chart='No data in datasources!',
-          report='No data in datasources!',
-          warnings='No data in datasources!',
-      )
+    return render_template(
+        'report.html',
+        summary=summary,
+        chart=chart,
+        report=report,
+        raw_data=df.to_html(),
+        warnings=warnings,
+    )
   else:
-    return redirect('/')
+    return render_template(
+        'report.html',
+        summary='No data in datasources!',
+        chart='No data in datasources!',
+        report='No data in datasources!',
+        warnings='No data in datasources!',
+    )
 
 
 @app.route('/_get_gads_mcc_ids')
