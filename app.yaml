@@ -40,5 +40,12 @@ handlers:
   secure: always
   redirect_http_response_code: 301
 
+# Put the environment variables into your config.yaml for the Developer token
+# and the Flask secret key like:
+#
+# env_variables:
+#   FLASK_SECRET_KEY: 'SECRET_KEY_VALUE'
+#   GOOGLE_ADS_DEVELOPER_TOKEN: 'DEVELOPER_TOKEN_VALUE'
+
 includes:
   - config.yaml
