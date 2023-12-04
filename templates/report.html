@@ -1,5 +1,8 @@
 {% include "_header.html" %}
+<title>Causal Impact Insights - Report</title>
+</head>
 
+<body>
 <h1 class="title">Causal Impacts Insights</h1>
 
 <div class="columns">
@@ -10,6 +13,7 @@
       <div>
         <a href="/"><button class="button is-info">Edit Analysis</button></a>
         <button class="button is-success" onclick="showRawData();">View Raw Data</button>
+        <button class="button is-success" onclick="showValidationData();">View Validation Data</button>
       </div>
       <div>
         <span id='warnings' class="tag is-warning is-hidden">
@@ -53,15 +57,37 @@
       {{raw_data|safe}}
   </section>
   </div>
-  <button class="modal-close is-large" onclick="closeRawData();" aria-label="close"></button>
+  <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
+</div>
+
+<div id="validation_data" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-content">
+    <section class="modal-card-body">
+      <table class="full-table-border">
+        {% for x in validation %}
+        <tr class="full-table-border">
+          {% for y in x %}
+              <td class="full-table-border">{{y}}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+        </table>
+  </section>
+  </div>
+  <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
 </div>
 
 <script>
   function showRawData() {
     openPopup('raw_data');
   }
-  function closeRawData() {
+  function showValidationData() {
+    openPopup('validation_data');
+  }
+  function closePopups() {
     closePopup('raw_data');
+    closePopup('validation_data');
   }
   var warnings='{{warnings}}';
   if(warnings!= "") {
