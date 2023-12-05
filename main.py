@@ -20,7 +20,7 @@ Analytics. Information can be augmented by uploading a CSV file.
 
 from datetime import datetime, timedelta
 import json, os, socket, struct
-from causal import getCiChart, getCiObject, getCiReport, getCiSummary
+from causal import getCiChart, getCiObject, getCiReport, getCiSummary, getValidation
 from csv_data import csv_get_date_range, csv_merge_data, get_csv_columns, get_csv_data
 from flask import Flask, flash, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask_session import Session
@@ -184,6 +184,7 @@ def report():
     summary = getCiSummary(impact)
     chart = getCiChart(impact)
     report = getCiReport(impact)
+    validation = getValidation(df)
 
     return render_template(
         'report.html',
@@ -192,6 +193,7 @@ def report():
         report=report,
         raw_data=df.to_html(),
         warnings=warnings,
+        validation=validation
     )
   else:
     return render_template(
@@ -200,6 +202,7 @@ def report():
         chart='No data in datasources!',
         report='No data in datasources!',
         warnings='No data in datasources!',
+        validation='No data in datasouces!'
     )
 
 

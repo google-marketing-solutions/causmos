@@ -85,6 +85,12 @@ body {
   border-bottom:1px solid #aaa;
   height: 10px;
 }
+.full-table-border {
+  border:1px solid #aaa;
+  height: 10px;
+  padding: 5px;
+}
+
 @keyframes spinner {
   to {transform: rotate(360deg);}
 }

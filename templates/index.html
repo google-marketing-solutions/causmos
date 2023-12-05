@@ -1,5 +1,8 @@
 {% include "_header.html" %}
+<title>Causal Impact Insights - Create</title>
+</head>
 
+<body>
 <h1 class="title">Causal Impact Insights</h1>
 
 <div class="columns">
@@ -1097,14 +1100,22 @@
     data_to_send['to_date'] = document.getElementById('to_date').value;
     data_to_send['event_date'] = document.getElementById('event_date').value;
     data_to_send['target_event'] = document.getElementById('target_event_dd').value;
+    var data_sources = [];
+    var mcc_id_ts="";
+    var ga4_id_ts="";
     if (gads_data.metrics.length > 0) {
       data_to_send['gads'] = gads_data;
+      data_sources.push("gads");
+      mcc_id_ts = gads_data.mcc_id;
     }
     if (ga4_data.metrics.length > 0) {
       data_to_send['ga4'] = ga4_data;
+      data_sources.push("ga4");
+      ga4_id_ts = ga4_data.account;
     }
     if (csv_data.metrics.length > 0) {
       data_to_send['csv'] = csv_data;
+      data_sources.push("csv");
     }
     document.getElementById('data_to_send').value = JSON.stringify(data_to_send);
   }
