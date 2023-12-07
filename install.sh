@@ -44,6 +44,7 @@ gcloud services enable iamcredentials.googleapis.com
 gcloud services enable cloudbuild.googleapis.com
 gcloud services enable googleads.googleapis.com
 gcloud services enable analyticsadmin.googleapis.com
+gcloud services enable analyticsdata.googleapis.com
 
 gcloud app create --region $GAE_LOCATION
 
