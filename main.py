@@ -22,19 +22,17 @@ from datetime import datetime, timedelta
 import json, os, socket, struct
 from causal import getCiChart, getCiObject, getCiReport, getCiSummary, getValidation
 from csv_data import csv_get_date_range, csv_merge_data, get_csv_columns, get_csv_data
-from flask import Flask, flash, jsonify, make_response, redirect, render_template, request, session, url_for
-from flask_session import Session
+from flask import Flask, jsonify, redirect, render_template, request, session
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
 from google_auth_oauthlib.flow import Flow
 import numpy as np
 import pandas as pd
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
 app.config['SESSION_FILE_DIR'] = '/tmp'
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 
@@ -69,8 +67,6 @@ else:
   app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
   app.config['SESSION_COOKIE_NAME'] = '__Host-causal-impact-session'
 
-Session(app)
-
 SCOPES = [
     'https://www.googleapis.com/auth/analytics.readonly',
     'https://www.googleapis.com/auth/adwords',
@@ -89,7 +85,17 @@ def add_header(response):
       'max-age=31536000; includeSubDomains'
   )
   return response
+ 
+@app.route("/_ah/warmup")
+def warmup():
+    """Served stub function returning no content.
 
+    Your warmup logic can be implemented here (e.g. set up a database connection pool)
+
+    Returns:
+        An empty string, an HTTP code 200, and an empty object.
+    """
+    return "", 200, {}
 
 @app.route('/')
 def root():
@@ -181,19 +187,15 @@ def report():
     post_period = [pre_delta, pre_delta + post_delta]
 
     impact = getCiObject(df, pre_period, post_period)
-    summary = getCiSummary(impact)
-    chart = getCiChart(impact)
-    report = getCiReport(impact)
-    validation = getValidation(df)
 
     return render_template(
         'report.html',
-        summary=summary,
-        chart=chart,
-        report=report,
+        summary=getCiSummary(impact),
+        chart=getCiChart(impact),
+        report=getCiReport(impact),
         raw_data=df.to_html(),
         warnings=warnings,
-        validation=validation
+        validation=getValidation(df)
     )
   else:
     return render_template(
@@ -204,7 +206,6 @@ def report():
         warnings='No data in datasources!',
         validation='No data in datasouces!'
     )
-
 
 @app.route('/_get_gads_mcc_ids')
 def _get_gads_mcc_ids():
