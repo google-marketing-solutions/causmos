@@ -13,18 +13,21 @@
 # limitations under the License.
 
 runtime: python39
-
+entrypoint: gunicorn -b :$PORT main:app -w 1
 instance_class: F4_1G
+automatic_scaling:
+ min_idle_instances: 1
 
 handlers:
   # This configures Google App Engine to serve the files in the app's static
   # directory.
+  # Add your Cloud Project ID to the Access-Control-Allow-Origin URL
 - url: /static
   static_dir: static
   secure: always
   redirect_http_response_code: 301
   http_headers:
-    Access-Control-Allow-Origin: http://causal-impact-insights.ew.r.appspot.com/
+    Access-Control-Allow-Origin: http://[PROJECT_ID].ew.r.appspot.com/
     X-Content-Type-Options: nosniff
     X-Frame-Options: SAMEORIGIN
     SESSION_COOKIE_SECURE: true
@@ -39,6 +42,9 @@ handlers:
   script: auto
   secure: always
   redirect_http_response_code: 301
+
+inbound_services:
+- warmup
 
 # Put the environment variables into your config.yaml for the Developer token
 # and the Flask secret key like:
