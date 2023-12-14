@@ -25,15 +25,16 @@ from csv_data import csv_get_date_range, csv_merge_data, get_csv_columns, get_cs
 from flask import Flask, jsonify, redirect, render_template, request, session
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
+from fs_storage import set_value_session, get_value_session
 from google_auth_oauthlib.flow import Flow
 import numpy as np
 import pandas as pd
+from uuid import uuid4
 
 app = Flask(__name__)
+
 app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
-app.config['SESSION_FILE_DIR'] = '/tmp'
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 
 def is_loopback(host):
@@ -76,6 +77,14 @@ CLIENT_SECRETS_PATH = os.getcwd() + '/client_secret.json'
 flow: Flow
 csv_data = {}
 
+def get_session_id():
+  if 'session_id' in session:
+    return session['session_id']
+  else:
+    session_id = str(uuid4())
+    session['session_id'] = session_id
+    return session_id
+
 @app.after_request
 def add_header(response):
   response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -88,26 +97,21 @@ def add_header(response):
  
 @app.route("/_ah/warmup")
 def warmup():
-    """Served stub function returning no content.
-
-    Your warmup logic can be implemented here (e.g. set up a database connection pool)
-
-    Returns:
-        An empty string, an HTTP code 200, and an empty object.
-    """
     return "", 200, {}
 
 @app.route('/')
 def root():
   authed = "false"
-  if 'credentials' in session:
+  creds = get_value_session(get_session_id(), 'credentials')
+  if creds:
     authed="true"
   return render_template('index.html', authed=authed)
 
 
 @app.route('/oauth')
 def oauth():
-  if 'credentials' in session:
+  creds = get_value_session(get_session_id(), 'credentials')
+  if creds:
     return redirect('/')
   else:
     flow = create_flow()
@@ -122,7 +126,8 @@ def oauth_complete():
     flow = create_flow()
     flow.fetch_token(code=code)
     credentials = flow.credentials
-    session['credentials'] = credentials.to_json()
+    set_value_session(get_session_id(), 'credentials', credentials.to_json())
+    #session['credentials'] = credentials.to_json()
   return redirect('/')
 
 
@@ -155,7 +160,7 @@ def report():
     )
 
   if 'csv' in data:
-    csv_data = session['csv_data']
+    csv_data = get_value_session(get_session_id(), 'csv_data')
     raw_data = csv_merge_data(csv_data, data['csv'], raw_data)
   if raw_data:
     idx = pd.date_range(data['from_date'], data['to_date'])
@@ -276,7 +281,7 @@ def upload_file():
         csv_settings.append(csv_columns)
         csv_settings.append(start_date)
         csv_settings.append(end_date)
-        session['csv_data'] = csv_data
+        set_value_session(get_session_id(), 'csv_data', csv_data)
       else:
         csv_settings.append('error')
         csv_settings.append(

@@ -27,6 +27,7 @@ USER_EMAIL=$(gcloud config get-value account 2> /dev/null)
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID | grep projectNumber | sed "s/.* '//;s/'//g")
 SERVICE_ACCOUNT=$PROJECT_ID@appspot.gserviceaccount.com
 GAE_LOCATION=europe-west
+FIRESTORE_SA='firebase-service-account@firebase-sa-management.iam.gserviceaccount.com'
 
 # check the billing
 BILLING_ENABLED=$(gcloud beta billing projects describe $PROJECT_ID --format="csv(billingEnabled)" | tail -n 1)
@@ -45,6 +46,7 @@ gcloud services enable cloudbuild.googleapis.com
 gcloud services enable googleads.googleapis.com
 gcloud services enable analyticsadmin.googleapis.com
 gcloud services enable analyticsdata.googleapis.com
+gcloud services enable firestore.googleapis.com
 
 gcloud app create --region $GAE_LOCATION
 
@@ -85,6 +87,14 @@ curl -X PATCH -H "Content-Type: application/json" \
 # Grant access to the current user
 echo -e "${COLOR}Granting user $USER_EMAIL access to the app through IAP...${NC}"
 gcloud iap web add-iam-policy-binding --resource-type=app-engine --member="user:$USER_EMAIL" --role='roles/iap.httpsResourceAccessor'
+
+echo -e "${COLOR}Creating Firestore database...${NC}"
+gcloud firestore databases create --location=eur3
+
+echo -e "${COLOR}Granting service account access...${NC}"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$FIRESTORE_SA" \
+    --role="roles/firebase.managementServiceAgent"
 
 USER_DOMAIN=$(echo $USER_EMAIL | sed 's/^.*@\(.*\)/\1/')
 if [ "$USER_DOMAIN" != "gmail.com" ]; then
