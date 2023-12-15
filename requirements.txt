@@ -8,3 +8,4 @@ oauth2client
 python-dotenv
 google-auth-httplib2
 tfp-causalimpact
+firebase_admin

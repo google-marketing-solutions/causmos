@@ -16,11 +16,12 @@ from datetime import datetime
 import json
 from flask import session
 from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build, httplib2
+from googleapiclient.discovery import build
+from fs_storage import get_value_session
 
 
 def get_analytics_client():
-  creds_info = json.loads(session['credentials'])
+  creds_info = json.loads()
   creds = Credentials.from_authorized_user_info(creds_info)
   analytics = build('analyticsdata', 'v1beta', credentials=creds)
 
@@ -28,7 +29,7 @@ def get_analytics_client():
 
 
 def get_analytics_admin_client():
-  creds_info = json.loads(session['credentials'])
+  creds_info = json.loads(get_value_session(session['session_id'], 'credentials'))
   creds = Credentials.from_authorized_user_info(creds_info)
   analytics_admin = build('analyticsadmin', 'v1beta', credentials=creds)
   return analytics_admin

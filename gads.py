@@ -15,10 +15,11 @@
 import json, os
 from flask import session
 from google.ads.googleads.client import GoogleAdsClient
+from fs_storage import get_value_session
 
 
 def get_gads_client(mcc_id) -> GoogleAdsClient:
-  main_creds = json.loads(session.get("credentials"))
+  main_creds = json.loads(get_value_session(session['session_id'], 'credentials'))
   creds = {
       "developer_token": os.environ["GOOGLE_ADS_DEVELOPER_TOKEN"],
       "refresh_token": main_creds["refresh_token"],
