@@ -18,10 +18,10 @@ def get_csv_data(file):
   fstring = file.read().decode('utf8')
   csv_data = {}
   csv_data = [
-      {k: v for k, v in row.items()}
-      for row in csv.DictReader(fstring.splitlines(), skipinitialspace=True)
+      {k: v.replace(",", "") for k, v in row.items()}
+      for row in csv.DictReader(fstring.splitlines(), skipinitialspace=True, quoting=csv.QUOTE_ALL)
   ]
-
+  print(csv_data)
   return csv_data
 
 
