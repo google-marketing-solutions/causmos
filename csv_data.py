@@ -21,7 +21,6 @@ def get_csv_data(file):
       {k: v.replace(",", "") for k, v in row.items()}
       for row in csv.DictReader(fstring.splitlines(), skipinitialspace=True, quoting=csv.QUOTE_ALL)
   ]
-  print(csv_data)
   return csv_data
 
 
