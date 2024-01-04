@@ -21,166 +21,219 @@
           </div>
           <div class="dropdown-menu" id="dropdown-menu" role="menu">
             <div class="dropdown-content">
-              {% if authed=="true" %}
+              {% if auth_adwords=="true" %}
               <a id="gads_link" href="#" onclick="addGoogleAdsDatasource();" class="dropdown-item">
                 Google Ads
               </a>
+              {% endif %}
+              {% if auth_analytics=="true" %}
               <a id="ga4_link" href="#" onclick="addGa4Datasource();" class="dropdown-item">
                 Google Analytics 4
               </a>
               {% endif %}
               <a id="csc_link" href="#" onclick="addCsvDatasource();" class="dropdown-item">
-                Upload CSV
+                CSV & Google Sheet
               </a>
             </div>
           </div>
         </div>
-        {% if authed=="false" %}
-        <a href="oauth"><button class="button is-info float-right">Sign In</button></a>
-        {% endif %}
-        <div id="final_gads" class="is-hidden final-datasource">
-          <div><strong>Google Ads Datasource</strong>
-            <div class="float-right">
-              <button class="button is-info" onclick="addGoogleAdsDatasource();">
-                <span class="material-symbols-outlined">
-                  edit
-                </span>
-              </button>
-              <button class="button is-danger" onclick="deleteGoogleAdsDatasource();">
-                <span class="material-symbols-outlined">
-                  delete_forever
-                </span>
-              </button>
-            </div>
-          </div>
-          <div id="final_gads_details"></div>
-        </div>
-        <div id="final_ga4" class="is-hidden final-datasource">
-          <div><strong>Google Analytics Datasource</strong>
-            <div class="float-right">
-              <button class="button is-info" onclick="addGa4Datasource();">
-                <span class="material-symbols-outlined">
-                  edit
-                </span>
-              </button>
-              <button class="button is-danger" onclick="deleteGa4Datasource();">
-                <span class="material-symbols-outlined">
-                  delete_forever
-                </span>
-              </button>
-            </div>
-          </div>
-          <div id="final_ga4_details"></div>
-        </div>
+        {% if auth_adwords=="false" and auth_analytics=="false" %}
+        <a href="oauth"><button class="button is-info float-right">Sign in to GAads and GA4</button>
+          {% elif auth_adwords=="false" %}
+          <a href="oauth"><button class="button is-info float-right">Sign in to GAads</button>
+            {% elif auth_analytics=="false" %}
+            <a href="oauth"><button class="button is-info float-right">Sign in to GA4</button>
+              {% else %}
+              <a href="oauth"><button class="button is-light float-right">Fully signed in!</button>
+                {% endif %}
+              </a>
 
-        <div id="final_csv" class="is-hidden final-datasource">
-          <div><strong>CSV Datasource</strong>
-            <div class="float-right">
-              <button class="button is-info" onclick="addCsvDatasource();">
-                <span class="material-symbols-outlined">
-                  edit
-                </span>
-              </button>
-              <button class="button is-danger" onclick="deleteCsvDatasource();">
-                <span class="material-symbols-outlined">
-                  delete_forever
-                </span>
-              </button>
-            </div>
-          </div>
-          <div id="final_csv_details"></div>
-        </div>
+              <div id="final_gads" class="is-hidden final-datasource">
+                <div><strong>Google Ads Datasource</strong>
+                  <div class="float-right">
+                    <button class="button is-info" onclick="addGoogleAdsDatasource();">
+                      <span class="material-symbols-outlined">
+                        edit
+                      </span>
+                    </button>
+                    <button class="button is-danger" onclick="deleteGoogleAdsDatasource();">
+                      <span class="material-symbols-outlined">
+                        delete_forever
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                <div id="final_gads_details"></div>
+              </div>
+              <div id="final_ga4" class="is-hidden final-datasource">
+                <div><strong>Google Analytics Datasource</strong>
+                  <div class="float-right">
+                    <button class="button is-info" onclick="addGa4Datasource();">
+                      <span class="material-symbols-outlined">
+                        edit
+                      </span>
+                    </button>
+                    <button class="button is-danger" onclick="deleteGa4Datasource();">
+                      <span class="material-symbols-outlined">
+                        delete_forever
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                <div id="final_ga4_details"></div>
+              </div>
+
+              <div id="final_csv" class="is-hidden final-datasource">
+                <div><strong>CSV & Google Sheet Datasource</strong>
+                  <div class="float-right">
+                    <button class="button is-info" onclick="addCsvDatasource();">
+                      <span class="material-symbols-outlined">
+                        edit
+                      </span>
+                    </button>
+                    <button class="button is-danger" onclick="deleteCsvDatasource();">
+                      <span class="material-symbols-outlined">
+                        delete_forever
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                <div id="final_csv_details"></div>
+              </div>
 
 
-        <div id="no_datasources" class="final-datasource">
-          <i>There are no datasources currently added</i>
-        </div>
-        <div id="general_settings" class="final-datasource">
-          <div class="level">
-            <div class="columns align-middle">
-              <div class="column is-narrow">
-                <label for="from_date">Date From</label>
+              <div id="no_datasources" class="final-datasource">
+                <i>There are no datasources currently added</i>
               </div>
-              <div class="column">
-                <div id="from_date_label" class="info"></div>
-                <input id="from_date" class="input" type="date" onchange="validation();">
-              </div>
-              <div class="column is-narrow"></div>
-              <div class="column is-narrow">
-                <label for="to_date">Date To</label>
-              </div>
-              <div class="column">
-                <div id="to_date_label" class="info"></div>
-                <input id="to_date" class="input" type="date" onchange="validation();">
-              </div>
-              <div class="column">
-                <span id='date_error' class="tag is-danger is-hidden">
-                  <span class="material-symbols-outlined">
-                    warning
-                  </span>
-                  Date From must be before Date To
-                </span>
-              </div>
-              <div class="column">
-                <span id='csv_date_error' class="tag is-danger is-hidden">
-                  <span class="material-symbols-outlined">
-                    warning
-                  </span>
-                  When using CSV, selected dates must be in the CSV data
-                </span>
-                <span id='date_3_days' class="tag is-danger is-hidden">
-                  <span class="material-symbols-outlined">
-                    warning
-                  </span>
-                  There must be at least 3 days between From date and Event date
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="level">
-            <div class="columns align-middle">
-              <div class="column is-narrow">
-                <label for="event_date">Event Date</label>
-              </div>
-              <div class="column">
-                <input id="event_date" class="input" type="date" onchange="validation();">
-              </div>
-              <div class="column is-narrow"></div>
-              <div class="column is-narrow">
-                <label for="target_event_dd">Target Event</label>
-              </div>
-              <div class="column">
-                <div id="target_event_div" class="select">
-                  <select class="dd-width" id="target_event_dd" onchange="validation();">
-                  </select>
+              <div id="general_settings" class="final-datasource">
+
+                <div class="columns align-middle">
+                  <div class="column is-narrow">
+                    <label for="from_date">Date From</label>
+                  </div>
+                  <div class="column is-one-fifth">
+                    <div id="from_date_label" class="info"></div>
+                    <input id="from_date" class="input" type="date" onchange="validation();">
+                  </div>
+                  <div class="column is-narrow"></div>
+                  <div class="column is-narrow">
+                    <label for="to_date">Date To</label>
+                  </div>
+                  <div class="column is-one-fifth">
+                    <div id="to_date_label" class="info"></div>
+                    <input id="to_date" class="input" type="date" onchange="validation();">
+                  </div>
+                  <div class="column">
+                    <span id='date_error' class="tag is-danger is-hidden">
+                      <span class="material-symbols-outlined">
+                        warning
+                      </span>
+                      Date From must be before Date To
+                    </span>
+                  </div>
+                  <div class="column">
+                    <span id='csv_date_error' class="tag is-danger is-hidden">
+                      <span class="material-symbols-outlined">
+                        warning
+                      </span>
+                      When using CSV, selected dates must be in the CSV data
+                    </span>
+                    <span id='date_3_days' class="tag is-danger is-hidden">
+                      <span class="material-symbols-outlined">
+                        warning
+                      </span>
+                      There must be at least 3 days between From date and Event date
+                    </span>
+                  </div>
+                </div>
+
+
+                <div class="columns align-middle">
+                  <div class="column is-narrow">
+                    <label for="event_date">Event Date</label>
+                  </div>
+                  <div class="column is-one-fifth">
+                    <input id="event_date" class="input" type="date" onchange="validation();">
+                  </div>
+                  <div class="column is-narrow"></div>
+                  <div class="column is-narrow">
+                    <label for="target_event_dd">Target Event</label>
+                  </div>
+                  <div class="column is-one-fifth">
+                    <div id="target_event_div" class="select">
+                      <select class="dd-width" id="target_event_dd" onchange="target_event_dd_change();">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="column">
+                    <span id='event_date_error' class="tag is-danger is-hidden">
+                      <span class="material-symbols-outlined">
+                        warning
+                      </span>
+                      Event Date must be within selected date range
+                    </span>
+                  </div>
+                </div>
+                <hr>
+                <div class="columns">
+                  <div class="column is-one-quarter">
+                    <label>Validation Tests</label>
+                  </div>
+                  <div class="column is-one-quarter">
+                    <label class="checkbox align-left">
+                      <input id="pre_period_check" type="checkbox" onclick="validation_change();">
+                      Pre-Period
+                    </label> 
+                    <div class="tooltip">
+                      <span class="material-symbols-outlined is-small">
+                      help
+                    </span>
+                      <span class="tooltiptext">Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of the date range as a new pre and post-period to confirm if there are any natural causal impact during the period before the target event happened.
+                        <br>
+                        <br>
+                        Requires at least 5 days between Date From and Event Date
+                      </span>
+                    </div>
+                    
+                  </div>
+                  <div class="column is-one-quarter">
+                    <label class="checkbox align-left">
+                      <input id="uneffectiveness_check" type="checkbox" onclick="validation_change();">
+                      Uneffectiveness
+                    </label>
+                    <div class="tooltip">
+                      <span class="material-symbols-outlined is-small">
+                      help
+                    </span>
+                      <span class="tooltiptext">Uneffectiveness Validation test removes the target event from the data, and checks the selected event to ensure there is no natural causal impact with other events over the same date period as your original Causal Impact analysis.
+                        <br>
+                        <br>
+                        Requires at least 3 Metrics to be selected in your data sources
+                      </span>
+                    </div>
+                    <div id="target_event_div" class="select">
+                      <select class="dd-width" id="unef_dd" onchange="validation_change();">
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="column">
-                <span id='event_date_error' class="tag is-danger is-hidden">
+
+              <div class="align-right single-level">
+                <span id='three_metrics_error' class="tag is-warning is-hidden">
                   <span class="material-symbols-outlined">
                     warning
                   </span>
-                  Event Date must be within selected date range
+                  It is recommended to have 2 or more covariates in addition to your target event for more accuracy
                 </span>
+                <div>
+                  <button class="button is-danger" onclick="resetAnalysis();">Reset Analysis</button>
+                  <form class="float-right left-padding" id="run_analysis_form" method="post" action="/report">
+                    <input type="hidden" id="data_to_send" name="data_to_send">
+                    <input type="submit" id="run_analysis" class="button is-success" value="Run Analysis" disabled>
+                  </form>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div class="align-right single-level">
-          <span id='three_metrics_error' class="tag is-warning is-hidden">
-            <span class="material-symbols-outlined">
-              warning
-            </span>
-            It is recommended to have 2 or more covariates in addition to your target event for more accuracy
-          </span>
-          <div>
-            <button class="button is-danger" onclick="resetAnalysis();">Reset Analysis</button>
-            <form class="float-right left-padding" id="run_analysis_form" method="post" action="/report">
-              <input type="hidden" id="data_to_send" name="data_to_send">
-              <input type="submit" id="run_analysis" class="button is-success" value="Run Analysis" disabled>
-            </form>
-          </div>
-        </div>
       </div>
     </div>
     <div class="column">
@@ -363,16 +416,38 @@
     <div class="modal-background"></div>
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">CSV Datasource</p>
+        <p class="modal-card-title">
+          CSV & Google Sheets Datasource</p>
       </header>
       <section class="modal-card-body">
-        <div class="align-middle">
-          <form id="file_upload_form">
-            <input type="file" name="file">
-          </form>
-          <button class="button is-info" onclick="uploadFile();">Upload</button>
-          <div id="uploading_div" class="left-padding"></div>
-          <div clsss="left-padding">
+        <div class="columns">
+          <div class="column is-one-fifth">
+            Datasource
+          </div>
+          <div class="column is-one-fifth">
+            <div id="ds_options" class="tags has-addons">
+              <a href="#" onclick="csv_option_click();"><span id="csv_option_span" class="tag is-link">CSV</span></a>
+              <a href="#" onclick="gsheet_option_click();"><span id="gsheet_option_span"
+                  class="tag is-light">gSheet</span></a>
+            </div>
+          </div>
+        </div>
+        <div id="csv_option">
+          <div class="columns">
+            <div class="column is-one-fifth">
+              File Upload
+            </div>
+            <div class="column is-two-fifth align-left">
+              <form id="file_upload_form">
+                <input id="file_upload" type="file" name="file" hidden>
+                <label class="file-button" for="file_upload">Choose File</label>
+                <span id="file_name">...</span>
+              </form>
+            </div>
+            <div class="column is-three-fifth">
+              <button id="getCsv" class="button is-info" onclick="uploadFile();">Upload</button>
+              <div id="uploading_div" class="left-padding"></div>
+            </div>
             <span id='csv_upload_error' class="tag is-danger is-hidden">
               <span class="material-symbols-outlined">
                 warning
@@ -380,10 +455,45 @@
               <span id="csv_upload_error_msg"></span>
             </span>
           </div>
+          <div class="columns">
+            <div class="column is-full">
+              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd
+              </div>
+            </div>
+          </div>
         </div>
-        <br><br>
+        <div id="gsheet_option" class="is-hidden">
+          <div class="columns">
+            <div class="column is-one-fifth"><label for="gsUrl">Google Sheet URL or ID</label><br>
+              <br>
+              <span id='gs_upload_error' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                <span id="gs_upload_error_msg"></span>
+              </span>
+            </div>
+            <div class="column is-three-fifths"><input class="input" type="text" id="gsUrl">
+            </div>
+            <div class="column is-one-fifth"><button id="getGsSheet" class="button is-info" onclick="uploadGs();">Get
+                Sheet</button>
+            </div>
+          </div>
+          <div class="columns">
+            <div class="column is-full">
+              <div id="gs_url_email" class="info">Must add
+                <strong>{{project_id}}@appspot.gserviceaccount.com</strong> as <u>viewer</u> in sheet permissions and
+                the data must be on the first tab, with 'date' column in yyyy-mm-dd format
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="csv_options" class="columns is-hidden">
           <div class="column rounded-outline">
+            <div class="level">
+              <div id="csv_datasource_box"></div>
+            </div>
             <div class="level">
               <div>
                 <label for="csv_date_dd" class="label">Date Column</label>
@@ -419,7 +529,9 @@
               </div>
             </div>
             <div class="level">
-              Selected Metrics
+              <div>
+                <span id='ds' class='tag'></span> Selected Metrics
+              </div>
             </div>
             <div class="level">
               <div id="csv_metrics_boxes" class="align-left"></div>
@@ -500,7 +612,7 @@
     };
 
     //CSV global variables
-    var csv_data = { 'date_column': "", 'metrics': [] };
+    var csv_data = { 'date_column': "", 'metrics': [], 'format': "" };
     var tmp_csv_data = {};
     var csv_metrics = [];
     var csv_from_date = "";
@@ -582,12 +694,14 @@
               }
             })
           }
-          mcc_dd.disabled = false;
-          removeDDSpinner('gads_customer_div');
         });
     }
 
     function getCampaignList(mcc_id = 0, customer_id = 0) {
+      mcc_dd = document.getElementById('gads_mcc_id_dd');
+      customer_dd = document.getElementById('gads_customer_dd');
+      customer_dd.disabled = true;
+      mcc_dd.disabled = true;
       if (mcc_id == 0 && customer_id == 0) {
         mcc_id = document.getElementById('gads_mcc_id_dd').value;
         customer_id = document.getElementById('gads_customer_dd').value;
@@ -612,6 +726,9 @@
             })
           }
           removeDDSpinner('gads_campaign_div');
+          mcc_dd.disabled = false;
+          removeDDSpinner('gads_customer_div');
+          customer_dd.disabled = false;
         });
     }
 
@@ -735,14 +852,20 @@
         function () { });
     }
 
-    function resetAnalysis() {
-      confirmBox("Reset Analysis form",
+    function resetAnalysis(bp=false) {
+      if(bp) {
+        sessionStorage.clear();
+        window.location.replace("/sessionExpired");
+      }
+      else {
+        confirmBox("Reset Analysis form",
         "Are you sure you want to reset all the settings and delete datasources?",
         function () {
           sessionStorage.clear();
           location.reload();
         },
         function () { });
+      }
     }
 
     function _renderGoogleAdsMetricsBoxes() {
@@ -953,6 +1076,7 @@
       sessionStorage.setItem('csv_metrics', JSON.stringify(csv_metrics));
       sessionStorage.setItem('csv_from_date', JSON.stringify(csv_from_date))
       sessionStorage.setItem('csv_to_date', JSON.stringify(csv_to_date))
+      sessionStorage.setItem('csv_format', JSON.stringify(csv_data.format))
 
       if (csv_data.metrics.length > 0) {
         _renderCsvDatasourceBox();
@@ -966,7 +1090,14 @@
 
     function _renderCsvDatasourceBox() {
       const final_csv_details = document.getElementById('final_csv_details');
-      final_csv_details.innerHTML = "Date Column<br>";
+      final_csv_details.innerHTML = "Datasource<br>";
+      if (csv_data.format == "csv") {
+        final_csv_details.innerHTML += "<span class='tag is-link'>CSV</span><br><br>";
+      }
+      else {
+        final_csv_details.innerHTML += "<span class='tag is-success'>gSheet</span><br><br>";
+      }
+      final_csv_details.innerHTML += "Date Column<br>";
       final_csv_details.innerHTML += "<span class='tag is-info'>" + csv_data.date_column + "</span><br><br>";
       final_csv_details.innerHTML += "Metric(s)<br>";
 
@@ -999,38 +1130,79 @@
     }
 
     function uploadFile() {
-      addDDSpinner('uploading_div');
       const form = document.querySelector('#file_upload_form');
       const fileInput = form.querySelector('input[type="file"]');
       const file = fileInput.files[0];
-      const formData = new FormData();
-      csv_data.metrics = [];
-      formData.append('file', file);
-      var fetchRequest = new Request('/upload_csv', {
-        method: 'POST',
-        body: formData
-      });
-
-      fetch(fetchRequest)
-        .then(response => response.json())
-        .then(data => {
-          if (data.result[0] == "ok") {
-            csv_data.date_column = data.result[1];
-            csv_metrics = data.result[2];
-            csv_from_date = data.result[3];
-            document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
-            csv_to_date = data.result[4];
-            document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
-            csv_items_loaded = false;
-            _renderCsvMetricsBoxes();
-            closePopup('csv_upload_error');
-            removeDDSpinner('uploading_div');
-          }
-          else {
-            document.getElementById('csv_upload_error_msg').innerHTML = data.result[1];
-            openPopup('csv_upload_error');
-          }
+      if (file) {
+        addDDSpinner('getCsv');
+        document.getElementById('csv_options').classList.add('div-disable');
+        const formData = new FormData();
+        csv_data.metrics = [];
+        formData.append('file', file);
+        var fetchRequest = new Request('/upload_csv', {
+          method: 'POST',
+          body: formData
         });
+
+        fetch(fetchRequest)
+          .then(response => response.json())
+          .then(data => {
+            if (data.result[0] == "ok") {
+              csv_data.date_column = data.result[1];
+              csv_metrics = data.result[2];
+              csv_from_date = data.result[3];
+              document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
+              csv_to_date = data.result[4];
+              document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
+              csv_items_loaded = false;
+              csv_data.format = data.result[5];
+              _renderCsvMetricsBoxes();
+              closePopup('csv_upload_error');
+              removeDDSpinner('getCsv');
+            }
+            else {
+              document.getElementById('csv_upload_error_msg').innerHTML = data.result[1];
+              openPopup('csv_upload_error');
+            }
+          });
+      }
+    }
+
+    function uploadGs() {
+      gsUrl = document.getElementById('gsUrl').value;
+      if (gsUrl == "") {
+        openPopup('gs_upload_error');
+        document.getElementById('gs_upload_error_msg').textContent = "Must have a valid URL or Sheet ID";
+      }
+      else {
+        closePopup('gs_upload_error');
+        addDDSpinner('getGsSheet');
+        document.getElementById('csv_options').classList.add('div-disable');
+        csv_data.metrics = [];
+        const api_url = "/_get_gs_data?gs_url=" + gsUrl;
+        fetch(api_url)
+          .then(response => response.json())
+          .then(data => {
+            if (data.result[0] == "ok") {
+              csv_data.date_column = data.result[1];
+              csv_metrics = data.result[2];
+              csv_from_date = data.result[3];
+              document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
+              csv_to_date = data.result[4];
+              document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
+              csv_items_loaded = false;
+              csv_data.format = data.result[5];
+              _renderCsvMetricsBoxes();
+              closePopup('csv_upload_error');
+              removeDDSpinner('getGsSheet');
+            }
+            else {
+              document.getElementById('gs_upload_error_msg').textContent = data.result[1];
+              openPopup('gs_upload_error');
+              removeDDSpinner('getGsSheet');
+            }
+          });
+      }
     }
 
     function addCsvMetric() {
@@ -1068,6 +1240,7 @@
           else {
             csv_date_dd.add(new Option(metric, metric));
           }
+          document.getElementById('csv_options').classList.remove('div-disable');
           openPopup('csv_options');
         });
         csv_items_loaded = true;
@@ -1079,6 +1252,20 @@
       }
       csv_date_dd.value = csv_data.date_column;
       csv_date_dd.disabled = true;
+
+
+      ds = document.getElementById('ds');
+      if (csv_data.format == "csv") {
+        ds.textContent = "CSV";
+        ds.classList.add('is-link');
+        ds.classList.remove('is-success');
+      }
+      else {
+        ds.textContent = "gsheet";
+        ds.classList.add('is-success');
+        ds.classList.remove('is-link');
+      }
+
       csv_metrics_boxes = document.getElementById('csv_metrics_boxes');
       csv_metrics_boxes.innerHTML = "";
 
@@ -1115,6 +1302,26 @@
         function () { });
     }
 
+    function csv_option_click() {
+      document.getElementById('csv_option_span').classList.remove('is-light');
+      document.getElementById('csv_option_span').classList.add('is-link');
+      document.getElementById('gsheet_option_span').classList.remove('is-success');
+      document.getElementById('gsheet_option_span').classList.add('is-light');
+
+      document.getElementById('csv_option').classList.remove('is-hidden');
+      document.getElementById('gsheet_option').classList.add('is-hidden');
+    }
+
+    function gsheet_option_click() {
+      document.getElementById('csv_option_span').classList.remove('is-link');
+      document.getElementById('csv_option_span').classList.add('is-light');
+      document.getElementById('gsheet_option_span').classList.remove('is-light');
+      document.getElementById('gsheet_option_span').classList.add('is-success');
+
+      document.getElementById('gsheet_option').classList.remove('is-hidden');
+      document.getElementById('csv_option').classList.add('is-hidden');
+    }
+
 
     //Run Analysis
     function generateData() {
@@ -1124,6 +1331,10 @@
       data_to_send['to_date'] = document.getElementById('to_date').value;
       data_to_send['event_date'] = document.getElementById('event_date').value;
       data_to_send['target_event'] = document.getElementById('target_event_dd').value;
+      data_to_send['pre_period_validation'] = document.getElementById('pre_period_check').checked;
+      data_to_send['uneffectiveness_validation'] = document.getElementById('uneffectiveness_check').checked;
+      data_to_send['uneffectiveness_option'] = document.getElementById('unef_dd').value;
+
       var data_sources = [];
       var mcc_id_ts = "";
       var ga4_id_ts = "";
@@ -1139,7 +1350,7 @@
       }
       if (csv_data.metrics.length > 0) {
         data_to_send['csv'] = csv_data;
-        data_sources.push("csv");
+        data_sources.push(csv_data.format);
       }
       document.getElementById('data_to_send').value = JSON.stringify(data_to_send);
     }
@@ -1166,6 +1377,7 @@
         });
         if (sessionStorage.getItem('target_event')) { document.getElementById('target_event_dd').value = sessionStorage.getItem('target_event'); }
         closePopup('no_datasources');
+        target_event_dd_change();
       }
       f_date = document.getElementById('from_date');
       t_date = document.getElementById('to_date');
@@ -1176,7 +1388,45 @@
       validation();
     }
 
+    function target_event_dd_change() {
+      var target_event = document.getElementById('target_event_dd');
+      var optionsArray = Array.from(target_event.options);
+      var unef_dd = document.getElementById('unef_dd');
+      unef_dd.innerHTML = "";
+
+      for (let i = 0; i < target_event.options.length; i++) {
+        const option = target_event.options[i];
+        if (!option.selected) {
+          const newOption = document.createElement("option");
+          newOption.value = option.value;
+          newOption.text = option.text;
+          unef_dd.appendChild(newOption);
+        }
+      }
+      validation();
+    }
+
+    function validation_change() {
+      sessionStorage.setItem('val_pre_period_check', document.getElementById('pre_period_check').checked);
+      sessionStorage.setItem('val_unef_check', document.getElementById('uneffectiveness_check').checked);
+      sessionStorage.setItem('val_unef_option', document.getElementById('unef_dd').value);
+    }
+
+    function reset_timer() {
+      if(sessionStorage.getItem('timer'))
+      {
+        if((Date.now()-sessionStorage.getItem('timer')) / 1000 >  6300) { //1h 45 mins
+          resetAnalysis(true);
+        }
+      }
+      else {
+        sessionStorage.setItem('timer', Date.now());
+      }
+    }
+
     function validation() {
+      reset_timer();
+
       var from_date = document.getElementById('from_date').value;
       var to_date = document.getElementById('to_date').value;
       var event_date = document.getElementById('event_date').value;
@@ -1197,6 +1447,14 @@
       }
       else {
         closePopup('date_3_days');
+      }
+      if (((Date.parse(event_date) - Date.parse(from_date)) / 86400000) < 5 && ((Date.parse(event_date) - Date.parse(from_date)) / 86400000) >= 0) {
+        document.getElementById('pre_period_check').checked = false;
+        sessionStorage.setItem('val_pre_period_check', 'false');
+        document.getElementById('pre_period_check').disabled = true;
+      }
+      else {
+        document.getElementById('pre_period_check').disabled = false;
       }
       if (from_date > to_date && from_date != "" && to_date != "") {
         openPopup('date_error');
@@ -1232,9 +1490,15 @@
 
       if (target_event.length < 3) {
         openPopup('three_metrics_error');
+        document.getElementById('uneffectiveness_check').checked = false;
+        sessionStorage.setItem('val_unef_check', 'false');
+        document.getElementById('uneffectiveness_check').disabled = true;
+        document.getElementById('unef_dd').disabled = true;
       }
       else {
         closePopup('three_metrics_error');
+        document.getElementById('uneffectiveness_check').disabled = false;
+        document.getElementById('unef_dd').disabled = false;
       }
 
       var run_analysis = document.getElementById('run_analysis');
@@ -1270,6 +1534,7 @@
     }
 
     document.forms.namedItem('run_analysis_form').addEventListener('submit', function () {
+      reset_timer();
       openPopup('loading_modal');
       generateData();
     });
@@ -1281,6 +1546,7 @@
     if (sessionStorage.getItem('from_date')) { document.getElementById('from_date').value = sessionStorage.getItem('from_date'); }
     if (sessionStorage.getItem('to_date')) { document.getElementById('to_date').value = sessionStorage.getItem('to_date'); }
     if (sessionStorage.getItem('event_date')) { document.getElementById('event_date').value = sessionStorage.getItem('event_date'); }
+    
     count = 0;
     if (sessionStorage.getItem('gads_data')) {
       gads_data = JSON.parse(sessionStorage.getItem('gads_data'));
@@ -1310,12 +1576,26 @@
       document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
       document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
 
+      if (csv_data.format == "gsheet") {
+        gsheet_option_click();
+      }
+
       _renderCsvDatasourceBox();
       count = +1
     }
     if (count > 0) { cleanUp(); }
     _populateGadsMetrics();
     _populateGa4Metrics();
+
+    document.getElementById('file_upload').addEventListener('change', function (e) {
+      if (e.target.files[0]) {
+        document.getElementById('file_name').textContent = e.target.files[0].name;
+      }
+    });
+
+    if (sessionStorage.getItem('val_pre_period_check')) { document.getElementById('pre_period_check').checked = (sessionStorage.getItem('val_pre_period_check') == "true"); };
+    if (sessionStorage.getItem('val_unef_check')) { document.getElementById('uneffectiveness_check').checked = (sessionStorage.getItem('val_unef_check') == "true"); };
+    if (sessionStorage.getItem('val_unef_option')) { document.getElementById('unef_dd').value = sessionStorage.getItem('val_unef_option'); }
 
   </script>
 

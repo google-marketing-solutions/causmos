@@ -47,6 +47,7 @@ gcloud services enable googleads.googleapis.com
 gcloud services enable analyticsadmin.googleapis.com
 gcloud services enable analyticsdata.googleapis.com
 gcloud services enable firestore.googleapis.com
+gcloud services enable sheets.googleapis.com
 
 gcloud app create --region $GAE_LOCATION
 

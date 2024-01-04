@@ -15,27 +15,23 @@
 import re
 import causalimpact
 
-def getCiObject(df, pre_period, post_period):
-  impact = causalimpact.fit_causalimpact(df, pre_period, post_period)
-  return impact
+def getCiObject(df, pre_period: list, post_period: list):
+  return causalimpact.fit_causalimpact(df, pre_period, post_period)
 
-def getCiSummary(impact):
+def getCiSummary(impact) -> list:
   summary = causalimpact.summary(impact, output_format='summary')
   summary = re.sub('  +', '|', summary)
-  summary_arr = [r.split('|') for r in [r for r in summary.split('\n')]]
-  return summary_arr
+  return [r.split('|') for r in [r for r in summary.split('\n')]]
 
-def getCiChart(impact):
-  return causalimpact.plot(impact, static_plot=False, chart_width=800).to_html()
+def getCiChart(impact, div="vis"):
+  return causalimpact.plot(impact, static_plot=False, chart_width=800).to_html().replace("vis", div)
 
-def getCiReport(impact):
+def getCiReport(impact) -> str:
   report = causalimpact.summary(impact, output_format='report')
-  report = report.replace('\n\n', '<br><br>')
-  return report
+  return report.replace('\n\n', '<br><br>')
 
-def getValidation(df):
+def getValidation(df) -> list:
   df.corr(method='pearson', numeric_only=False)
   validation=str(df.describe())
   validation = re.sub('  +', '|', validation)
-  validation_arr = [r.split('|') for r in [r for r in validation.split('\n')]]
-  return validation_arr
+  return [r.split('|') for r in [r for r in validation.split('\n')]]

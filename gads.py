@@ -13,12 +13,13 @@
 # limitations under the License.
 
 import json, os
+import textwrap
 from flask import session
 from google.ads.googleads.client import GoogleAdsClient
 from fs_storage import get_value_session
 
 
-def get_gads_client(mcc_id) -> GoogleAdsClient:
+def get_gads_client(mcc_id: str) -> GoogleAdsClient:
   main_creds = json.loads(get_value_session(session['session_id'], 'credentials'))
   creds = {
       "developer_token": os.environ["GOOGLE_ADS_DEVELOPER_TOKEN"],
@@ -35,27 +36,25 @@ def get_gads_client(mcc_id) -> GoogleAdsClient:
   return google_ads_client
 
 
-def get_gads_data(
-    mcc_id, customer_id, campaign_ids, date_from, date_to
-) -> dict:
+def get_gads_data(mcc_id: str, customer_id: str, campaign_ids: list, date_from: str, date_to: str) -> dict:
   client = get_gads_client(mcc_id)
   ga_service = client.get_service("GoogleAdsService", version="v14")
   camp_filter = ""
   if not customer_id + "-0" in campaign_ids[0]:
     camp_filter = "AND campaign.id IN (" + (",").join(campaign_ids) + ")"
 
-  query = f"""
+  query = textwrap.dedent(f"""
     SELECT segments.date, metrics.impressions, metrics.clicks, metrics.video_views, metrics.cost_micros, metrics.conversions, metrics.view_through_conversions FROM campaign
     WHERE segments.date BETWEEN '{date_from}' AND '{date_to}' {camp_filter}
     ORDER BY segments.date ASC
-    """
+    """)
 
   response = ga_service.search_stream(customer_id=customer_id, query=query)
   response.service_reference = ga_service
   return response
 
 
-def process_gads_responses(responses, metrics):
+def process_gads_responses(responses, metrics: list):
   final_d = {}
   counter = 0
   for response in responses:
@@ -191,15 +190,15 @@ def process_gads_responses(responses, metrics):
   return final_d
 
 
-def get_gads_campaigns(mcc_id, customer_id) -> list:
+def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
   client = get_gads_client(mcc_id)
   campaigns = []
-  query = f"""
+  query = textwrap.dedent("""
     SELECT
         campaign.id,
         campaign.name 
     FROM campaign
-    """
+    """)
 
   ga_service = client.get_service("GoogleAdsService", version="v14")
 
@@ -212,16 +211,16 @@ def get_gads_campaigns(mcc_id, customer_id) -> list:
   return campaigns
 
 
-def get_gads_customer_ids(mcc_id) -> list:
+def get_gads_customer_ids(mcc_id: str) -> list:
   client = get_gads_client(mcc_id)
   all_customer_ids = []
-  query = f"""
+  query = textwrap.dedent("""
     SELECT
         customer_client.descriptive_name,
         customer_client.id
     FROM customer_client
     WHERE customer_client.level <= 1 AND customer_client.manager = FALSE
-    """
+    """)
 
   ga_service = client.get_service("GoogleAdsService", version="v14")
 

@@ -3,97 +3,190 @@
 </head>
 
 <body>
-<h1 class="title">Causal Impacts Insights</h1>
+  <h1 class="title">Causal Impacts Insights</h1>
 
-<div class="columns">
-  <div class="column">
-  </div>
-  <div class="column">
-    <div id="all_content" class="align-left main-window">
-      <div>
-        <a href="/"><button class="button is-info">Edit Analysis</button></a>
-        <button class="button is-success" onclick="showRawData();">View Raw Data</button>
-        <button class="button is-success" onclick="showValidationData();">View Validation Data</button>
-      </div>
-      <div>
-        <span id='warnings' class="tag is-warning is-hidden">
-          <span class="material-symbols-outlined">
-            warning
+  <div class="columns">
+    <div class="column">
+    </div>
+    <div class="column">
+      <div id="all_content" class="align-left main-window">
+        <div>
+          <a href="/"><button class="button is-info">Edit Analysis</button></a>
+          <button class="button is-success" onclick="showRawData();">Raw Data</button>
+          <button class="button is-success" onclick="showDataOverview();">Data Overview</button>
+          {% if v1_summary!="-" %}
+          <button class="button is-light" onclick="showV1Data();">Pre-Period Validation</button>
+          {% endif %}
+          {% if v2_summary!="-" %}
+          <button class="button is-light" onclick="showV2Data();">Uneffectiveness Validation</button>
+          {% endif %}
+        </div>
+        <br>
+        <div>
+          <span id='warnings' class="tag is-warning is-hidden">
+            <span class="material-symbols-outlined">
+              warning
+            </span>
+            <span id="warnings_msg"></span>
           </span>
-          <span id="warnings_msg"></span>
-        </span>
-      </div>
-      <div class="summary-report">
-        <h4 class="title is-4">Summary Report</h4>
-        <table>
-        {% for x in summary[1:15] %}
-        <tr class="table-border">
-          {% for y in x %}
+        </div>
+        <div class="summary-report">
+          <h4 class="title is-4">Summary Report</h4>
+          <table>
+            {% for x in summary[1:15] %}
+            <tr class="table-border">
+              {% for y in x %}
               <td>{{y}}</td>
-          {% endfor %}
-        </tr>
-        {% endfor %}
-        </table>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+        <br><br>
+
+        <h4 class="title is-4">Plotted Results</h4>
+        {{chart|safe}}
+        <br><br>
+
+        <h4 class="title is-4">Detailed Report</h4>
+        {{report|safe}}
+        <br><br>
       </div>
-      <br><br>
-
-      <h4 class="title is-4">Plotted Results</h4>
-      {{chart|safe}}
-      <br><br>
-
-      <h4 class="title is-4">Detailed Report</h4>
-      {{report|safe}}
-      <br><br>
+    </div>
+    <div class="column">
     </div>
   </div>
-  <div class="column">
-  </div>
-</div>
 
-<div id="raw_data" class="modal">
-  <div class="modal-background"></div>
-  <div class="modal-content">
-    <section class="modal-card-body">
-      {{raw_data|safe}}
-  </section>
+  <div id="raw_data" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Raw Data</p>
+      </header>
+      <section class="modal-card-body">
+        {{raw_data|safe}}
+      </section>
+      <footer class="modal-card-foot">
+        <button onclick="closePopups();" class="button is-danger">Close</button>
+      </footer>
+    </div>
+    <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
   </div>
-  <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
-</div>
 
-<div id="validation_data" class="modal">
-  <div class="modal-background"></div>
-  <div class="modal-content">
-    <section class="modal-card-body">
-      <table class="full-table-border">
-        {% for x in validation %}
-        <tr class="full-table-border">
-          {% for y in x %}
-              <td class="full-table-border">{{y}}</td>
+  <div id="data_overview" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Data Overview</p>
+      </header>
+      <section class="modal-card-body">
+        <table class="full-table-border">
+          {% for x in validation %}
+          <tr class="full-table-border">
+            {% for y in x %}
+            <td class="full-table-border">{{y}}</td>
+            {% endfor %}
+          </tr>
           {% endfor %}
-        </tr>
-        {% endfor %}
         </table>
-  </section>
+      </section>
+      <footer class="modal-card-foot">
+        <button onclick="closePopups();" class="button is-danger">Close</button>
+      </footer>
+    </div>
+    <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
   </div>
-  <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
-</div>
 
-<script>
-  function showRawData() {
-    openPopup('raw_data');
-  }
-  function showValidationData() {
-    openPopup('validation_data');
-  }
-  function closePopups() {
-    closePopup('raw_data');
-    closePopup('validation_data');
-  }
-  var warnings='{{warnings}}';
-  if(warnings!= "") {
-    document.getElementById('warnings_msg').innerHTML=warnings;
-    openPopup('warnings');
-  }
-</script>
+  {% if v1_summary!="-" %}
+  <div id="v1_data" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p id="confirm_title" class="modal-card-title">Pre-Period Validation</p>
+      </header>
+      <section class="modal-card-body">
+        Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of the date range as a new pre and post-period to confirm if there are any natural causal impact during the period before the target event happened.
+        <br><br>
+        <h4 class="title is-4">Sumamry</h4>
+        <table>
+          {% for x in v1_summary[1:15] %}
+          <tr class="table-border">
+            {% for y in x %}
+            <td>{{y}}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </table>
+        <br><br>
+        <h4 class="title is-4">Plotted Results</h4>
+        {{v1_validation_chart|safe}}
+      </section>
+      <footer class="modal-card-foot">
+        <button onclick="closeV1Data();" class="button is-danger">Close</button>
+      </footer>
+    </div>
+  </div>
+  {% endif %}
 
-{% include "_footer.html" %}
+  {% if v2_summary!="-" %}
+  <div id="v2_data" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p id="confirm_title" class="modal-card-title">Uneffectiveness Validation</p>
+      </header>
+      <section class="modal-card-body">
+        Uneffectiveness Validation test removes the target event from the data, and checks the selected event to ensure there is no natural causal impact with other events over the same date period as your original Causal Impact analysis.
+        <br><br>
+        <h4 class="title is-4">Sumamry</h4>
+        <table>
+          {% for x in v2_summary[1:15] %}
+          <tr class="table-border">
+            {% for y in x %}
+            <td>{{y}}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </table>
+        <br><br>
+        <h4 class="title is-4">Plotted Results</h4>
+        {{v2_validation_chart|safe}}
+      </section>
+      <footer class="modal-card-foot">
+        <button onclick="closeV2Data();" class="button is-danger">Close</button>
+      </footer>
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    function showRawData() {
+      openPopup('raw_data');
+    }
+    function showDataOverview() {
+      openPopup('data_overview');
+    }
+    function showV1Data() {
+      openPopup('v1_data');
+    }
+    function showV2Data() {
+      openPopup('v2_data');
+    }
+    function closeV1Data() {
+      closePopup('v1_data');
+    }
+    function closeV2Data() {
+      closePopup('v2_data');
+    }
+    function closePopups() {
+      closePopup('raw_data');
+      closePopup('data_overview');
+    }
+    var warnings = '{{warnings}}';
+    if (warnings != "") {
+      document.getElementById('warnings_msg').innerHTML = warnings;
+      openPopup('warnings');
+    }
+  </script>
+
+  {% include "_footer.html" %}

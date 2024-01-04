@@ -13,7 +13,7 @@
 # limitations under the License.
 
 runtime: python39
-entrypoint: gunicorn -b :$PORT main:app -w 1
+entrypoint: gunicorn -b :$PORT main:app -w 3
 instance_class: F4_1G
 automatic_scaling:
  min_idle_instances: 1
@@ -27,7 +27,7 @@ handlers:
   secure: always
   redirect_http_response_code: 301
   http_headers:
-    Access-Control-Allow-Origin: http://[PROJECT_ID].ew.r.appspot.com/
+    Access-Control-Allow-Origin: http://PROJECT_ID.ew.r.appspot.com/
     X-Content-Type-Options: nosniff
     X-Frame-Options: SAMEORIGIN
     SESSION_COOKIE_SECURE: true
