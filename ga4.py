@@ -21,18 +21,14 @@ from fs_storage import get_value_session
 
 
 def get_analytics_client():
-  creds_info = json.loads()
-  creds = Credentials.from_authorized_user_info(creds_info)
-  analytics = build('analyticsdata', 'v1beta', credentials=creds)
-
-  return analytics
+  creds_info = json.loads(get_value_session(session['session_id'], 'credentials'))
+  return build('analyticsdata', 'v1beta', credentials=Credentials.from_authorized_user_info(creds_info))
 
 
 def get_analytics_admin_client():
+  print(session['session_id'])
   creds_info = json.loads(get_value_session(session['session_id'], 'credentials'))
-  creds = Credentials.from_authorized_user_info(creds_info)
-  analytics_admin = build('analyticsadmin', 'v1beta', credentials=creds)
-  return analytics_admin
+  return build('analyticsadmin', 'v1beta', credentials=Credentials.from_authorized_user_info(creds_info))
 
 
 def get_ga4_account_ids() -> list:
@@ -47,7 +43,7 @@ def get_ga4_account_ids() -> list:
   return account_id_list
 
 
-def get_ga4_property_ids(account_id) -> list:
+def get_ga4_property_ids(account_id: str) -> list:
   analytics_admin = get_analytics_admin_client()
   response = (
       analytics_admin.properties()
@@ -63,7 +59,7 @@ def get_ga4_property_ids(account_id) -> list:
   return property_id_list
 
 
-def get_ga4_data(property_id, date_from, date_to, items, raw_data):
+def get_ga4_data(property_id: str, date_from: str, date_to: str, items: list, raw_data: dict) -> dict:
   analytics = get_analytics_client()
   request = {
       'requests': [{

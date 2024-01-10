@@ -34,10 +34,23 @@ body {
 .align-right {
   text-align: right;
 }
+.align-center {
+  margin: 0 auto;
+}
 
 .align-middle {
   display : flex;
   align-items : center;
+}
+
+.file-button {
+    background-color: rgb(96, 96, 96);
+    color: white;
+    padding: 0.5rem;
+    font-family: sans-serif;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    margin-top: 1rem;
 }
 
 .rounded-outline {
@@ -89,7 +102,9 @@ body {
   border:1px solid #aaa;
   height: 10px;
   padding: 5px;
+  font-weight: normal;
 }
+
 
 @keyframes spinner {
   to {transform: rotate(360deg);}
@@ -111,3 +126,46 @@ body {
   animation: spinner .6s linear infinite;
 }
 
+.div-disable {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 400px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}

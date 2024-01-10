@@ -14,17 +14,15 @@
 
 import csv
 
-def get_csv_data(file):
+def get_csv_data(file) -> dict:
   fstring = file.read().decode('utf8')
-  csv_data = {}
-  csv_data = [
+  return [
       {k: v.replace(",", "") for k, v in row.items()}
       for row in csv.DictReader(fstring.splitlines(), skipinitialspace=True, quoting=csv.QUOTE_ALL)
   ]
-  return csv_data
 
 
-def get_csv_columns(data):
+def get_csv_columns(data: dict):
   keys_list = list(data[0].keys())
   date_column = ''
   for key in keys_list:
@@ -34,7 +32,7 @@ def get_csv_columns(data):
   return keys_list, date_column
 
 
-def csv_get_date_range(data, date_column):
+def csv_get_date_range(data: dict, date_column: str):
   date_list = []
   for item in data:
     if date_column in item:
@@ -42,7 +40,7 @@ def csv_get_date_range(data, date_column):
   return min(date_list), max(date_list)
 
 
-def csv_merge_data(csv_data, csv_settings, raw_data):
+def csv_merge_data(csv_data: dict, csv_settings: dict, raw_data: dict) -> dict:
   for item in csv_data:
     if item[csv_settings['date_column']] in raw_data:
       for col in csv_settings['metrics']:
