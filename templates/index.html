@@ -457,7 +457,7 @@
           </div>
           <div class="columns">
             <div class="column is-full">
-              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd
+              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd. 1mb max size CSV file. For larger, use Google Sheets
               </div>
             </div>
           </div>
@@ -1133,6 +1133,8 @@
       const form = document.querySelector('#file_upload_form');
       const fileInput = form.querySelector('input[type="file"]');
       const file = fileInput.files[0];
+      sessionStorage.removeItem('gsheet_url');
+      document.getElementById('gsUrl').value = "";
       if (file) {
         addDDSpinner('getCsv');
         document.getElementById('csv_options').classList.add('div-disable');
@@ -1175,6 +1177,7 @@
         document.getElementById('gs_upload_error_msg').textContent = "Must have a valid URL or Sheet ID";
       }
       else {
+        sessionStorage.setItem('gsheet_url', gsUrl);
         closePopup('gs_upload_error');
         addDDSpinner('getGsSheet');
         document.getElementById('csv_options').classList.add('div-disable');
@@ -1282,8 +1285,8 @@
     }
 
     function deleteCsvDatasource() {
-      confirmBox("Delete CSV Datasource",
-        "Are you sure you want to delete the CSV datasource?",
+      confirmBox("Delete CSV/gSheet Datasource",
+        "Are you sure you want to delete the CSV/gSheet datasource?",
         function () {
           csv_data = { 'date_column': "", 'metrics': [] };
           tmp_csv_data = {};
@@ -1294,6 +1297,8 @@
           sessionStorage.removeItem('csv_metrics');
           sessionStorage.removeItem('csv_from_date');
           sessionStorage.removeItem('csv_to_date');
+          sessionStorage.removeItem('gsheet_url');
+          document.getElementById('gsUrl').value = "";
           document.getElementById('from_date_label').innerHTML = "";
           document.getElementById('to_date_label').innerHTML = "";
           closePopup('final_csv');
@@ -1350,6 +1355,7 @@
       }
       if (csv_data.metrics.length > 0) {
         data_to_send['csv'] = csv_data;
+        data_to_send['csv_format'] = csv_data.format;
         data_sources.push(csv_data.format);
       }
       document.getElementById('data_to_send').value = JSON.stringify(data_to_send);
@@ -1575,6 +1581,7 @@
       csv_to_date = JSON.parse(sessionStorage.getItem('csv_to_date'));
       document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
       document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
+      if (sessionStorage.getItem('gsheet_url')) { document.getElementById('gsUrl').value = sessionStorage.getItem('gsheet_url'); }
 
       if (csv_data.format == "gsheet") {
         gsheet_option_click();
