@@ -38,7 +38,7 @@ app = Flask(__name__)
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
-PROJECT_ID = "causal-impact-insights"
+PROJECT_ID = ""
 
 def is_loopback(host) -> bool:
   loopback_checker = {
