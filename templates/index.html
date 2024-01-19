@@ -3,7 +3,8 @@
 </head>
 
 <body>
-  <h1 class="title">Causal Impact Insights</h1>
+  <br>
+  <h1 class="title">Causmos - Causal Impact Insights</h1>
 
   <div class="columns">
     <div class="column">
@@ -32,208 +33,220 @@
               </a>
               {% endif %}
               <a id="csc_link" href="#" onclick="addCsvDatasource();" class="dropdown-item">
-                CSV & Google Sheet
+                CSV{% if auth_sheets=="true" %} & Google Sheet{% endif %}
               </a>
             </div>
           </div>
         </div>
-        {% if auth_adwords=="false" and auth_analytics=="false" %}
-        <a href="oauth"><button class="button is-info float-right">Sign in to GAads and GA4</button>
-          {% elif auth_adwords=="false" %}
-          <a href="oauth"><button class="button is-info float-right">Sign in to GAads</button>
-            {% elif auth_analytics=="false" %}
-            <a href="oauth"><button class="button is-info float-right">Sign in to GA4</button>
-              {% else %}
-              <a href="oauth"><button class="button is-light float-right">Fully signed in!</button>
-                {% endif %}
-              </a>
-
-              <div id="final_gads" class="is-hidden final-datasource">
-                <div><strong>Google Ads Datasource</strong>
-                  <div class="float-right">
-                    <button class="button is-info" onclick="addGoogleAdsDatasource();">
-                      <span class="material-symbols-outlined">
-                        edit
-                      </span>
-                    </button>
-                    <button class="button is-danger" onclick="deleteGoogleAdsDatasource();">
-                      <span class="material-symbols-outlined">
-                        delete_forever
-                      </span>
-                    </button>
-                  </div>
-                </div>
-                <div id="final_gads_details"></div>
-              </div>
-              <div id="final_ga4" class="is-hidden final-datasource">
-                <div><strong>Google Analytics Datasource</strong>
-                  <div class="float-right">
-                    <button class="button is-info" onclick="addGa4Datasource();">
-                      <span class="material-symbols-outlined">
-                        edit
-                      </span>
-                    </button>
-                    <button class="button is-danger" onclick="deleteGa4Datasource();">
-                      <span class="material-symbols-outlined">
-                        delete_forever
-                      </span>
-                    </button>
-                  </div>
-                </div>
-                <div id="final_ga4_details"></div>
-              </div>
-
-              <div id="final_csv" class="is-hidden final-datasource">
-                <div><strong>CSV & Google Sheet Datasource</strong>
-                  <div class="float-right">
-                    <button class="button is-info" onclick="addCsvDatasource();">
-                      <span class="material-symbols-outlined">
-                        edit
-                      </span>
-                    </button>
-                    <button class="button is-danger" onclick="deleteCsvDatasource();">
-                      <span class="material-symbols-outlined">
-                        delete_forever
-                      </span>
-                    </button>
-                  </div>
-                </div>
-                <div id="final_csv_details"></div>
-              </div>
-
-
-              <div id="no_datasources" class="final-datasource">
-                <i>There are no datasources currently added</i>
-              </div>
-              <div id="general_settings" class="final-datasource">
-
-                <div class="columns align-middle">
-                  <div class="column is-narrow">
-                    <label for="from_date">Date From</label>
-                  </div>
-                  <div class="column is-one-fifth">
-                    <div id="from_date_label" class="info"></div>
-                    <input id="from_date" class="input" type="date" onchange="validation();">
-                  </div>
-                  <div class="column is-narrow"></div>
-                  <div class="column is-narrow">
-                    <label for="to_date">Date To</label>
-                  </div>
-                  <div class="column is-one-fifth">
-                    <div id="to_date_label" class="info"></div>
-                    <input id="to_date" class="input" type="date" onchange="validation();">
-                  </div>
-                  <div class="column">
-                    <span id='date_error' class="tag is-danger is-hidden">
-                      <span class="material-symbols-outlined">
-                        warning
-                      </span>
-                      Date From must be before Date To
-                    </span>
-                  </div>
-                  <div class="column">
-                    <span id='csv_date_error' class="tag is-danger is-hidden">
-                      <span class="material-symbols-outlined">
-                        warning
-                      </span>
-                      When using CSV, selected dates must be in the CSV data
-                    </span>
-                    <span id='date_3_days' class="tag is-danger is-hidden">
-                      <span class="material-symbols-outlined">
-                        warning
-                      </span>
-                      There must be at least 3 days between From date and Event date
-                    </span>
-                  </div>
-                </div>
-
-
-                <div class="columns align-middle">
-                  <div class="column is-narrow">
-                    <label for="event_date">Event Date</label>
-                  </div>
-                  <div class="column is-one-fifth">
-                    <input id="event_date" class="input" type="date" onchange="validation();">
-                  </div>
-                  <div class="column is-narrow"></div>
-                  <div class="column is-narrow">
-                    <label for="target_event_dd">Target Event</label>
-                  </div>
-                  <div class="column is-one-fifth">
-                    <div id="target_event_div" class="select">
-                      <select class="dd-width" id="target_event_dd" onchange="target_event_dd_change();">
-                      </select>
-                    </div>
-                  </div>
-                  <div class="column">
-                    <span id='event_date_error' class="tag is-danger is-hidden">
-                      <span class="material-symbols-outlined">
-                        warning
-                      </span>
-                      Event Date must be within selected date range
-                    </span>
-                  </div>
-                </div>
-                <hr>
-                <div class="columns">
-                  <div class="column is-one-quarter">
-                    <label>Validation Tests</label>
-                  </div>
-                  <div class="column is-one-quarter">
-                    <label class="checkbox align-left">
-                      <input id="pre_period_check" type="checkbox" onclick="validation_change();">
-                      Pre-Period
-                    </label> 
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined is-small">
-                      help
-                    </span>
-                      <span class="tooltiptext">Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of the date range as a new pre and post-period to confirm if there are any natural causal impact during the period before the target event happened.
-                        <br>
-                        <br>
-                        Requires at least 5 days between Date From and Event Date
-                      </span>
-                    </div>
-                    
-                  </div>
-                  <div class="column is-one-quarter">
-                    <label class="checkbox align-left">
-                      <input id="uneffectiveness_check" type="checkbox" onclick="validation_change();">
-                      Uneffectiveness
-                    </label>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined is-small">
-                      help
-                    </span>
-                      <span class="tooltiptext">Uneffectiveness Validation test removes the target event from the data, and checks the selected event to ensure there is no natural causal impact with other events over the same date period as your original Causal Impact analysis.
-                        <br>
-                        <br>
-                        Requires at least 3 Metrics to be selected in your data sources
-                      </span>
-                    </div>
-                    <div id="target_event_div" class="select">
-                      <select class="dd-width" id="unef_dd" onchange="validation_change();">
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="align-right single-level">
-                <span id='three_metrics_error' class="tag is-warning is-hidden">
-                  <span class="material-symbols-outlined">
-                    warning
-                  </span>
-                  It is recommended to have 2 or more covariates in addition to your target event for more accuracy
+        <div class="tooltip float-right">
+          <span class="material-symbols-outlined is-small">
+            help
+          </span>
+          <span class="tooltiptext">Signing in to your Google account gives you access to any Google Sheets, Google Ads 
+            and Google Analytics 4 accounts you have access to and will appear under datasources
+          </span>
+        </div>
+        <a href="oauth"><button class="button is-info float-right">
+          {% if auth_adwords=="false" and auth_analytics=="false" and auth_sheets=="false" %}
+            Sign In
+          {% elif auth_adwords=="false" or auth_analytics=="false" or auth_sheets=="false" %}
+            Partially Signed In
+          {% else %}
+            Fully Signed In
+          {% endif %}
+          </button> 
+          
+        </a>
+        <div id="final_gads" class="is-hidden final-datasource">
+          <div><strong>Google Ads Datasource</strong>
+            <div class="float-right">
+              <button class="button is-info" onclick="addGoogleAdsDatasource();">
+                <span class="material-symbols-outlined">
+                  edit
                 </span>
-                <div>
-                  <button class="button is-danger" onclick="resetAnalysis();">Reset Analysis</button>
-                  <form class="float-right left-padding" id="run_analysis_form" method="post" action="/report">
-                    <input type="hidden" id="data_to_send" name="data_to_send">
-                    <input type="submit" id="run_analysis" class="button is-success" value="Run Analysis" disabled>
-                  </form>
-                </div>
+              </button>
+              <button class="button is-danger" onclick="deleteGoogleAdsDatasource();">
+                <span class="material-symbols-outlined">
+                  delete_forever
+                </span>
+              </button>
+            </div>
+          </div>
+          <div id="final_gads_details"></div>
+        </div>
+        <div id="final_ga4" class="is-hidden final-datasource">
+          <div><strong>Google Analytics Datasource</strong>
+            <div class="float-right">
+              <button class="button is-info" onclick="addGa4Datasource();">
+                <span class="material-symbols-outlined">
+                  edit
+                </span>
+              </button>
+              <button class="button is-danger" onclick="deleteGa4Datasource();">
+                <span class="material-symbols-outlined">
+                  delete_forever
+                </span>
+              </button>
+            </div>
+          </div>
+          <div id="final_ga4_details"></div>
+        </div>
+
+        <div id="final_csv" class="is-hidden final-datasource">
+          <div><strong>CSV & Google Sheet Datasource</strong>
+            <div class="float-right">
+              <button class="button is-info" onclick="addCsvDatasource();">
+                <span class="material-symbols-outlined">
+                  edit
+                </span>
+              </button>
+              <button class="button is-danger" onclick="deleteCsvDatasource();">
+                <span class="material-symbols-outlined">
+                  delete_forever
+                </span>
+              </button>
+            </div>
+          </div>
+          <div id="final_csv_details"></div>
+        </div>
+
+
+        <div id="no_datasources" class="final-datasource">
+          <i>There are no datasources currently added</i>
+        </div>
+        <div id="general_settings" class="final-datasource">
+
+          <div class="columns align-middle">
+            <div class="column is-narrow">
+              <label for="from_date">Date From</label>
+            </div>
+            <div class="column is-one-fifth">
+              <div id="from_date_label" class="info"></div>
+              <input id="from_date" class="input" type="date" onchange="validation();">
+            </div>
+            <div class="column is-narrow"></div>
+            <div class="column is-narrow">
+              <label for="to_date">Date To</label>
+            </div>
+            <div class="column is-one-fifth">
+              <div id="to_date_label" class="info"></div>
+              <input id="to_date" class="input" type="date" onchange="validation();">
+            </div>
+            <div class="column">
+              <span id='date_error' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                Date From must be before Date To
+              </span>
+            </div>
+            <div class="column">
+              <span id='csv_date_error' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                When using CSV, selected dates must be in the CSV data
+              </span>
+              <span id='date_3_days' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                There must be at least 3 days between From date and Event date
+              </span>
+            </div>
+          </div>
+
+
+          <div class="columns align-middle">
+            <div class="column is-narrow">
+              <label for="event_date">Event Date</label>
+            </div>
+            <div class="column is-one-fifth">
+              <input id="event_date" class="input" type="date" onchange="validation();">
+            </div>
+            <div class="column is-narrow"></div>
+            <div class="column is-narrow">
+              <label for="target_event_dd">Target Event</label>
+            </div>
+            <div class="column is-one-fifth">
+              <div id="target_event_div" class="select">
+                <select class="dd-width" id="target_event_dd" onchange="target_event_dd_change();">
+                </select>
               </div>
+            </div>
+            <div class="column">
+              <span id='event_date_error' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                Event Date must be within selected date range
+              </span>
+            </div>
+          </div>
+          <hr>
+          <div class="columns">
+            <div class="column is-one-quarter">
+              <label>Validation Tests</label>
+            </div>
+            <div class="column is-one-quarter">
+              <label class="checkbox align-left">
+                <input id="pre_period_check" type="checkbox" onclick="validation_change();">
+                Pre-Period
+              </label>
+              <div class="tooltip">
+                <span class="material-symbols-outlined is-small">
+                  help
+                </span>
+                <span class="tooltiptext">Pre-Period Validation test takes the pre-period from your Causal Impact
+                  analysis and does a 75/25% split of the date range as a new pre and post-period to confirm if there
+                  are any natural causal impact during the period before the target event happened.
+                  <br>
+                  <br>
+                  Requires at least 5 days between Date From and Event Date
+                </span>
+              </div>
+
+            </div>
+            <div class="column is-one-quarter">
+              <label class="checkbox align-left">
+                <input id="uneffectiveness_check" type="checkbox" onclick="validation_change();">
+                Uneffectiveness
+              </label>
+              <div class="tooltip">
+                <span class="material-symbols-outlined is-small">
+                  help
+                </span>
+                <span class="tooltiptext">Uneffectiveness Validation test removes the target event from the data, and
+                  checks the selected event to ensure there is no natural causal impact with other events over the same
+                  date period as your original Causal Impact analysis.
+                  <br>
+                  <br>
+                  Requires at least 3 Metrics to be selected in your data sources
+                </span>
+              </div>
+              <div id="target_event_div" class="select">
+                <select class="dd-width" id="unef_dd" onchange="validation_change();">
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="align-right single-level">
+          <span id='three_metrics_error' class="tag is-warning is-hidden">
+            <span class="material-symbols-outlined">
+              warning
+            </span>
+            It is recommended to have 2 or more covariates in addition to your target event for more accuracy
+          </span>
+          <div>
+            <button class="button is-danger" onclick="resetAnalysis();">Reset Analysis</button>
+            <form class="float-right left-padding" id="run_analysis_form" method="post" action="/report">
+              <input type="hidden" id="data_to_send" name="data_to_send">
+              <input type="submit" id="run_analysis" class="button is-success" value="Run Analysis" disabled>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
     <div class="column">
@@ -427,8 +440,9 @@
           <div class="column is-one-fifth">
             <div id="ds_options" class="tags has-addons">
               <a href="#" onclick="csv_option_click();"><span id="csv_option_span" class="tag is-link">CSV</span></a>
-              <a href="#" onclick="gsheet_option_click();"><span id="gsheet_option_span"
-                  class="tag is-light">gSheet</span></a>
+              {% if auth_sheets=="true" %}
+              <a href="#" onclick="gsheet_option_click();"><span id="gsheet_option_span" class="tag is-light">gSheet</span></a>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -457,7 +471,8 @@
           </div>
           <div class="columns">
             <div class="column is-full">
-              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd. 1mb max size CSV file. For larger, use Google Sheets
+              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd. 1mb max
+                size CSV file. For larger, use Google Sheets
               </div>
             </div>
           </div>
@@ -481,9 +496,8 @@
           </div>
           <div class="columns">
             <div class="column is-full">
-              <div id="gs_url_email" class="info">Must add
-                <strong>{{project_id}}@appspot.gserviceaccount.com</strong> as <u>viewer</u> in sheet permissions and
-                the data must be on the first tab, with 'date' column in yyyy-mm-dd format
+              <div id="gs_url_email" class="info">
+                The data must be on the first tab, with 'date' column in yyyy-mm-dd format
               </div>
             </div>
           </div>
@@ -852,19 +866,19 @@
         function () { });
     }
 
-    function resetAnalysis(bp=false) {
-      if(bp) {
+    function resetAnalysis(bp = false) {
+      if (bp) {
         sessionStorage.clear();
         window.location.replace("/sessionExpired");
       }
       else {
         confirmBox("Reset Analysis form",
-        "Are you sure you want to reset all the settings and delete datasources?",
-        function () {
-          sessionStorage.clear();
-          location.reload();
-        },
-        function () { });
+          "Are you sure you want to reset all the settings and delete datasources?",
+          function () {
+            sessionStorage.clear();
+            location.reload();
+          },
+          function () { });
       }
     }
 
@@ -1419,9 +1433,8 @@
     }
 
     function reset_timer() {
-      if(sessionStorage.getItem('timer'))
-      {
-        if((Date.now()-sessionStorage.getItem('timer')) / 1000 >  6300) { //1h 45 mins
+      if (sessionStorage.getItem('timer')) {
+        if ((Date.now() - sessionStorage.getItem('timer')) / 1000 > 6300) { //1h 45 mins
           resetAnalysis(true);
         }
       }
@@ -1552,7 +1565,7 @@
     if (sessionStorage.getItem('from_date')) { document.getElementById('from_date').value = sessionStorage.getItem('from_date'); }
     if (sessionStorage.getItem('to_date')) { document.getElementById('to_date').value = sessionStorage.getItem('to_date'); }
     if (sessionStorage.getItem('event_date')) { document.getElementById('event_date').value = sessionStorage.getItem('event_date'); }
-    
+
     count = 0;
     if (sessionStorage.getItem('gads_data')) {
       gads_data = JSON.parse(sessionStorage.getItem('gads_data'));
