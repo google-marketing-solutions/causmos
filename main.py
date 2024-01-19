@@ -65,8 +65,7 @@ if is_loopback('localhost'):
   
 else:
   PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-  #_REDIRECT_URI = f'https://{PROJECT_ID}.ew.r.appspot.com/oauth_completed'
-  _REDIRECT_URI = f'https://causmos.googleplex.com/oauth_completed'
+  _REDIRECT_URI = f'https://{PROJECT_ID}.ew.r.appspot.com/oauth_completed'
   app.config['SESSION_COOKIE_SECURE'] = True
   app.config['SESSION_COOKIE_HTTPONLY'] = True
   app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
