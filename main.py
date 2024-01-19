@@ -27,11 +27,11 @@ from flask import Flask, jsonify, redirect, render_template, request, session
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
 from fs_storage import set_value_session, get_value_session
+from gsheet_data import get_raw_gsheet_data
 from google_auth_oauthlib.flow import Flow
 import numpy as np
 import pandas as pd
 from uuid import uuid4
-import gspread
 
 app = Flask(__name__)
 
@@ -74,7 +74,7 @@ else:
 SCOPES = [
     'https://www.googleapis.com/auth/analytics.readonly',
     'https://www.googleapis.com/auth/adwords',
-    #'https://www.googleapis.com/auth/spreadsheets.readonly'
+    'https://www.googleapis.com/auth/spreadsheets.readonly'
 ]
 CLIENT_SECRETS_PATH = os.getcwd() + '/client_secret.json'
 
@@ -97,7 +97,7 @@ def add_header(response):
       'max-age=31536000; includeSubDomains'
   )
   return response
- 
+
 @app.route("/_ah/warmup")
 def warmup():
     return "", 200, {}
@@ -111,6 +111,7 @@ def root():
   authed = "false"
   auth_analytics="false"
   auth_adwords="false"
+  auth_sheets="false"
   creds = get_value_session(get_session_id(), 'credentials')
   if creds:
     authed="true"
@@ -120,8 +121,11 @@ def root():
   adwords = get_value_session(get_session_id(), 'adwords')
   if adwords:
     auth_adwords = "true"
+  sheets = get_value_session(get_session_id(), 'sheets')
+  if sheets:
+    auth_sheets = "true"
   
-  return render_template('index.html', authed=authed, auth_analytics=auth_analytics, auth_adwords=auth_adwords, project_id=PROJECT_ID)
+  return render_template('index.html', authed=authed, auth_analytics=auth_analytics, auth_adwords=auth_adwords, auth_sheets=auth_sheets, project_id=PROJECT_ID)
 
 
 @app.route('/oauth')
@@ -139,10 +143,11 @@ def oauth_complete():
     
     if 'analytics' in scope:
       set_value_session(get_session_id(), 'analytics', 'true')
-      
     if 'adwords' in scope:
       set_value_session(get_session_id(), 'adwords', 'true')
-
+    if 'spreadsheets' in scope:
+      set_value_session(get_session_id(), 'sheets', 'true')
+    
     scope = scope.split(" ")
     flow = create_flow(scope)
     flow.fetch_token(code=code)
@@ -183,7 +188,7 @@ def report():
 
     if 'csv' in data:
       if(data['csv_format']=="gsheet"):
-        csv_data = _get_gsheet_data(get_value_session(get_session_id(), 'sheet_id'))
+        csv_data = get_raw_gsheet_data(get_value_session(get_session_id(), 'sheet_id'))
       else:
         csv_data = get_value_session(get_session_id(), 'csv_data')
       raw_data = csv_merge_data(csv_data, data['csv'], raw_data)
@@ -195,9 +200,6 @@ def report():
         df.replace(np.NaN, 0, inplace=True)
         df.replace('', 0, inplace=True)
         df = df.apply(pd.to_numeric, errors='ignore')
-
-        print(df)
-
         df.index = pd.DatetimeIndex(df.index)
         df = df.reindex(idx, fill_value=0)  # fills in any blank dates
         df = df[
@@ -356,30 +358,11 @@ def _get_gs_data():
     sheet_id = sheet_id.split("/")[5]
   set_value_session(get_session_id(), 'sheet_id', sheet_id)
 
-  final_gsheet = _get_gsheet_data(sheet_id)
+  final_gsheet = get_raw_gsheet_data(sheet_id)
   if final_gsheet[0]!="error":
     return jsonify(result=getCsvSettings(final_gsheet, "gsheet"))
   else:
     return jsonify(result=final_gsheet)
-  
-
-def _get_gsheet_data(sheet_id):
-  sheet_err=['error']
-  try:
-    gc = gspread.service_account(filename='service_account.json')
-    worksheet = gc.open_by_key(sheet_id).get_worksheet(0)
-    final_gsheet = []
-    values = worksheet.get_values()
-    headers = values.pop(0)
-    for row in values:
-        temp_data = {}
-        for inx, item in enumerate(headers):
-            temp_data[item] = row[inx].replace(",", "")
-        final_gsheet.append(temp_data)
-    return final_gsheet
-  except:
-    sheet_err.append('Requires access to sheet or sheet has data without headers')
-    return sheet_err
   
 def getCsvSettings(csv_data: dict, format: str) -> dict:
   csv_settings = []
