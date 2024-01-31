@@ -66,3 +66,10 @@ window.onload = function () {
     return Array.prototype.slice.call(document.querySelectorAll(selector), 0);
   }
 }
+
+function addDDSpinner(div_id) {
+  document.getElementById(div_id).classList.add('is-loading');
+}
+function removeDDSpinner(div_id) {
+  document.getElementById(div_id).classList.remove('is-loading');
+}

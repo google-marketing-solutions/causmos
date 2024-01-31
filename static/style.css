@@ -19,6 +19,23 @@ body {
   text-align: center;
 }
 
+.foot {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #EEE;
+  font-size: 10px;
+  padding: 11px; 
+  text-align: center;
+}
+
+
+.hr-tag {
+  border-bottom: 1px solid #aaa;
+  padding-bottom: 20px;
+  margin-bottom: 20px
+}
+
 .main-window {
   width: 1000px;
   background-color: #FFF;
@@ -33,6 +50,9 @@ body {
 }
 .align-right {
   text-align: right;
+}
+.align-center-text {
+  text-align: center;
 }
 .align-center {
   margin: 0 auto;
@@ -168,4 +188,50 @@ body {
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
+}
+
+.success {
+  color: #73bd42;
+  font-weight:bold;
+  font-size: 9px;
+}
+.error {
+  color: red;
+  font-weight:bold;
+  font-size: 9px;
+}
+
+.main-info {
+  background-color: #EEE;
+  font-size: 10px;
+  padding: 11px;
+  text-align: center;
+}
+.opp {
+  font-size: 11px;
+}
+
+.banner {
+  background-color: #EEE;
+  color: #000;
+  font-size: 10px;
+  padding: 11px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.header {
+  font-size: 36px;
+  font-weight: bold;
+  text-align: center;
+  display : flex;
+  align-items : center;
+  justify-content: center;
+}
+
+.beta {
+  color: red;
+  font-weight: bold;
+  font-size: 0.3em;
+  vertical-align: super;
 }

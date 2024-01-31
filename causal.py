@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import pathlib
 import re
+from uuid import uuid4
 import causalimpact
+from google.cloud import storage
+
+_TEMP_FOLDER = "/tmp/"
 
 def getCiObject(df, pre_period: list, post_period: list):
   return causalimpact.fit_causalimpact(df, pre_period, post_period)
@@ -23,8 +29,19 @@ def getCiSummary(impact) -> list:
   summary = re.sub('  +', '|', summary)
   return [r.split('|') for r in [r for r in summary.split('\n')]]
 
-def getCiChart(impact, div="vis"):
-  return causalimpact.plot(impact, static_plot=False, chart_width=800).to_html().replace("vis", div)
+def getCiChart(impact, div="vis", img=False):
+  ci = causalimpact.plot(impact, static_plot=False, chart_width=800)
+  image_name=""
+  if img:
+    image_name = str(uuid4())+".png"
+    ci.save(_TEMP_FOLDER+image_name, engine="vl-convert")
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(os.environ.get('IMAGE_BUCKET'))
+    blob = bucket.blob(image_name)
+    generation_match_precondition = 0
+    blob.upload_from_filename(_TEMP_FOLDER+image_name, if_generation_match=generation_match_precondition)
+    #pathlib.Path.unlink(_TEMP_FOLDER+image_name)
+  return ci.to_html().replace("vis", div), image_name
 
 def getCiReport(impact) -> str:
   report = causalimpact.summary(impact, output_format='report')

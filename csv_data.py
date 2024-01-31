@@ -15,11 +15,14 @@
 import csv
 
 def get_csv_data(file) -> dict:
-  fstring = file.read().decode('utf8')
-  return [
-      {k: v.replace(",", "") for k, v in row.items()}
-      for row in csv.DictReader(fstring.splitlines(), skipinitialspace=True, quoting=csv.QUOTE_ALL)
-  ]
+  try:
+    fstring = file.read().decode('utf8')
+    return [
+        {k: v.replace(",", "") for k, v in row.items()}
+        for row in csv.DictReader(fstring.splitlines(), skipinitialspace=True, quoting=csv.QUOTE_ALL)
+    ]
+  except:
+    return "{'error':'File format isn't in CSV or some columsn misaligned. Checked file and try again.'}"
 
 
 def get_csv_columns(data: dict):

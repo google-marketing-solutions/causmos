@@ -3,9 +3,7 @@
 </head>
 
 <body>
-  <br>
-  <h1 class="title">Causmos - Causal Impact Insights</h1>
-
+  {% include "_title.html" %}
   <div class="columns">
     <div class="column">
     </div>
@@ -42,20 +40,20 @@
           <span class="material-symbols-outlined is-small">
             help
           </span>
-          <span class="tooltiptext">Signing in to your Google account gives you access to any Google Sheets, Google Ads 
-            and Google Analytics 4 accounts you have access to and will appear under datasources
+          <span class="tooltiptext">Signing in to your Google account gives you access to any Google Sheets, Google Ads
+            and Google Analytics 4 accounts you have access to and will appear under datasources. It also enables you to
+            export your results to Slides automatically.
           </span>
         </div>
         <a href="oauth"><button class="button is-info float-right">
-          {% if auth_adwords=="false" and auth_analytics=="false" and auth_sheets=="false" %}
+            {% if auth_adwords=="false" and auth_analytics=="false" and auth_sheets=="false" and auth_slides=="false" %}
             Sign In
-          {% elif auth_adwords=="false" or auth_analytics=="false" or auth_sheets=="false" %}
+            {% elif auth_adwords=="false" or auth_analytics=="false" or auth_sheets=="false" or auth_slides=="false" %}
             Partially Signed In
-          {% else %}
+            {% else %}
             Fully Signed In
-          {% endif %}
-          </button> 
-          
+            {% endif %}
+          </button>
         </a>
         <div id="final_gads" class="is-hidden final-datasource">
           <div><strong>Google Ads Datasource</strong>
@@ -209,14 +207,14 @@
             </div>
             <div class="column is-one-quarter">
               <label class="checkbox align-left">
-                <input id="uneffectiveness_check" type="checkbox" onclick="validation_change();">
-                Uneffectiveness
+                <input id="unaffectedness_check" type="checkbox" onclick="validation_change();">
+                Unaffectedness
               </label>
               <div class="tooltip">
                 <span class="material-symbols-outlined is-small">
                   help
                 </span>
-                <span class="tooltiptext">Uneffectiveness Validation test removes the target event from the data, and
+                <span class="tooltiptext">Unaffectedness Validation test removes the target event from the data, and
                   checks the selected event to ensure there is no natural causal impact with other events over the same
                   date period as your original Causal Impact analysis.
                   <br>
@@ -231,7 +229,6 @@
             </div>
           </div>
         </div>
-
         <div class="align-right single-level">
           <span id='three_metrics_error' class="tag is-warning is-hidden">
             <span class="material-symbols-outlined">
@@ -441,7 +438,8 @@
             <div id="ds_options" class="tags has-addons">
               <a href="#" onclick="csv_option_click();"><span id="csv_option_span" class="tag is-link">CSV</span></a>
               {% if auth_sheets=="true" %}
-              <a href="#" onclick="gsheet_option_click();"><span id="gsheet_option_span" class="tag is-light">gSheet</span></a>
+              <a href="#" onclick="gsheet_option_click();"><span id="gsheet_option_span"
+                  class="tag is-light">gSheet</span></a>
               {% endif %}
             </div>
           </div>
@@ -457,6 +455,13 @@
                 <label class="file-button" for="file_upload">Choose File</label>
                 <span id="file_name">...</span>
               </form>
+              <span id='file_too_big' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                <span id="file_too_big_msg">File size is over 250kb. Use a smaller file or use Google Sheets for larger
+                  amounts of data.</span>
+              </span>
             </div>
             <div class="column is-three-fifth">
               <button id="getCsv" class="button is-info" onclick="uploadFile();">Upload</button>
@@ -471,7 +476,7 @@
           </div>
           <div class="columns">
             <div class="column is-full">
-              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd. 1mb max
+              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd. 250kb max
                 size CSV file. For larger, use Google Sheets
               </div>
             </div>
@@ -1150,37 +1155,44 @@
       sessionStorage.removeItem('gsheet_url');
       document.getElementById('gsUrl').value = "";
       if (file) {
-        addDDSpinner('getCsv');
-        document.getElementById('csv_options').classList.add('div-disable');
-        const formData = new FormData();
-        csv_data.metrics = [];
-        formData.append('file', file);
-        var fetchRequest = new Request('/upload_csv', {
-          method: 'POST',
-          body: formData
-        });
-
-        fetch(fetchRequest)
-          .then(response => response.json())
-          .then(data => {
-            if (data.result[0] == "ok") {
-              csv_data.date_column = data.result[1];
-              csv_metrics = data.result[2];
-              csv_from_date = data.result[3];
-              document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
-              csv_to_date = data.result[4];
-              document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
-              csv_items_loaded = false;
-              csv_data.format = data.result[5];
-              _renderCsvMetricsBoxes();
-              closePopup('csv_upload_error');
-              removeDDSpinner('getCsv');
-            }
-            else {
-              document.getElementById('csv_upload_error_msg').innerHTML = data.result[1];
-              openPopup('csv_upload_error');
-            }
+        if ((file.size / 1024) > 250) {
+          document.getElementById('file_too_big').classList.remove('is-hidden');
+        }
+        else {
+          document.getElementById('file_too_big').classList.add('is-hidden');
+          addDDSpinner('getCsv');
+          document.getElementById('csv_options').classList.add('div-disable');
+          const formData = new FormData();
+          csv_data.metrics = [];
+          formData.append('file', file);
+          var fetchRequest = new Request('/upload_csv', {
+            method: 'POST',
+            body: formData
           });
+
+          fetch(fetchRequest)
+            .then(response => response.json())
+            .then(data => {
+              if (data.result[0] == "ok") {
+                csv_data.date_column = data.result[1];
+                csv_metrics = data.result[2];
+                csv_from_date = data.result[3];
+                document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
+                csv_to_date = data.result[4];
+                document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
+                csv_items_loaded = false;
+                csv_data.format = data.result[5];
+                _renderCsvMetricsBoxes();
+                closePopup('csv_upload_error');
+                removeDDSpinner('getCsv');
+              }
+              else {
+                document.getElementById('csv_upload_error_msg').innerHTML = data.result[1];
+                openPopup('csv_upload_error');
+                removeDDSpinner('getCsv');
+              }
+            });
+        }
       }
     }
 
@@ -1351,8 +1363,8 @@
       data_to_send['event_date'] = document.getElementById('event_date').value;
       data_to_send['target_event'] = document.getElementById('target_event_dd').value;
       data_to_send['pre_period_validation'] = document.getElementById('pre_period_check').checked;
-      data_to_send['uneffectiveness_validation'] = document.getElementById('uneffectiveness_check').checked;
-      data_to_send['uneffectiveness_option'] = document.getElementById('unef_dd').value;
+      data_to_send['unaffectedness_validation'] = document.getElementById('unaffectedness_check').checked;
+      data_to_send['unaffectedness_option'] = document.getElementById('unef_dd').value;
 
       var data_sources = [];
       var mcc_id_ts = "";
@@ -1373,6 +1385,7 @@
         data_sources.push(csv_data.format);
       }
       document.getElementById('data_to_send').value = JSON.stringify(data_to_send);
+
     }
 
     //General helpers
@@ -1428,13 +1441,12 @@
 
     function validation_change() {
       sessionStorage.setItem('val_pre_period_check', document.getElementById('pre_period_check').checked);
-      sessionStorage.setItem('val_unef_check', document.getElementById('uneffectiveness_check').checked);
+      sessionStorage.setItem('val_unef_check', document.getElementById('unaffectedness_check').checked);
       sessionStorage.setItem('val_unef_option', document.getElementById('unef_dd').value);
     }
-
     function reset_timer() {
       if (sessionStorage.getItem('timer')) {
-        if ((Date.now() - sessionStorage.getItem('timer')) / 1000 > 6300) { //1h 45 mins
+        if ((Date.now() - sessionStorage.getItem('timer')) / 1000 > 6300) { //6300 = 1h 45 mins
           resetAnalysis(true);
         }
       }
@@ -1509,14 +1521,14 @@
 
       if (target_event.length < 3) {
         openPopup('three_metrics_error');
-        document.getElementById('uneffectiveness_check').checked = false;
+        document.getElementById('unaffectedness_check').checked = false;
         sessionStorage.setItem('val_unef_check', 'false');
-        document.getElementById('uneffectiveness_check').disabled = true;
+        document.getElementById('unaffectedness_check').disabled = true;
         document.getElementById('unef_dd').disabled = true;
       }
       else {
         closePopup('three_metrics_error');
-        document.getElementById('uneffectiveness_check').disabled = false;
+        document.getElementById('unaffectedness_check').disabled = false;
         document.getElementById('unef_dd').disabled = false;
       }
 
@@ -1542,14 +1554,6 @@
         noCallback();
       };
       openPopup('confirm_box');
-    }
-
-    function addDDSpinner(div_id) {
-      document.getElementById(div_id).classList.add('is-loading');
-
-    }
-    function removeDDSpinner(div_id) {
-      document.getElementById(div_id).classList.remove('is-loading');
     }
 
     document.forms.namedItem('run_analysis_form').addEventListener('submit', function () {
@@ -1613,10 +1617,12 @@
       }
     });
 
-    if (sessionStorage.getItem('val_pre_period_check')) { document.getElementById('pre_period_check').checked = (sessionStorage.getItem('val_pre_period_check') == "true"); };
-    if (sessionStorage.getItem('val_unef_check')) { document.getElementById('uneffectiveness_check').checked = (sessionStorage.getItem('val_unef_check') == "true"); };
+    if (sessionStorage.getItem('val_pre_period_check')) { document.getElementById('pre_period_check').checked = (sessionStorage.getItem('val_pre_period_check') == "true"); }
+    if (sessionStorage.getItem('val_unef_check')) { document.getElementById('unaffectedness_check').checked = (sessionStorage.getItem('val_unef_check') == "true"); }
     if (sessionStorage.getItem('val_unef_option')) { document.getElementById('unef_dd').value = sessionStorage.getItem('val_unef_option'); }
 
+    var intervalId = window.setInterval(function () {
+      reset_timer();
+    }, 5000);
   </script>
-
   {% include "_footer.html" %}

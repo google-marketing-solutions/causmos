@@ -3,7 +3,7 @@
 </head>
 
 <body>
-  <h1 class="title">Causal Impacts Insights</h1>
+  {% include "_title.html" %}
 
   <div class="columns">
     <div class="column">
@@ -18,10 +18,13 @@
           <button class="button is-light" onclick="showV1Data();">Pre-Period Validation</button>
           {% endif %}
           {% if v2_summary!="-" %}
-          <button class="button is-light" onclick="showV2Data();">Uneffectiveness Validation</button>
+          <button class="button is-light" onclick="showV2Data();">Unaffectedness Validation</button>
+          {% endif %}
+          {% if auth_slides=="true" %}
+          <button class="button is-light float-right" onclick="exportData();">Export To Slides</button>
           {% endif %}
         </div>
-        <br>
+        <p class="hr-tag"></p>
         <div>
           <span id='warnings' class="tag is-warning is-hidden">
             <span class="material-symbols-outlined">
@@ -105,9 +108,11 @@
         <p id="confirm_title" class="modal-card-title">Pre-Period Validation</p>
       </header>
       <section class="modal-card-body">
-        Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of the date range as a new pre and post-period to confirm if there are any natural causal impact during the period before the target event happened.
+        Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of the
+        date range as a new pre and post-period to confirm if there are any natural causal impact during the period
+        before the target event happened.
         <br><br>
-        <h4 class="title is-4">Sumamry</h4>
+        <h4 class="title is-4">Summary</h4>
         <table>
           {% for x in v1_summary[1:15] %}
           <tr class="table-border">
@@ -133,12 +138,14 @@
     <div class="modal-background"></div>
     <div class="modal-card">
       <header class="modal-card-head">
-        <p id="confirm_title" class="modal-card-title">Uneffectiveness Validation</p>
+        <p id="confirm_title" class="modal-card-title">Unaffectedness Validation</p>
       </header>
       <section class="modal-card-body">
-        Uneffectiveness Validation test removes the target event from the data, and checks the selected event to ensure there is no natural causal impact with other events over the same date period as your original Causal Impact analysis.
+        Unaffectedness Validation test removes the target event from the data, and checks the selected event to ensure
+        there is no natural causal impact with other events over the same date period as your original Causal Impact
+        analysis.
         <br><br>
-        <h4 class="title is-4">Sumamry</h4>
+        <h4 class="title is-4">Summary</h4>
         <table>
           {% for x in v2_summary[1:15] %}
           <tr class="table-border">
@@ -158,6 +165,105 @@
     </div>
   </div>
   {% endif %}
+
+  <div id="export_data" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p id="confirm_title" class="modal-card-title">Export</p>
+      </header>
+      <section class="modal-card-body">
+        <div class="columns align-middle">
+          <div class="column is-4">
+            <label for="client_name">Client Name</label>
+          </div>
+          <div class="column is-5">
+            <input id="client_name" class="input" type="text">
+          </div>
+          <span id='client_name_error' class="tag is-danger is-hidden">
+            <span class="material-symbols-outlined">
+              warning
+            </span>
+            Must enter a client name
+          </span>
+        </div>
+        <div class="columns align-middle">
+          <div class="column is-4">
+            <label for="template_id">Slide Template ID</label>
+          </div>
+          <div class="column is-5">
+            <input id="template_id" class="input" width="100" type="text" value="{{slide_template}}">
+          </div>
+          <div class="column is-1">
+            <button onclick="viewPlaceholders();" title="View Placeholder Code" class="button is-small is-primary">
+              <span class="material-symbols-outlined">
+                data_object
+              </span>
+            </button>
+          </div>
+          <div class="column is-1">
+            <button onclick="restoreSlideTemplateId();" title="Restore default Template ID"
+              class="button is-small is-info">
+              <span class="material-symbols-outlined">
+                settings_backup_restore
+              </span>
+            </button>
+          </div>
+          <div class="column is-1">
+            <button onclick="viewSlideTemplate();" title="View Default Template Slides" class="button is-small is-link">
+              <span class="material-symbols-outlined">
+                visibility
+              </span>
+            </button>
+          </div>
+        </div>
+        <div id="template_info" class="columns main-info align-middle is-hidden">
+          <div class="column is-four-fiths">
+            <span class="raw-data">
+              You can specify your own Slide ID for any template and use the below placeholders in your template to be
+              filled in automatically by Causal Impact<br><br>
+              {% raw %}{{CLIENT_NAME}}<br>
+              {{DATE}} - Todays date<br>
+              {{TARGET_EVENT}} - The target event selected for the analysis<br>
+              {{COVARIATES}} - A list of covariates separated by comma<br>
+              {{PREPERIOD-START}} - Preperiod start date<br>
+              {{PREPERIOD-END}} - Preperiod end date<br>
+              {{POSTPERIOD-START}} - Post-period start date<br>
+              {{POSTPERIOD-END}} - Post-period end date<br>
+              {{P_VALUE}} - The P Value calculated by the analysis<br>
+              {{INCR_ACTIONS}} - The total incremental target events since the event date<br>{% endraw %}<br>
+
+              For the chart, you must create a box shape for the size and position you want the chart and add the
+              description CHART to it under alt text
+            </span>
+          </div>
+        </div>
+        <button id="export_to_slides" onclick="exportToSlides();" class="button is-success">Export To Slides</button>
+        <br><br>
+        <span id="created_slide" class="is-hidden">
+          <span class="success">
+            Slides successfully created! The slides is available below or visit <a href='https://slides.google.com'
+              target='_blank'>https://slides.google.com</a> to view previously generated ones.
+          </span>
+          <br>
+          <span class="material-symbols-outlined">
+            slideshow
+          </span>
+          <span id="slide_link"></span>
+        </span>
+        <span id="created_slide_error" class="is-hidden">
+          <span class="error">
+            There was an error creating the slide. This could be either you do not have access to the template, the template
+            does not exist or your credentials have exired. Check you can access the template (eye icon above) and if you 
+            haven't refreshed your browser in a while, go back to the main screen and re-authenticate with Google and try again.
+          </span>
+        </span>
+      </section>
+      <footer class="modal-card-foot">
+        <button onclick="closeExportData();" class="button is-danger">Close</button>
+      </footer>
+    </div>
+  </div>
 
   <script>
     function showRawData() {
@@ -182,11 +288,83 @@
       closePopup('raw_data');
       closePopup('data_overview');
     }
+    function closeExportData() {
+      closePopup('export_data');
+    }
     var warnings = '{{warnings}}';
     if (warnings != "") {
       document.getElementById('warnings_msg').innerHTML = warnings;
       openPopup('warnings');
     }
+
+    function exportData() {
+      openPopup('export_data');
+    }
+
+    function restoreSlideTemplateId() {
+      document.getElementById('template_id').value = '{{slide_template}}';
+    }
+
+    function viewSlideTemplate() {
+      window.open('https://docs.google.com/presentation/d/{{slide_template}}/', '_blank');
+    }
+
+    function viewPlaceholders() {
+      if (document.getElementById('template_info').classList.contains('is-hidden')) {
+        document.getElementById('template_info').classList.remove('is-hidden');
+      }
+      else {
+        document.getElementById('template_info').classList.add('is-hidden');
+      }
+    }
+
+    function exportToSlides() {
+      addDDSpinner('export_to_slides');
+      document.getElementById('created_slide').classList.add('is-hidden');
+      document.getElementById('created_slide_error').classList.add('is-hidden');
+      temp_id = document.getElementById('template_id').value;
+      var client_name = document.getElementById('client_name').value;
+      if(client_name=="") {
+        document.getElementById('client_name_error').classList.remove('is-hidden');
+        removeDDSpinner('export_to_slides');
+      }
+      else {
+        document.getElementById('client_name_error').classList.add('is-hidden');
+        const api_url = "/_create_slide?client_name=" + client_name + "&temp_id=" + temp_id;
+        fetch(api_url)
+          .then(response => response.json())
+          .then(data => {
+            removeDDSpinner('export_to_slides');
+            var slide_id = data.result;
+            if (slide_id == "0") {
+              document.getElementById('created_slide_error').classList.remove('is-hidden');
+              document.getElementById('created_slide').classList.add('is-hidden');
+            }
+            else {
+              document.getElementById('created_slide_error').classList.add('is-hidden');
+              document.getElementById('created_slide').classList.remove('is-hidden');
+              document.getElementById('slide_link').innerHTML = "<a href='https://docs.google.com/presentation/d/" + slide_id + "/' target='_blank'><b>" + client_name + " - Causal Impact Insights</b></a>";
+            }
+          });
+        }
+    }
+
+    function reset_timer() {
+      if (sessionStorage.getItem('timer')) {
+        if ((Date.now() - sessionStorage.getItem('timer')) / 1000 > 6300) { //6300 = 1h 45 mins
+          sessionStorage.clear();
+          window.location.replace("/sessionExpired");
+        }
+      }
+      else {
+        sessionStorage.setItem('timer', Date.now());
+      }
+    }
+
+    var intervalId = window.setInterval(function () {
+      reset_timer();
+    }, 5000);
+
   </script>
 
   {% include "_footer.html" %}

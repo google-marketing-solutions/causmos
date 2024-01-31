@@ -13,7 +13,7 @@
 # limitations under the License.
 
 runtime: python39
-entrypoint: gunicorn -b :$PORT main:app -w 3
+entrypoint: gunicorn -b :$PORT main:app -w 3 --timeout=90
 instance_class: F4_1G
 automatic_scaling:
  min_idle_instances: 1
@@ -27,7 +27,7 @@ handlers:
   secure: always
   redirect_http_response_code: 301
   http_headers:
-    Access-Control-Allow-Origin: http://PROJECT_ID.ew.r.appspot.com/
+    Access-Control-Allow-Origin: https://<PROJECT_ID>.ew.r.appspot.com/
     X-Content-Type-Options: nosniff
     X-Frame-Options: SAMEORIGIN
     SESSION_COOKIE_SECURE: true
@@ -42,15 +42,21 @@ handlers:
   secure: always
   redirect_http_response_code: 301
 
+- url: /favicon.ico
+  static_files: static/favicon.ico
+  upload: static/favicon.ico
+
 inbound_services:
 - warmup
 
-# Put the environment variables into your config.yaml for the Developer token
+# Put the environment variables into a config.yaml for the Developer token
 # and the Flask secret key like:
 #
 # env_variables:
 #   FLASK_SECRET_KEY: 'SECRET_KEY_VALUE'
 #   GOOGLE_ADS_DEVELOPER_TOKEN: 'DEVELOPER_TOKEN_VALUE'
+#   SLIDE_TEMPLATE: 'TEMPLATE_ID_FOR_SLIDE_OUTPUT'
+#   IMAGE_BUCKET: 'OPEN_ACCESS_GCP_BUCKET'
 
 includes:
   - config.yaml
