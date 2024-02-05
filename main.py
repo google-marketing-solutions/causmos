@@ -16,22 +16,25 @@
 
 This solution runs an analysis pulling information from Google Ads and Google
 Analytics. Information can be augmented by uploading a CSV file.
-"""
+""" 
 
 from datetime import datetime, timedelta
 import json, os, socket, struct
 import math
-from causal import getCiChart, getCiObject, getCiReport, getCiSummary, getValidation
+from causal import getCiChart, getCiObject, getCiReport, getCiSummary, getValidation, getDfMatrix
 from csv_data import csv_get_date_range, csv_merge_data, get_csv_columns, get_csv_data
-from flask import Flask, jsonify, redirect, render_template, request, session
+from flask import Flask, jsonify, redirect, render_template, request, session, send_file
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
-from fs_storage import set_value_session, get_value_session
+from fs_storage import set_value_session, get_value_session, delete_field
 from gsheet_data import get_raw_gsheet_data
+from slides_api import create_slide
 from google_auth_oauthlib.flow import Flow
 import numpy as np
 import pandas as pd
+import re
 from uuid import uuid4
+import logging
 
 app = Flask(__name__)
 
@@ -61,11 +64,14 @@ def is_loopback(host) -> bool:
 if is_loopback('localhost'):
   _SERVER = 'localhost'
   _PORT = 8080
-  _REDIRECT_URI = f'http://{_SERVER}:{_PORT}/oauth_completed'
+  _MAIN_URL = f'http://{_SERVER}:{_PORT}'
+  _REDIRECT_URI = f'{_MAIN_URL}/oauth_completed'
   
 else:
   PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-  _REDIRECT_URI = f'https://{PROJECT_ID}.ew.r.appspot.com/oauth_completed'
+  #_MAIN_URL = f'https://{PROJECT_ID}.ew.r.appspot.com'
+  _MAIN_URL = f'https://causmos.googleplex.com'
+  _REDIRECT_URI = f'{_MAIN_URL}/oauth_completed'
   app.config['SESSION_COOKIE_SECURE'] = True
   app.config['SESSION_COOKIE_HTTPONLY'] = True
   app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -74,7 +80,9 @@ else:
 SCOPES = [
     'https://www.googleapis.com/auth/analytics.readonly',
     'https://www.googleapis.com/auth/adwords',
-    'https://www.googleapis.com/auth/spreadsheets.readonly'
+    'https://www.googleapis.com/auth/spreadsheets.readonly',
+    'https://www.googleapis.com/auth/presentations',
+    'https://www.googleapis.com/auth/drive'
 ]
 CLIENT_SECRETS_PATH = os.getcwd() + '/client_secret.json'
 
@@ -98,12 +106,22 @@ def add_header(response):
   )
   return response
 
+@app.route("/_create_slide")
+def _create_slide():
+    if request.args.get('client_name'):
+      client_name = request.args.get('client_name', 0, type=str)
+      slide_template_id = request.args.get('temp_id', 0, type=str)
+      return jsonify(result=create_slide(get_session_id(), slide_template_id, client_name, _MAIN_URL))   
+    else:
+      return jsonify(result="No client name")
+
 @app.route("/_ah/warmup")
 def warmup():
     return "", 200, {}
 
 @app.route('/sessionExpired')
 def sessionExpired():
+  session.clear()
   return render_template('sessionExpired.html')
 
 @app.route('/')
@@ -112,6 +130,7 @@ def root():
   auth_analytics="false"
   auth_adwords="false"
   auth_sheets="false"
+  auth_slides="false"
   creds = get_value_session(get_session_id(), 'credentials')
   if creds:
     authed="true"
@@ -124,8 +143,11 @@ def root():
   sheets = get_value_session(get_session_id(), 'sheets')
   if sheets:
     auth_sheets = "true"
+  slides = get_value_session(get_session_id(), 'slides')
+  if slides:
+    auth_slides = "true"
   
-  return render_template('index.html', authed=authed, auth_analytics=auth_analytics, auth_adwords=auth_adwords, auth_sheets=auth_sheets, project_id=PROJECT_ID)
+  return render_template('index.html', authed=authed, auth_analytics=auth_analytics, auth_adwords=auth_adwords, auth_sheets=auth_sheets, auth_slides=auth_slides, project_id=PROJECT_ID, custom_inc=os.environ.get('CUSTOM_INCLUDES'))
 
 
 @app.route('/oauth')
@@ -147,6 +169,8 @@ def oauth_complete():
       set_value_session(get_session_id(), 'adwords', 'true')
     if 'spreadsheets' in scope:
       set_value_session(get_session_id(), 'sheets', 'true')
+    if 'presentations' in scope:
+      set_value_session(get_session_id(), 'slides', 'true')
     
     scope = scope.split(" ")
     flow = create_flow(scope)
@@ -159,6 +183,10 @@ def oauth_complete():
 
 @app.route('/report', methods=['POST'])
 def report():
+  auth_slides="false"
+  slides = get_value_session(get_session_id(), 'slides')
+  if slides:
+    auth_slides = "true"
   gads_responses = []
   if request.form.get('data_to_send'):
     data = json.loads(request.form.get('data_to_send', 0, type=str))
@@ -221,15 +249,38 @@ def report():
 
         pre_period = [0, pre_delta - 1]
         post_period = [pre_delta, pre_delta + post_delta]
-
-        impact = getCiObject(df, pre_period, post_period)
+        try:
+          impact = getCiObject(df, pre_period, post_period)
+        except ValueError as e:
+          return render_template(
+          'report.html',
+          custom_inc=os.environ.get('CUSTOM_INCLUDES'),
+          summary='-',
+          chart="-",
+          report="-",
+          raw_data="-",
+          warnings=f"Error: {e}",
+          validation="-",
+          v1_validation_chart="-",
+          v1_summary="-",
+          v2_validation_chart="-",
+          v2_summary="-",
+          v3_matrix="-",
+          slide_template="-",
+          auth_slides="false")
+        
         org_summary=getCiSummary(impact)
-        org_chart=getCiChart(impact)
+        org_chart, image_name = getCiChart(impact=impact, img=True)
         org_report=getCiReport(impact)
+        org_cov = (', ').join(df.columns[1:])
 
+        dfhtml = df.to_html().replace("<th>", "<th class='full-table-border'>").replace("<tr>", "<tr class='full-table-border'>")
         df_val = getValidation(df)
-        dfhtml = df.to_html().replace("<th>", "<th class='full-table-border'>")
-        dfhtml = dfhtml.replace("<tr>", "<tr class='full-table-border'>")
+
+        #Matrix Validation (v3)
+        v3_matrix="-"
+        if data['matrix_validation']==True:
+          v3_matrix = getDfMatrix(df)
 
         #Pre-Period validation (v1)
         v1_validation_chart="-"
@@ -242,26 +293,43 @@ def report():
           v1_post_period = [v1_pre_delta, v1_pre_delta + v1_post_delta]
 
           impact = getCiObject(df, v1_pre_period, v1_post_period)
-          v1_validation_chart = getCiChart(impact, "vis_v1")
+          v1_validation_chart = getCiChart(impact, div="vis_v1")[0]
           v1_summary = getCiSummary(impact)
 
-        #Uneffectiveness Validation (v2)
+        #Unaffectedness Validation (v2)
         v2_validation_chart="-"
         v2_summary="-"
 
-        if data['uneffectiveness_validation']==True:
+        if data['unaffectedness_validation']==True:
           df = df[
-            [data['uneffectiveness_option']]
-            + [c for c in df if c not in [data['uneffectiveness_option']]]
+            [data['unaffectedness_option']]
+            + [c for c in df if c not in [data['unaffectedness_option']]]
           ]
           df.drop(data['target_event'], axis=1, inplace=True)
           
           impact = getCiObject(df, pre_period, post_period)
-          v2_validation_chart = getCiChart(impact, "vis_v2")
+          v2_validation_chart = getCiChart(impact, div="vis_v2")[0]
           v2_summary = getCiSummary(impact)
+
+        pval = re.search(r"p:\s+([0-9]+\.[0-9]+)", org_summary[13][0])
+
+        delete_field(get_session_id(), 'output_data')
+        output_data = {
+          'from_date': data['from_date'],
+          'to_date': data['to_date'],
+          'event_date': data['event_date'],
+          'target_event': data['target_event'],
+          'covariates': org_cov,
+          'p_value': pval.group(1),
+          'avg_inc': org_summary[3][1],
+          'tot_inc': org_summary[3][2],
+          'image_name': image_name
+        }
+        set_value_session(get_session_id(), 'output_data', output_data)
 
         return render_template(
             'report.html',
+            custom_inc=os.environ.get('CUSTOM_INCLUDES'),
             summary=org_summary,
             chart=org_chart,
             report=org_report,
@@ -272,10 +340,14 @@ def report():
             v1_summary=v1_summary,
             v2_validation_chart=v2_validation_chart,
             v2_summary=v2_summary,
+            v3_matrix=v3_matrix,
+            slide_template=os.environ.get('SLIDE_TEMPLATE'),
+            auth_slides=auth_slides
         )
       else:
         return render_template(
           'report.html',
+          custom_inc=os.environ.get('CUSTOM_INCLUDES'),
           summary='-',
           chart="-",
           report="-",
@@ -286,10 +358,14 @@ def report():
           v1_summary="-",
           v2_validation_chart="-",
           v2_summary="-",
+          v3_matrix="-",
+          slide_template="-",
+          auth_slides="false"
       )
     else:
       return render_template(
           'report.html',
+          custom_inc=os.environ.get('CUSTOM_INCLUDES'),
           summary='-',
           chart="-",
           report="-",
@@ -300,6 +376,9 @@ def report():
           v1_summary="-",
           v2_validation_chart="-",
           v2_summary="-",
+          v3_matrix="-",
+          slide_template="-",
+          auth_slides="false"
       )
     
   else:
@@ -309,8 +388,8 @@ def report():
 def _get_gads_mcc_ids():
   try:
     return jsonify(result=get_gads_mcc_ids())
-  except:
-    print('Error code 1')
+  except ValueError as e:
+    logging.exception(e)
     return jsonify(result='error')
 
 
@@ -319,8 +398,8 @@ def _get_gads_customer_ids():
   try:
     mcc_id = request.args.get('mcc_id', 0, type=str)
     return jsonify(result=get_gads_customer_ids(mcc_id))
-  except:
-    print('Error code 2')
+  except ValueError as e:
+    logging.exception(e)
     return jsonify(result='error')
 
 
@@ -328,8 +407,8 @@ def _get_gads_customer_ids():
 def _get_gads_campaigns():
   try:
     return jsonify(result=get_gads_campaigns(request.args.get('mcc_id', 0, type=str), request.args.get('customer_id', 0, type=str)))
-  except:
-    print('Error code 3')
+  except ValueError as e:
+    logging.exception(e)
     return jsonify(result='error')
 
 
@@ -365,30 +444,35 @@ def _get_gs_data():
     return jsonify(result=final_gsheet)
   
 def getCsvSettings(csv_data: dict, format: str) -> dict:
-  csv_settings = []
-  csv_columns, csv_date_column = get_csv_columns(csv_data)
-  if not csv_date_column:
-    csv_settings.append('error')
-    csv_settings.append(
-        "'date' column not found. Add 'date' heading and use date format"
-        " 'yyyy-mm-dd' in the values"
-    )
-
-  else:
-    start_date, end_date = csv_get_date_range(csv_data, csv_date_column)
-    if _validate_date(start_date) and _validate_date(end_date):
-      csv_settings.append('ok')
-      csv_settings.append(csv_date_column)
-      csv_settings.append(csv_columns)
-      csv_settings.append(start_date)
-      csv_settings.append(end_date)
-      csv_settings.append(format)
-    else:
+  try:
+    csv_settings = []
+    csv_columns, csv_date_column = get_csv_columns(csv_data)
+    if not csv_date_column:
       csv_settings.append('error')
       csv_settings.append(
-          "'date' column found but some data does not match 'yyyy-mm-dd' format'"
+          "'date' column not found. Add 'date' heading and use date format"
+          " 'yyyy-mm-dd' in the values"
       )
-  return csv_settings
+
+    else:
+      start_date, end_date = csv_get_date_range(csv_data, csv_date_column)
+      if _validate_date(start_date) and _validate_date(end_date):
+        csv_settings.append('ok')
+        csv_settings.append(csv_date_column)
+        csv_settings.append(csv_columns)
+        csv_settings.append(start_date)
+        csv_settings.append(end_date)
+        csv_settings.append(format)
+      else:
+        csv_settings.append('error')
+        csv_settings.append(
+            "'date' column found but some data does not match 'yyyy-mm-dd' format'"
+        )
+    return csv_settings
+  except ValueError as e:
+    csv_settings.append('error')
+    csv_settings.append(f'Error - {e}')
+    return csv_settings
 
 
 def _validate_date(date_text: str) -> bool:

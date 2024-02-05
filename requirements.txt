@@ -7,5 +7,10 @@ google-api-python-client
 oauth2client
 python-dotenv
 google-auth-httplib2
+tensorflow-probability==0.22.1
 tfp-causalimpact
 firebase_admin
+html2image
+vl-convert-python
+altair==5.0.0
+matplotlib

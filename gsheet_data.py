@@ -44,8 +44,8 @@ def get_raw_gsheet_data(sheet_id):
        
     return final_gsheet
 
-  except:
-    sheet_err.append('Requires access to sheet or sheet has data without headers')
+  except ValueError as e:
+    sheet_err.append(f'Error: {e}')
     return sheet_err
 
 
