@@ -27,7 +27,7 @@ handlers:
   secure: always
   redirect_http_response_code: 301
   http_headers:
-    Access-Control-Allow-Origin: https://PROJECT_ID.googleplex.com/
+    Access-Control-Allow-Origin: https://causmos.ew.r.appspot.com/
     X-Content-Type-Options: nosniff
     X-Frame-Options: SAMEORIGIN
     SESSION_COOKIE_SECURE: true
@@ -41,6 +41,10 @@ handlers:
   script: auto
   secure: always
   redirect_http_response_code: 301
+
+- url: /favicon.ico
+  static_files: static/favicon.ico
+  upload: static/favicon.ico
 
 inbound_services:
 - warmup

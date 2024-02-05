@@ -1,0 +1,26 @@
+<div class="align-right single-level final-datasource">
+    <div class="columns align-middle">
+      <div class="column is-three-fifths">
+        <span class="opp">
+          Please enter your Opportunity ID from Connect Sales if you have one for this client/project. They help
+          us track the usage of these tools and allow us to continue to work on them. If you do not have an
+          Opportunity ID,
+          then you can check the "I don't have an Opportunity ID" checkbox to skip it.
+        </span>
+      </div>
+      <div class="column is-narrow">
+        <span class="material-symbols-outlined">
+          arrow_forward_ios
+        </span>
+      </div>
+      <div class="column is-one-fith align-center-text">
+        <div class="align-middle align-center-text">
+          <label for="op_id">Opportunity ID</label>&nbsp
+          <input id="op_id" style="width: 200px;" class="input" type="text" onchange="validation();">
+        </div>
+        <label class="checkbox">
+          <input id="testing_only" type="checkbox" onchange="opp_validation();">
+          I don't have an Opportunity ID</label>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,17 @@
+op_id = document.getElementById('op_id').value;
+      if (op_id == "") {
+        op_id = ""
+      }
+gtag('event', 'generate_lead', {
+    'mcc_id': mcc_id_ts,
+    'ga4_id': ga4_id_ts,
+    'data_sources': data_sources.join(","),
+    'date_from': data_to_send['from_date'],
+    'date_to': data_to_send['to_date'],
+    'event_date': data_to_send['event_date'],
+    'target_event': data_to_send['target_event'],
+    'opportunity_id': op_id
+  });
+
+sessionStorage.setItem('op_id', document.getElementById('op_id').value);
+sessionStorage.setItem('testing_only', document.getElementById('testing_only').checked)

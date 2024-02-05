@@ -1,0 +1,9 @@
+function opp_validation() {
+    document.getElementById('op_id').disabled = document.getElementById('testing_only').checked;
+    if (document.getElementById('testing_only').checked) { document.getElementById('op_id').value = ""; }
+    validation();
+  }
+
+if (sessionStorage.getItem('testing_only')) { document.getElementById('testing_only').checked = (sessionStorage.getItem('testing_only') == "true"); validation(); }
+document.getElementById('op_id').disabled = document.getElementById('testing_only').checked;
+if (sessionStorage.getItem('op_id')) { document.getElementById('op_id').value = sessionStorage.getItem('op_id'); }

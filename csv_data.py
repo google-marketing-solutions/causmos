@@ -27,7 +27,6 @@ def get_csv_data(file) -> dict:
     err = {'error':f'Error: {e}'}
     return err
 
-
 def get_csv_columns(data: dict):
   keys_list = list(data[0].keys())
   date_column = ''

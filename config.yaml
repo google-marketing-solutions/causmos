@@ -1,0 +1,6 @@
+env_variables:
+  CUSTOM_INCLUDES: "causmos"
+  FLASK_SECRET_KEY: "ab8ab48c68a329ce14e2424a2599a38ed483b95fb11e92be80238ec6ddcde0b2"
+  GOOGLE_ADS_DEVELOPER_TOKEN: "z27QEhvZe2mjjYFmwwfskg"
+  SLIDE_TEMPLATE: "1WZbOi_dhUT5KS5F8VytQMBBvs5HoT-EYaD4N8nukDTw"
+  IMAGE_BUCKET: "causal_impact_images"

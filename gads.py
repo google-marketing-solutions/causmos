@@ -21,29 +21,29 @@ import logging
 
 
 def get_gads_client(mcc_id: str) -> GoogleAdsClient:
-  try:
-    main_creds = json.loads(get_value_session(session['session_id'], 'credentials'))
+    try:
+        main_creds = json.loads(get_value_session(session['session_id'], 'credentials'))
+    except ValueError as e:
+        logging.exception(e)
+        return f"Error: Session Expired ({e})"
     creds = {
-        "developer_token": os.environ["GOOGLE_ADS_DEVELOPER_TOKEN"],
-        "refresh_token": main_creds["refresh_token"],
-        "client_id": main_creds["client_id"],
-        "client_secret": main_creds["client_secret"],
-        "use_proto_plus": True,
-    }
+            "developer_token": os.environ["GOOGLE_ADS_DEVELOPER_TOKEN"],
+            "refresh_token": main_creds["refresh_token"],
+            "client_id": main_creds["client_id"],
+            "client_secret": main_creds["client_secret"],
+            "use_proto_plus": True,
+        }
 
     google_ads_client = GoogleAdsClient.load_from_dict(creds)
     if mcc_id:
         google_ads_client.login_customer_id = mcc_id
-
     return google_ads_client
-  except ValueError as e:
-    logging.exception(e)
-    return f"Error: Session Expired ({e})"
 
 
 def get_gads_data(mcc_id: str, customer_id: str, campaign_ids: list, date_from: str, date_to: str) -> dict:
-  client = get_gads_client(mcc_id)
-  if "Error" not in client:
+    client = get_gads_client(mcc_id)
+    if "Error" in client:
+        return "Session Expired"
     ga_service = client.get_service("GoogleAdsService", version="v14")
     camp_filter = ""
     if not customer_id + "-0" in campaign_ids[0]:
@@ -58,7 +58,7 @@ def get_gads_data(mcc_id: str, customer_id: str, campaign_ids: list, date_from: 
     response = ga_service.search_stream(customer_id=customer_id, query=query)
     response.service_reference = ga_service
     return response
-  return "Session Expired"
+  
 
 
 def process_gads_responses(responses, metrics: list):

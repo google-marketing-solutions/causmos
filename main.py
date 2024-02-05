@@ -258,7 +258,7 @@ def report():
           chart="-",
           report="-",
           raw_data="-",
-          warnings=f"Error: {e}",
+          warnings=f"Error: There was an error with generating the Causal Impact charts",
           validation="-",
           v1_validation_chart="-",
           v1_summary="-",
@@ -443,35 +443,35 @@ def _get_gs_data():
     return jsonify(result=final_gsheet)
   
 def getCsvSettings(csv_data: dict, format: str) -> dict:
+  csv_settings = []
   try:
-    csv_settings = []
     csv_columns, csv_date_column = get_csv_columns(csv_data)
-    if not csv_date_column:
-      csv_settings.append('error')
-      csv_settings.append(
-          "'date' column not found. Add 'date' heading and use date format"
-          " 'yyyy-mm-dd' in the values"
-      )
-
-    else:
-      start_date, end_date = csv_get_date_range(csv_data, csv_date_column)
-      if _validate_date(start_date) and _validate_date(end_date):
-        csv_settings.append('ok')
-        csv_settings.append(csv_date_column)
-        csv_settings.append(csv_columns)
-        csv_settings.append(start_date)
-        csv_settings.append(end_date)
-        csv_settings.append(format)
-      else:
-        csv_settings.append('error')
-        csv_settings.append(
-            "'date' column found but some data does not match 'yyyy-mm-dd' format'"
-        )
-    return csv_settings
   except ValueError as e:
     csv_settings.append('error')
-    csv_settings.append(f'Error - {e}')
+    csv_settings.append(f'Error - There is an error reading the sheet. Please check format and try again.')
     return csv_settings
+  if not csv_date_column:
+    csv_settings.append('error')
+    csv_settings.append(
+        "'date' column not found. Add 'date' heading and use date format"
+        " 'yyyy-mm-dd' in the values"
+    )
+
+  else:
+    start_date, end_date = csv_get_date_range(csv_data, csv_date_column)
+    if _validate_date(start_date) and _validate_date(end_date):
+      csv_settings.append('ok')
+      csv_settings.append(csv_date_column)
+      csv_settings.append(csv_columns)
+      csv_settings.append(start_date)
+      csv_settings.append(end_date)
+      csv_settings.append(format)
+    else:
+      csv_settings.append('error')
+      csv_settings.append(
+          "'date' column found but some data does not match 'yyyy-mm-dd' format'"
+      )
+  return csv_settings
 
 
 def _validate_date(date_text: str) -> bool:
