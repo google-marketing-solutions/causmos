@@ -13,14 +13,19 @@
 # limitations under the License.
 
 import csv
+import logging
 
 def get_csv_data(file) -> dict:
-  fstring = file.read().decode('utf8')
-  return [
-      {k: v.replace(",", "") for k, v in row.items()}
-      for row in csv.DictReader(fstring.splitlines(), skipinitialspace=True, quoting=csv.QUOTE_ALL)
-  ]
-
+  try:
+    fstring = file.read().decode('utf8')
+    return [
+        {k: v.replace(",", "") for k, v in row.items()}
+        for row in csv.DictReader(fstring.splitlines(), skipinitialspace=True, quoting=csv.QUOTE_ALL)
+    ]
+  except ValueError as e:
+    logging.exception(e)
+    err = {'error':f'Error: {e}'}
+    return err
 
 def get_csv_columns(data: dict):
   keys_list = list(data[0].keys())
