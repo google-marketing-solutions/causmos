@@ -1,4 +1,4 @@
-# Cigaar: Causal Impact for Google Ads & Analytics Reporting
+# Causmos: Causal Impact for Google Ads & Analytics Reporting
 
 This repository contains a code to automate the collection of data from Google Ads and Analytics 
 and then run a [Casual Impact](https://github.com/google/tfp-causalimpact) analysis with that information
