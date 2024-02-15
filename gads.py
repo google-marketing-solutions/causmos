@@ -17,42 +17,47 @@ import textwrap
 from flask import session
 from google.ads.googleads.client import GoogleAdsClient
 from fs_storage import get_value_session
+import logging
 
 
 def get_gads_client(mcc_id: str) -> GoogleAdsClient:
-  main_creds = json.loads(get_value_session(session['session_id'], 'credentials'))
-  creds = {
-      "developer_token": os.environ["GOOGLE_ADS_DEVELOPER_TOKEN"],
-      "refresh_token": main_creds["refresh_token"],
-      "client_id": main_creds["client_id"],
-      "client_secret": main_creds["client_secret"],
-      "use_proto_plus": True,
-  }
+    try:
+        main_creds = json.loads(get_value_session(session['session_id'], 'credentials'))
+    except ValueError as e:
+        logging.exception(e)
+        return f"Error: Session Expired"
+    creds = {
+            "developer_token": os.environ["GOOGLE_ADS_DEVELOPER_TOKEN"],
+            "refresh_token": main_creds["refresh_token"],
+            "client_id": main_creds["client_id"],
+            "client_secret": main_creds["client_secret"],
+            "use_proto_plus": True,
+        }
 
-  google_ads_client = GoogleAdsClient.load_from_dict(creds)
-  if mcc_id:
-    google_ads_client.login_customer_id = mcc_id
-
-  return google_ads_client
+    google_ads_client = GoogleAdsClient.load_from_dict(creds)
+    if mcc_id:
+        google_ads_client.login_customer_id = mcc_id
+    return google_ads_client
 
 
 def get_gads_data(mcc_id: str, customer_id: str, campaign_ids: list, date_from: str, date_to: str) -> dict:
-  client = get_gads_client(mcc_id)
-  ga_service = client.get_service("GoogleAdsService", version="v14")
-  camp_filter = ""
-  if not customer_id + "-0" in campaign_ids[0]:
-    camp_filter = "AND campaign.id IN (" + (",").join(campaign_ids) + ")"
+    try:
+        client = get_gads_client(mcc_id)
+        ga_service = client.get_service("GoogleAdsService", version="v14")
+    except ValueError as e:
+        return "Error: Session expired"
+    camp_filter = ""
+    if not customer_id + "-0" in campaign_ids[0]:
+        camp_filter = "AND campaign.id IN (" + (",").join(campaign_ids) + ")"
 
-  query = textwrap.dedent(f"""
-    SELECT segments.date, metrics.impressions, metrics.clicks, metrics.video_views, metrics.cost_micros, metrics.conversions, metrics.view_through_conversions FROM campaign
-    WHERE segments.date BETWEEN '{date_from}' AND '{date_to}' {camp_filter}
-    ORDER BY segments.date ASC
-    """)
-
-  response = ga_service.search_stream(customer_id=customer_id, query=query)
-  response.service_reference = ga_service
-  return response
-
+    query = textwrap.dedent(f"""
+        SELECT segments.date, metrics.impressions, metrics.clicks, metrics.video_views, metrics.cost_micros, metrics.conversions, metrics.view_through_conversions FROM campaign
+        WHERE segments.date BETWEEN '{date_from}' AND '{date_to}' {camp_filter}
+        ORDER BY segments.date ASC
+        """)
+    response = ga_service.search_stream(customer_id=customer_id, query=query)
+    response.service_reference = ga_service
+    return response
 
 def process_gads_responses(responses, metrics: list):
   final_d = {}
@@ -186,9 +191,7 @@ def process_gads_responses(responses, metrics: list):
     for metric in final_d[key].copy():
       if not metric[5 : len(metric)] in metrics:
         final_d[key].pop(metric)
-
   return final_d
-
 
 def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
   client = get_gads_client(mcc_id)
@@ -199,11 +202,13 @@ def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
         campaign.name 
     FROM campaign
     """)
-
-  ga_service = client.get_service("GoogleAdsService", version="v14")
-
-  response = ga_service.search(customer_id=customer_id, query=query)
-
+  try:
+    ga_service = client.get_service("GoogleAdsService", version="v14")
+    response = ga_service.search(customer_id=customer_id, query=query)
+  except:
+     campaigns.append(["No campaigns in account", 0])
+     return campaigns
+  
   for googleads_row in response:
     campaign = googleads_row.campaign
     campaigns.append([campaign.name, campaign.id])
@@ -223,9 +228,12 @@ def get_gads_customer_ids(mcc_id: str) -> list:
     """)
 
   ga_service = client.get_service("GoogleAdsService", version="v14")
-
-  response = ga_service.search(customer_id=mcc_id, query=query)
-
+  try:
+    response = ga_service.search(customer_id=mcc_id, query=query)
+  except ValueError as e:
+     logging.exception(e)
+     all_customer_ids.append(["No clients or MCC access", 0])
+     return all_customer_ids
   for googleads_row in response:
     customer_client = googleads_row.customer_client
     all_customer_ids.append(

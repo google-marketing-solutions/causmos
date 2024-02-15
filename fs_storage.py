@@ -35,4 +35,7 @@ def set_value_session(session_id: str, name: str, value):
     name: value,
       'last_updated': firestore.SERVER_TIMESTAMP
     }, merge=True)
-    
+
+def delete_field(session_id: str, field: str):
+  doc_ref = db.collection(SESSION_NAME).document(session_id)
+  doc_ref.update({field: firestore.DELETE_FIELD})

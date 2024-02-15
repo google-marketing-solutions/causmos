@@ -35,11 +35,12 @@ def get_ga4_account_ids() -> list:
   analytics_admin = get_analytics_admin_client()
   response = analytics_admin.accounts().list().execute()
   account_id_list = []
+  if 'accounts' not in response:
+    return [["-- No accounts --", "-- No accounts --"]]
   for account in response['accounts']:
     account_id_list.append(
         [((account['name']).split('/'))[1], account['displayName']]
     )
-
   return account_id_list
 
 

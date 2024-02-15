@@ -1,11 +1,8 @@
-{% include "_header.html" %}
-<title>Causal Impact Insights - Create</title>
+{% include custom_inc+"_header.html" %}
 </head>
 
 <body>
-  <br>
-  <h1 class="title">Causmos - Causal Impact Insights</h1>
-
+  {% include custom_inc+"_title.html" %}
   <div class="columns">
     <div class="column">
     </div>
@@ -14,10 +11,13 @@
         <div class="dropdown">
           <div class="dropdown-trigger">
             <button class="button is-success" aria-haspopup="true" aria-controls="dropdown-menu">
-              <span class="material-symbols-outlined">
+              <span class="material-symbols-outlined icon">
                 add_box
               </span>
               <span>Add New Datasource</span>
+              <span class="material-symbols-outlined icon">
+                arrow_drop_down
+              </span>
             </button>
           </div>
           <div class="dropdown-menu" id="dropdown-menu" role="menu">
@@ -42,31 +42,51 @@
           <span class="material-symbols-outlined is-small">
             help
           </span>
-          <span class="tooltiptext">Signing in to your Google account gives you access to any Google Sheets, Google Ads 
-            and Google Analytics 4 accounts you have access to and will appear under datasources
+          <span class="tooltiptext">Signing in to your Google account gives you access to any Google Sheets, Google Ads
+            and Google Analytics 4 accounts you have access to and will appear under datasources. It also enables you to
+            export your results to Slides automatically.
           </span>
         </div>
-        <a href="oauth"><button class="button is-info float-right">
-          {% if auth_adwords=="false" and auth_analytics=="false" and auth_sheets=="false" %}
-            Sign In
-          {% elif auth_adwords=="false" or auth_analytics=="false" or auth_sheets=="false" %}
-            Partially Signed In
-          {% else %}
-            Fully Signed In
-          {% endif %}
-          </button> 
-          
+        <a href="oauth">
+          {% if auth_adwords=="false" and auth_analytics=="false" and auth_sheets=="false" and auth_slides=="false"
+          %}
+          <button class="button is-info float-right">
+            <span class="material-symbols-outlined icon">
+              account_circle
+            </span>
+            <span>
+              Sign In
+            </span>
+            {% elif auth_adwords=="false" or auth_analytics=="false" or auth_sheets=="false" or auth_slides=="false"
+            %}
+            <button class="button is-info float-right">
+              <span class="material-symbols-outlined icon">
+                account_circle
+              </span>
+              <span>
+                Partially Signed In
+              </span>
+              {% else %}
+              <button class="button is-light float-right">
+                <span class="material-symbols-outlined icon">
+                  verified
+                </span>
+                <span>
+                  Fully Signed In
+                </span>
+                {% endif %}
+              </button>
         </a>
         <div id="final_gads" class="is-hidden final-datasource">
           <div><strong>Google Ads Datasource</strong>
             <div class="float-right">
               <button class="button is-info" onclick="addGoogleAdsDatasource();">
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined icon">
                   edit
                 </span>
               </button>
               <button class="button is-danger" onclick="deleteGoogleAdsDatasource();">
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined icon">
                   delete_forever
                 </span>
               </button>
@@ -78,12 +98,12 @@
           <div><strong>Google Analytics Datasource</strong>
             <div class="float-right">
               <button class="button is-info" onclick="addGa4Datasource();">
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined icon">
                   edit
                 </span>
               </button>
               <button class="button is-danger" onclick="deleteGa4Datasource();">
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined icon">
                   delete_forever
                 </span>
               </button>
@@ -96,12 +116,12 @@
           <div><strong>CSV & Google Sheet Datasource</strong>
             <div class="float-right">
               <button class="button is-info" onclick="addCsvDatasource();">
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined icon">
                   edit
                 </span>
               </button>
               <button class="button is-danger" onclick="deleteCsvDatasource();">
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined icon">
                   delete_forever
                 </span>
               </button>
@@ -190,6 +210,23 @@
             </div>
             <div class="column is-one-quarter">
               <label class="checkbox align-left">
+                <input id="matrix_check" type="checkbox" onclick="validation_change();">
+                Correlation Matrix
+              </label>
+              <div class="tooltip">
+                <span class="material-symbols-outlined is-small">
+                  help
+                </span>
+                <span class="tooltiptext">Correlation Matrix Validation correlates the first 10 covariates (including
+                  the target event) against each other to
+                  understand the linear relationship between each pair of covariates. High values indicate strong linear
+                  relationship
+                  between two covariates where a low value indicates a poor linear relationship.
+                </span>
+              </div>
+            </div>
+            <div class="column is-one-quarter">
+              <label class="checkbox align-left">
                 <input id="pre_period_check" type="checkbox" onclick="validation_change();">
                 Pre-Period
               </label>
@@ -205,18 +242,17 @@
                   Requires at least 5 days between Date From and Event Date
                 </span>
               </div>
-
             </div>
             <div class="column is-one-quarter">
               <label class="checkbox align-left">
-                <input id="uneffectiveness_check" type="checkbox" onclick="validation_change();">
-                Uneffectiveness
+                <input id="unaffectedness_check" type="checkbox" onclick="validation_change();">
+                Unaffectedness
               </label>
               <div class="tooltip">
                 <span class="material-symbols-outlined is-small">
                   help
                 </span>
-                <span class="tooltiptext">Uneffectiveness Validation test removes the target event from the data, and
+                <span class="tooltiptext">Unaffectedness Validation test removes the target event from the data, and
                   checks the selected event to ensure there is no natural causal impact with other events over the same
                   date period as your original Causal Impact analysis.
                   <br>
@@ -231,19 +267,29 @@
             </div>
           </div>
         </div>
-
+        {% include custom_inc+"_presubmit.html" %}
         <div class="align-right single-level">
           <span id='three_metrics_error' class="tag is-warning is-hidden">
             <span class="material-symbols-outlined">
               warning
             </span>
-            It is recommended to have 2 or more covariates in addition to your target event for more accuracy
+            It is recommended to have 2 or more covariates in addition to your target event for best results
           </span>
           <div>
-            <button class="button is-danger" onclick="resetAnalysis();">Reset Analysis</button>
+            <button class="button is-danger" onclick="resetAnalysis();">
+              <span class="material-symbols-outlined icon">
+                restart_alt
+              </span>
+              <span>Reset Analysis</span>
+            </button>
             <form class="float-right left-padding" id="run_analysis_form" method="post" action="/report">
               <input type="hidden" id="data_to_send" name="data_to_send">
-              <input type="submit" id="run_analysis" class="button is-success" value="Run Analysis" disabled>
+              <button type="submit" id="run_analysis" class="button is-success" value="" disabled>
+                <span class="material-symbols-outlined icon">
+                  monitoring
+                </span>
+                <span>Run Analysis</span>
+              </button>
             </form>
           </div>
         </div>
@@ -300,7 +346,7 @@
               <div class="level-item has-text-centered">
                 <div>
                   <button onclick="addGadsCustomerCampaign();" class="button is-info">
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined icon">
                       add_box
                     </span>
                     <span>Add</span>
@@ -329,7 +375,7 @@
               <div class="level-item has-text-centered">
                 <div>
                   <button onclick="addGadsMetric();" class="button is-info">
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined icon">
                       add_box
                     </span>
                     <span>Add</span>
@@ -347,9 +393,18 @@
         </div>
       </section>
       <footer class="modal-card-foot">
-        <button id="gads_save_button" onclick="saveGoogleAdsDatasource();" class="button is-success">Save
-          Datasource</button>
-        <button onclick="cancelGoogleAdsDatasouce();" class="button">Cancel</button>
+        <button id="gads_save_button" onclick="saveGoogleAdsDatasource();" class="button is-success">
+          <span class="material-symbols-outlined icon">
+            save
+          </span>
+          <span>Save Datasource</span>
+        </button>
+        <button onclick="cancelGoogleAdsDatasouce();" class="button">
+          <span>Cancel</span>
+          <span class="material-symbols-outlined icon">
+            cancel
+          </span>
+        </button>
         <span id='gads_selection_error' class="tag is-danger is-hidden">
           <span class="material-symbols-outlined">
             warning
@@ -401,7 +456,7 @@
                 </div>
                 <div class="single-level">
                   <button onclick="addGa4Metric();" class="button is-info">
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined icon">
                       add_box
                     </span>
                     <span>Add</span>
@@ -419,8 +474,18 @@
         </div>
       </section>
       <footer class="modal-card-foot">
-        <button id="ga4_save_button" onclick="saveGa4Datasource();" class="button is-success">Save Datasource</button>
-        <button onclick="cancelGa4Datasource();" class="button">Cancel</button>
+        <button id="ga4_save_button" onclick="saveGa4Datasource();" class="button is-success">
+          <span class="material-symbols-outlined icon">
+            save
+          </span>
+          <span>Save Datasource</span>
+        </button>
+        <button onclick="cancelGa4Datasource();" class="button">
+          <span>Cancel</span>
+          <span class="material-symbols-outlined icon">
+            cancel
+          </span>
+        </button>
       </footer>
     </div>
   </div>
@@ -441,7 +506,8 @@
             <div id="ds_options" class="tags has-addons">
               <a href="#" onclick="csv_option_click();"><span id="csv_option_span" class="tag is-link">CSV</span></a>
               {% if auth_sheets=="true" %}
-              <a href="#" onclick="gsheet_option_click();"><span id="gsheet_option_span" class="tag is-light">gSheet</span></a>
+              <a href="#" onclick="gsheet_option_click();"><span id="gsheet_option_span"
+                  class="tag is-light">gSheet</span></a>
               {% endif %}
             </div>
           </div>
@@ -457,9 +523,21 @@
                 <label class="file-button" for="file_upload">Choose File</label>
                 <span id="file_name">...</span>
               </form>
+              <span id='file_too_big' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                <span id="file_too_big_msg">File size is over 250kb. Use a smaller file or use Google Sheets for larger
+                  amounts of data.</span>
+              </span>
             </div>
             <div class="column is-three-fifth">
-              <button id="getCsv" class="button is-info" onclick="uploadFile();">Upload</button>
+              <button id="getCsv" class="button is-info" onclick="uploadFile();">
+                <span class="material-symbols-outlined icon">
+                  upload_file
+                </span>
+                <span>Upload</span>
+              </button>
               <div id="uploading_div" class="left-padding"></div>
             </div>
             <span id='csv_upload_error' class="tag is-danger is-hidden">
@@ -471,7 +549,7 @@
           </div>
           <div class="columns">
             <div class="column is-full">
-              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd. 1mb max
+              <div class="info">CSV format requires a coulmn heading with 'date' and in the format yyyy-mm-dd. 250kb max
                 size CSV file. For larger, use Google Sheets
               </div>
             </div>
@@ -490,8 +568,12 @@
             </div>
             <div class="column is-three-fifths"><input class="input" type="text" id="gsUrl">
             </div>
-            <div class="column is-one-fifth"><button id="getGsSheet" class="button is-info" onclick="uploadGs();">Get
-                Sheet</button>
+            <div class="column is-one-fifth"><button id="getGsSheet" class="button is-info" onclick="uploadGs();">
+                <span class="material-symbols-outlined icon">
+                  download
+                </span>
+                <span>Get Sheet</span>
+              </button>
             </div>
           </div>
           <div class="columns">
@@ -528,13 +610,13 @@
                 </div>
                 <div class="single-level">
                   <button onclick="addCsvMetric();" class="button is-info">
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined icon">
                       add_box
                     </span>
                     <span>Add</span>
                   </button>
                   <button onclick="addAllCsvMetric();" class="button is-info is-light">
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined icon">
                       add_box
                     </span>
                     <span>Add All</span>
@@ -554,8 +636,18 @@
         </div>
       </section>
       <footer class="modal-card-foot">
-        <button id="csv_save_button" onclick="saveCsvDatasource();" class="button is-success">Save Datasource</button>
-        <button onclick="cancelCsvDatastore();" class="button">Cancel</button>
+        <button id="csv_save_button" onclick="saveCsvDatasource();" class="button is-success">
+          <span class="material-symbols-outlined icon">
+            save
+          </span>
+          <span>Save Datasource</span>
+        </button>
+        <button onclick="cancelCsvDatastore();" class="button">
+          <span>Cancel</span>
+          <span class="material-symbols-outlined icon">
+            cancel
+          </span>
+        </button>
       </footer>
     </div>
   </div>
@@ -633,6 +725,61 @@
     var csv_to_date = "";
     var csv_items_loaded = false;
 
+    count = 0;
+    if (sessionStorage.getItem('gads_data')) {
+      gads_data = JSON.parse(sessionStorage.getItem('gads_data'));
+      gads_customer_lkup = JSON.parse(sessionStorage.getItem('gads_customer_lkup'));
+      gads_campaign_lkup = JSON.parse(sessionStorage.getItem('gads_campaign_lkup'));
+      gads_metrics_lkup = JSON.parse(sessionStorage.getItem('gads_metrics_lkup'));
+      mcc_ids = JSON.parse(sessionStorage.getItem('mcc_ids'));
+      _populateMccIds(gads_data.mcc_id);
+      document.getElementById('gads_mcc_id_dd').value = gads_data.mcc_id
+      _renderGoogleAdsDataSourceBoxes();
+      count = +1
+    }
+    if (sessionStorage.getItem('ga4_data')) {
+      ga4_data = JSON.parse(sessionStorage.getItem('ga4_data'));
+      ga4_account_lkup = JSON.parse(sessionStorage.getItem('ga4_account_lkup'));
+      ga4_property_lkup = JSON.parse(sessionStorage.getItem('ga4_property_lkup'));
+      account_ids = JSON.parse(sessionStorage.getItem('account_ids'));
+      _populateGa4Accounts(ga4_data.account);
+      _renderGa4DatasourceBox();
+      count = +1
+    }
+    if (sessionStorage.getItem('csv_data')) {
+      csv_data = JSON.parse(sessionStorage.getItem('csv_data'));
+      csv_metrics = JSON.parse(sessionStorage.getItem('csv_metrics'));
+      csv_from_date = JSON.parse(sessionStorage.getItem('csv_from_date'));
+      csv_to_date = JSON.parse(sessionStorage.getItem('csv_to_date'));
+      document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
+      document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
+      if (sessionStorage.getItem('gsheet_url')) { document.getElementById('gsUrl').value = sessionStorage.getItem('gsheet_url'); }
+
+      if (csv_data.format == "gsheet") {
+        gsheet_option_click();
+      }
+
+      _renderCsvDatasourceBox();
+      count = +1
+    }
+    if (count > 0) { cleanUp(); }
+    _populateGadsMetrics();
+    _populateGa4Metrics();
+
+    document.getElementById('file_upload').addEventListener('change', function (e) {
+      if (e.target.files[0]) {
+        document.getElementById('file_name').textContent = e.target.files[0].name;
+      }
+    });
+
+    if (sessionStorage.getItem('val_unef_check')) { document.getElementById('unaffectedness_check').checked = (sessionStorage.getItem('val_unef_check') == "true"); }
+    if (sessionStorage.getItem('val_unef_option')) { document.getElementById('unef_dd').value = sessionStorage.getItem('val_unef_option'); }
+    if (sessionStorage.getItem('val_matrix_check')) { document.getElementById('matrix_check').checked = (sessionStorage.getItem('val_matrix_check') == "true"); }
+    if (sessionStorage.getItem('from_date')) { document.getElementById('from_date').value = sessionStorage.getItem('from_date'); }
+    if (sessionStorage.getItem('to_date')) { document.getElementById('to_date').value = sessionStorage.getItem('to_date'); }
+    if (sessionStorage.getItem('event_date')) { document.getElementById('event_date').value = sessionStorage.getItem('event_date'); }
+    if (sessionStorage.getItem('val_pre_period_check')) { validation(); document.getElementById('pre_period_check').checked = (sessionStorage.getItem('val_pre_period_check') == "true"); }
+
     //Google Ads code
     function addGoogleAdsDatasource() {
       tmp_gads_data = JSON.parse(JSON.stringify(gads_data));
@@ -682,7 +829,7 @@
 
     function getGadsCustomerList(mcc_id = 0) {
       addDDSpinner('gads_customer_div');
-      addDDSpinner('gads_campaign_div');
+      //addDDSpinner('gads_campaign_div');
       mcc_dd = document.getElementById('gads_mcc_id_dd');
       mcc_dd.disabled = true;
       if (mcc_id == 0) {
@@ -702,12 +849,21 @@
             customers.forEach((value) => {
               var newOption = new Option(value[0] + " (" + value[1] + ")", value[1]);
               gads_customer_dd.add(newOption);
-              if (first) {
+              if (first && value[1] != 0) {
                 getCampaignList(mcc_id, value[1]);
                 first = false;
               }
             })
           }
+          if (first) {
+            removeDDSpinner('gads_campaign_div');
+            mcc_dd.disabled = false;
+            removeDDSpinner('gads_customer_div');
+            customer_dd.disabled = false;
+            var newOption = new Option("No accounts in MCC", 0);
+            gads_customer_dd.add(newOption);
+          }
+          removeDDSpinner('gads_customer_div');
         });
     }
 
@@ -724,33 +880,38 @@
       if (mcc_id == 0) {
         var mcc_id = document.getElementById('gads_mcc_id_dd').value;
       }
-      const api_url = "/_get_gads_campaigns?mcc_id=" + mcc_id + "&customer_id=" + customer_id;
-      gads_campaign_dd = document.getElementById('gads_campaign_dd');
-      gads_campaign_dd.innerHTML = "";
-      fetch(api_url)
-        .then(response => response.json())
-        .then(data => {
-          campaigns = data.result;
-          if (campaigns != "error") {
-            var newOption = new Option("-- All --", customer_id + "-0");
-            gads_campaign_dd.add(newOption);
-            campaigns.forEach((value) => {
-              var newOption = new Option(value[0], value[1]);
-              gads_campaign_dd.add(newOption);
-            })
-          }
-          removeDDSpinner('gads_campaign_div');
-          mcc_dd.disabled = false;
-          removeDDSpinner('gads_customer_div');
-          customer_dd.disabled = false;
-        });
+      if (customer_id != 0) {
+        const api_url = "/_get_gads_campaigns?mcc_id=" + mcc_id + "&customer_id=" + customer_id;
+        gads_campaign_dd = document.getElementById('gads_campaign_dd');
+        gads_campaign_dd.innerHTML = "";
+        first = true;
+        fetch(api_url)
+          .then(response => response.json())
+          .then(data => {
+            campaigns = data.result;
+            if (campaigns != "error") {
+              campaigns.forEach((value) => {
+                if (first && value[1] != 0) {
+                  var newOption = new Option("-- All --", customer_id + "-0");
+                  gads_campaign_dd.add(newOption);
+                  first = false;
+                }
+                var newOption = new Option(value[0], value[1]);
+                gads_campaign_dd.add(newOption);
+              })
+            }
+            removeDDSpinner('gads_campaign_div');
+            mcc_dd.disabled = false;
+            removeDDSpinner('gads_customer_div');
+            customer_dd.disabled = false;
+          });
+      }
     }
 
     function addGadsCustomerCampaign() {
       const customer_id_dd = document.getElementById('gads_customer_dd');
       const campaign_id_dd = document.getElementById('gads_campaign_dd');
-
-      if (customer_id_dd.options[customer_id_dd.selectedIndex] != null && campaign_id_dd.options[campaign_id_dd.selectedIndex] != null) {
+      if (customer_id_dd.options[customer_id_dd.selectedIndex] != null && customer_id_dd.options[customer_id_dd.selectedIndex].value != 0 && campaign_id_dd.options[campaign_id_dd.selectedIndex] != null && campaign_id_dd.options[campaign_id_dd.selectedIndex].value != 0) {
         const customer_id = customer_id_dd.value;
         const customer_name = customer_id_dd.options[customer_id_dd.selectedIndex].text;
 
@@ -1150,37 +1311,44 @@
       sessionStorage.removeItem('gsheet_url');
       document.getElementById('gsUrl').value = "";
       if (file) {
-        addDDSpinner('getCsv');
-        document.getElementById('csv_options').classList.add('div-disable');
-        const formData = new FormData();
-        csv_data.metrics = [];
-        formData.append('file', file);
-        var fetchRequest = new Request('/upload_csv', {
-          method: 'POST',
-          body: formData
-        });
-
-        fetch(fetchRequest)
-          .then(response => response.json())
-          .then(data => {
-            if (data.result[0] == "ok") {
-              csv_data.date_column = data.result[1];
-              csv_metrics = data.result[2];
-              csv_from_date = data.result[3];
-              document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
-              csv_to_date = data.result[4];
-              document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
-              csv_items_loaded = false;
-              csv_data.format = data.result[5];
-              _renderCsvMetricsBoxes();
-              closePopup('csv_upload_error');
-              removeDDSpinner('getCsv');
-            }
-            else {
-              document.getElementById('csv_upload_error_msg').innerHTML = data.result[1];
-              openPopup('csv_upload_error');
-            }
+        if ((file.size / 1024) > 250) {
+          document.getElementById('file_too_big').classList.remove('is-hidden');
+        }
+        else {
+          document.getElementById('file_too_big').classList.add('is-hidden');
+          addDDSpinner('getCsv');
+          document.getElementById('csv_options').classList.add('div-disable');
+          const formData = new FormData();
+          csv_data.metrics = [];
+          formData.append('file', file);
+          var fetchRequest = new Request('/upload_csv', {
+            method: 'POST',
+            body: formData
           });
+
+          fetch(fetchRequest)
+            .then(response => response.json())
+            .then(data => {
+              if (data.result[0] == "ok") {
+                csv_data.date_column = data.result[1];
+                csv_metrics = data.result[2];
+                csv_from_date = data.result[3];
+                document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
+                csv_to_date = data.result[4];
+                document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
+                csv_items_loaded = false;
+                csv_data.format = data.result[5];
+                _renderCsvMetricsBoxes();
+                closePopup('csv_upload_error');
+                removeDDSpinner('getCsv');
+              }
+              else {
+                document.getElementById('csv_upload_error_msg').innerHTML = data.result[1];
+                openPopup('csv_upload_error');
+                removeDDSpinner('getCsv');
+              }
+            });
+        }
       }
     }
 
@@ -1209,6 +1377,14 @@
               document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
               csv_items_loaded = false;
               csv_data.format = data.result[5];
+
+              var f_date = document.getElementById('from_date');
+              var t_date = document.getElementById('to_date');
+              if (csv_from_date != "" && csv_to_date != "") {
+                f_date.value = csv_from_date;
+                t_date.value = csv_to_date;
+              }
+
               _renderCsvMetricsBoxes();
               closePopup('csv_upload_error');
               removeDDSpinner('getGsSheet');
@@ -1346,13 +1522,25 @@
     function generateData() {
       var data_to_send = {};
 
-      data_to_send['from_date'] = document.getElementById('from_date').value;
-      data_to_send['to_date'] = document.getElementById('to_date').value;
-      data_to_send['event_date'] = document.getElementById('event_date').value;
-      data_to_send['target_event'] = document.getElementById('target_event_dd').value;
+      var from_date = document.getElementById('from_date').value;
+      var to_date = document.getElementById('to_date').value;
+      var event_date = document.getElementById('event_date').value;
+      var target_event = document.getElementById('target_event_dd').value;
+      var errors = 0;
+
+      sessionStorage.setItem('from_date', from_date);
+      sessionStorage.setItem('to_date', to_date);
+      sessionStorage.setItem('event_date', event_date);
+      sessionStorage.setItem('target_event', target_event);
+
+      data_to_send['from_date'] = from_date;
+      data_to_send['to_date'] = to_date;
+      data_to_send['event_date'] = event_date;
+      data_to_send['target_event'] = target_event;
       data_to_send['pre_period_validation'] = document.getElementById('pre_period_check').checked;
-      data_to_send['uneffectiveness_validation'] = document.getElementById('uneffectiveness_check').checked;
-      data_to_send['uneffectiveness_option'] = document.getElementById('unef_dd').value;
+      data_to_send['unaffectedness_validation'] = document.getElementById('unaffectedness_check').checked;
+      data_to_send['unaffectedness_option'] = document.getElementById('unef_dd').value;
+      data_to_send['matrix_validation'] = document.getElementById('matrix_check').checked;
 
       var data_sources = [];
       var mcc_id_ts = "";
@@ -1372,8 +1560,11 @@
         data_to_send['csv_format'] = csv_data.format;
         data_sources.push(csv_data.format);
       }
+      {% include custom_inc + "_gen_data.html" %}
       document.getElementById('data_to_send').value = JSON.stringify(data_to_send);
     }
+
+    {% include custom_inc + "_create_javascript.html" %}
 
     //General helpers
     function cleanUp() {
@@ -1399,12 +1590,12 @@
         closePopup('no_datasources');
         target_event_dd_change();
       }
-      f_date = document.getElementById('from_date');
-      t_date = document.getElementById('to_date');
-      if (csv_from_date != "" && csv_to_date != "") {
-        f_date.value = csv_from_date;
-        t_date.value = csv_to_date;
-      }
+      // var f_date = document.getElementById('from_date');
+      // var t_date = document.getElementById('to_date');
+      // if (csv_from_date != "" && csv_to_date != "") {
+      //   f_date.value = csv_from_date;
+      //   t_date.value = csv_to_date;
+      // }
       validation();
     }
 
@@ -1428,13 +1619,13 @@
 
     function validation_change() {
       sessionStorage.setItem('val_pre_period_check', document.getElementById('pre_period_check').checked);
-      sessionStorage.setItem('val_unef_check', document.getElementById('uneffectiveness_check').checked);
+      sessionStorage.setItem('val_unef_check', document.getElementById('unaffectedness_check').checked);
       sessionStorage.setItem('val_unef_option', document.getElementById('unef_dd').value);
+      sessionStorage.setItem('val_matrix_check', document.getElementById('matrix_check').checked);
     }
-
     function reset_timer() {
       if (sessionStorage.getItem('timer')) {
-        if ((Date.now() - sessionStorage.getItem('timer')) / 1000 > 6300) { //1h 45 mins
+        if ((Date.now() - sessionStorage.getItem('timer')) / 1000 > 6300) { //6300 = 1h 45 mins
           resetAnalysis(true);
         }
       }
@@ -1452,10 +1643,10 @@
       var target_event = document.getElementById('target_event_dd');
       var errors = 0;
 
-      sessionStorage.setItem('from_date', from_date);
-      sessionStorage.setItem('to_date', to_date);
-      sessionStorage.setItem('event_date', event_date);
-      sessionStorage.setItem('target_event', target_event.value);
+      // sessionStorage.setItem('from_date', from_date);
+      // sessionStorage.setItem('to_date', to_date);
+      // sessionStorage.setItem('event_date', event_date);
+      // sessionStorage.setItem('target_event', target_event.value);
 
       if (from_date == "" || to_date == "" || event_date == "") {
         errors++;
@@ -1485,9 +1676,7 @@
       if (target_event.value == "") {
         errors++;
       }
-      f_date = document.getElementById('from_date').value;
-      t_date = document.getElementById('to_date').value;
-      if ((csv_from_date != "" && csv_to_date != "") && (f_date < csv_from_date || t_date > csv_to_date)) {
+      if ((csv_from_date != "" && csv_to_date != "") && (from_date < csv_from_date || to_date > csv_to_date)) {
         errors++;
         openPopup('csv_date_error');
       }
@@ -1503,20 +1692,21 @@
         closePopup('event_date_error');
       }
 
+      {% include custom_inc + "_validation.html" %}
+
       if (gads_data.length == 0 && ga4_metrics.length == 0) {
         errors++;
       }
 
       if (target_event.length < 3) {
         openPopup('three_metrics_error');
-        document.getElementById('uneffectiveness_check').checked = false;
-        sessionStorage.setItem('val_unef_check', 'false');
-        document.getElementById('uneffectiveness_check').disabled = true;
+        document.getElementById('unaffectedness_check').checked = false;
+        document.getElementById('unaffectedness_check').disabled = true;
         document.getElementById('unef_dd').disabled = true;
       }
       else {
         closePopup('three_metrics_error');
-        document.getElementById('uneffectiveness_check').disabled = false;
+        document.getElementById('unaffectedness_check').disabled = false;
         document.getElementById('unef_dd').disabled = false;
       }
 
@@ -1527,7 +1717,6 @@
       else {
         run_analysis.disabled = true;
       }
-
     }
 
     function confirmBox(title, message, yesCallback, noCallback) {
@@ -1544,14 +1733,6 @@
       openPopup('confirm_box');
     }
 
-    function addDDSpinner(div_id) {
-      document.getElementById(div_id).classList.add('is-loading');
-
-    }
-    function removeDDSpinner(div_id) {
-      document.getElementById(div_id).classList.remove('is-loading');
-    }
-
     document.forms.namedItem('run_analysis_form').addEventListener('submit', function () {
       reset_timer();
       openPopup('loading_modal');
@@ -1562,61 +1743,8 @@
       closePopup('loading_modal');
     }
 
-    if (sessionStorage.getItem('from_date')) { document.getElementById('from_date').value = sessionStorage.getItem('from_date'); }
-    if (sessionStorage.getItem('to_date')) { document.getElementById('to_date').value = sessionStorage.getItem('to_date'); }
-    if (sessionStorage.getItem('event_date')) { document.getElementById('event_date').value = sessionStorage.getItem('event_date'); }
-
-    count = 0;
-    if (sessionStorage.getItem('gads_data')) {
-      gads_data = JSON.parse(sessionStorage.getItem('gads_data'));
-      gads_customer_lkup = JSON.parse(sessionStorage.getItem('gads_customer_lkup'));
-      gads_campaign_lkup = JSON.parse(sessionStorage.getItem('gads_campaign_lkup'));
-      gads_metrics_lkup = JSON.parse(sessionStorage.getItem('gads_metrics_lkup'));
-      mcc_ids = JSON.parse(sessionStorage.getItem('mcc_ids'));
-      _populateMccIds(gads_data.mcc_id);
-      document.getElementById('gads_mcc_id_dd').value = gads_data.mcc_id
-      _renderGoogleAdsDataSourceBoxes();
-      count = +1
-    }
-    if (sessionStorage.getItem('ga4_data')) {
-      ga4_data = JSON.parse(sessionStorage.getItem('ga4_data'));
-      ga4_account_lkup = JSON.parse(sessionStorage.getItem('ga4_account_lkup'));
-      ga4_property_lkup = JSON.parse(sessionStorage.getItem('ga4_property_lkup'));
-      account_ids = JSON.parse(sessionStorage.getItem('account_ids'));
-      _populateGa4Accounts(ga4_data.account);
-      _renderGa4DatasourceBox();
-      count = +1
-    }
-    if (sessionStorage.getItem('csv_data')) {
-      csv_data = JSON.parse(sessionStorage.getItem('csv_data'));
-      csv_metrics = JSON.parse(sessionStorage.getItem('csv_metrics'));
-      csv_from_date = JSON.parse(sessionStorage.getItem('csv_from_date'));
-      csv_to_date = JSON.parse(sessionStorage.getItem('csv_to_date'));
-      document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
-      document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
-      if (sessionStorage.getItem('gsheet_url')) { document.getElementById('gsUrl').value = sessionStorage.getItem('gsheet_url'); }
-
-      if (csv_data.format == "gsheet") {
-        gsheet_option_click();
-      }
-
-      _renderCsvDatasourceBox();
-      count = +1
-    }
-    if (count > 0) { cleanUp(); }
-    _populateGadsMetrics();
-    _populateGa4Metrics();
-
-    document.getElementById('file_upload').addEventListener('change', function (e) {
-      if (e.target.files[0]) {
-        document.getElementById('file_name').textContent = e.target.files[0].name;
-      }
-    });
-
-    if (sessionStorage.getItem('val_pre_period_check')) { document.getElementById('pre_period_check').checked = (sessionStorage.getItem('val_pre_period_check') == "true"); };
-    if (sessionStorage.getItem('val_unef_check')) { document.getElementById('uneffectiveness_check').checked = (sessionStorage.getItem('val_unef_check') == "true"); };
-    if (sessionStorage.getItem('val_unef_option')) { document.getElementById('unef_dd').value = sessionStorage.getItem('val_unef_option'); }
-
+    var intervalId = window.setInterval(function () {
+      reset_timer();
+    }, 5000);
   </script>
-
-  {% include "_footer.html" %}
+  {% include custom_inc+"_footer.html" %}
