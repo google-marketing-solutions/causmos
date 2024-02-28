@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import csv
+from datetime import datetime
 import logging
+import pandas as pd
 
 def get_csv_data(file) -> dict:
   try:
@@ -30,18 +32,32 @@ def get_csv_data(file) -> dict:
 def get_csv_columns(data: dict):
   keys_list = list(data[0].keys())
   date_column = ''
+  string_columns = []
   for key in keys_list:
     if 'date' in key.lower():
       date_column = key
+      keys_list.remove(key)
       break
-  return keys_list, date_column
+  for rows in data:
+    for key in keys_list:
+      if key != date_column:
+        if rows.get(key)=='':
+          rows.update({key: "0"})
+        if not rows.get(key).replace(".", "").isnumeric():
+          string_columns.append(key)
+          keys_list.remove(key)
+  return keys_list, date_column, string_columns
 
-
-def csv_get_date_range(data: dict, date_column: str):
+def csv_get_date_range(data: dict, date_column: str, convert: bool):
   date_list = []
   for item in data:
     if date_column in item:
-      date_list.append(item[date_column])
+      if convert:
+        date_obj = datetime.strptime(item[date_column], "%b %d %Y")
+        item_to_add = date_obj.strftime("%Y-%m-%d")
+      else:
+        item_to_add = item[date_column]
+      date_list.append(item_to_add)
   return min(date_list), max(date_list)
 
 
@@ -62,5 +78,39 @@ def csv_merge_data(csv_data: dict, csv_settings: dict, raw_data: dict) -> dict:
           raw_data[item[csv_settings['date_column']]] = {
               f'csv_{col}': item[col]
           }
-
   return raw_data
+
+
+def bm_merge_data(bm_data:dict, bm_settings: dict, raw_data:dict):
+
+  df = pd.DataFrame.from_dict(bm_data)
+
+  values_to_extract = list(set([val[1] for val in bm_settings['metrics']]))
+  df[values_to_extract] = df[values_to_extract].apply(pd.to_numeric)
+
+  for key in bm_settings['filters']:
+    df = df.loc[(df[key].isin(bm_settings['filters'][key]))]
+
+  fields = [bm_settings['date_column'], bm_settings['cov']]
+  fields.extend(values_to_extract)
+  summed_data = df[fields].groupby([bm_settings['date_column'], bm_settings['cov']])[values_to_extract].sum()
+  summed_data = summed_data.reset_index()
+
+  key_dict = summed_data.to_dict('records')
+ 
+  for item in key_dict:
+    for pairs in bm_settings['metrics']:
+      if get_date_from_str(item[bm_settings['date_column']]) in raw_data:
+        if pairs[0] == item[bm_settings['cov']]:
+          raw_data[get_date_from_str(item[bm_settings['date_column']])].update(
+            {f"bm_{pairs[0]}[{pairs[1]}]": item[pairs[1]]}
+          )
+      else:
+        if pairs[0] == item[bm_settings['cov']]:
+          raw_data[get_date_from_str(item[bm_settings['date_column']])] = (
+            {f"bm_{pairs[0]}[{pairs[1]}]": item[pairs[1]]}
+          )
+  return raw_data
+
+def get_date_from_str(date):
+  return datetime.strptime(date, "%b %d %Y").strftime("%Y-%m-%d")

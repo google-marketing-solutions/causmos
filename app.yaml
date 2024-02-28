@@ -13,7 +13,7 @@
 # limitations under the License.
 
 runtime: python39
-entrypoint: gunicorn -b :$PORT main:app -w 3
+entrypoint: gunicorn -b :$PORT main:app -w 2 --timeout=300
 instance_class: F4_1G
 automatic_scaling:
  min_idle_instances: 1
@@ -27,7 +27,7 @@ handlers:
   secure: always
   redirect_http_response_code: 301
   http_headers:
-    Access-Control-Allow-Origin: http://PROJECT_ID.ew.r.appspot.com/
+    Access-Control-Allow-Origin: https://{PROJECT_ID}.ew.r.appspot.com
     X-Content-Type-Options: nosniff
     X-Frame-Options: SAMEORIGIN
     SESSION_COOKIE_SECURE: true
@@ -42,15 +42,20 @@ handlers:
   secure: always
   redirect_http_response_code: 301
 
+- url: /favicon\.ico
+  static_files: static/favicon.ico
+  upload: static/favicon.ico
+
 inbound_services:
 - warmup
 
-# Put the environment variables into your config.yaml for the Developer token
-# and the Flask secret key like:
-#
-# env_variables:
-#   FLASK_SECRET_KEY: 'SECRET_KEY_VALUE'
-#   GOOGLE_ADS_DEVELOPER_TOKEN: 'DEVELOPER_TOKEN_VALUE'
+env_variables:
+  CUSTOM_INCLUDES: "" #for custom build includes if you want to add your own code. Default is blank
+  BM_DATASOURCE: "" #custom name for any custom includes. Default is blank
+  SLIDE_TEMPLATE: "" #Google Slide template ID for the default template
 
-includes:
-  - config.yaml
+# Add the following secrets to your Google Secrets Manager
+#   client_secret - Upload your client_secret.json file to this
+#   flask_secret_key - The secret key for your Flask instance
+#   developer_token - The developer token found in the API section of your google Ads account
+#   image_bucket - An open bucket for the images to be read externally (add a 1 day TTL) and stored by your service account

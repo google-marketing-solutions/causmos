@@ -14,6 +14,7 @@
 
 
 import datetime
+import re
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from fs_storage import get_value_session
@@ -21,8 +22,9 @@ from flask import session
 from fs_storage import get_value_session
 import json, os
 import logging
+from project_secrets import get_secret
 
-def create_slide(session_id="", slide_id=os.environ.get('SLIDE_TEMPLATE'), client_name="", main_url=""):
+def create_slide(session_id="", slide_id=os.environ.get('SLIDE_TEMPLATE'), client_name="", prepend=False, main_url=""):
     try:
         creds_info = json.loads(get_value_session(session['session_id'], 'credentials'))
     except ValueError as e:
@@ -43,18 +45,26 @@ def create_slide(session_id="", slide_id=os.environ.get('SLIDE_TEMPLATE'), clien
     
     request_data = get_value_session(session_id, 'output_data')
 
+    target_event = request_data['target_event']
+    covariates = request_data['covariates']
+    if prepend:
+        target_event = re.sub(r'^.*?_', '', target_event)
+        covariates = ", ".join([re.sub(r'^.*?_', '', cov) for cov in covariates.split(",")])
+
     to_replace = [
         ['CLIENT_NAME', client_name], 
         ['DATE', datetime.date.today().strftime("%d-%m-%Y")],
-        ['TARGET_EVENT', request_data['target_event']],
-        ['COVARIATES', request_data['covariates']],
+        ['TARGET_EVENT', target_event],
+        ['COVARIATES', covariates],
         ['PREPERIOD-START', request_data['from_date']],
         ['PREPERIOD-END', (datetime.datetime.strptime(request_data['event_date'], "%Y-%m-%d") - datetime.timedelta(days=1)).strftime("%Y-%m-%d")],
         ['POSTPERIOD-START', request_data['event_date']],
         ['POSTPERIOD-END', request_data['to_date']],
         ['P_VALUE', request_data['p_value']],
         ['INCR_ACTIONS', request_data['tot_inc']],
-        ['RELATIVE_EFFECT', request_data['rel_eff']]
+        ['RELATIVE_EFFECT', request_data['rel_eff']],
+        ['SUMMARY', request_data['summary']],
+        ['REPORT', request_data['report']]
     ]
     requests = []
     for label in to_replace:
@@ -84,7 +94,7 @@ def create_slide(session_id="", slide_id=os.environ.get('SLIDE_TEMPLATE'), clien
     add_img = {
             "createImage": {
             "objectId": "my_id",
-            "url": f"https://storage.googleapis.com/{os.environ.get('IMAGE_BUCKET')}/{request_data['image_name']}",
+            "url": f"https://storage.googleapis.com/{get_secret('image_bucket')}/{request_data['image_name']}",
             "elementProperties": {
                 "pageObjectId": page_id,
                 'size': {

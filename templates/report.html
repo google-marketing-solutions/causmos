@@ -74,14 +74,30 @@
             </div>
           </div>
           {% endif %}
-
           {% if auth_slides=="true" %}
-          <button class="button is-light float-right" onclick="exportData();">
-            <span class="material-symbols-outlined icon">
-              present_to_all
-            </span>
-            <span>Export To Slides</span>
-          </button>
+          <div class="dropdown float-right">
+            <div class="dropdown-trigger">
+              <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
+                <span class="material-symbols-outlined icon icon">
+                  share_windows
+                </span>
+                <span>Export to...</span>
+                <span class="material-symbols-outlined icon">
+                  arrow_drop_down
+                </span>
+              </button>
+            </div>
+            <div class="dropdown-menu" id="dropdown-menu" role="menu">
+              <div class="dropdown-content">
+                <a id="v3_linkl" href="#" onclick="exportData();" class="dropdown-item">
+                  Slides
+                </a>
+                <a id="v3_linkl" href="#" onclick="jsonToCsv();" class="dropdown-item">
+                  CSV
+                </a>
+              </div>
+            </div>
+          </div>
           {% endif %}
         </div>
         <p class="hr-tag"></p>
@@ -108,6 +124,9 @@
         <br><br>
 
         <h4 class="title is-4">Plotted Results</h4>
+        <script>
+          var main_spec;
+        </script>
         {{chart|safe}}
         <br><br>
 
@@ -178,7 +197,8 @@
         <p id="confirm_title" class="modal-card-title">Pre-Period Validation</p>
       </header>
       <section class="modal-card-body">
-        Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of the
+        Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of
+        the
         date range as a new pre and post-period to confirm if there are any natural causal impact during the period
         before the target event happened.
         <br><br>
@@ -254,8 +274,11 @@
         <p id="confirm_title" class="modal-card-title">Correlation Matrix Validation</p>
       </header>
       <section class="modal-card-body">
-        Correlation Matrix Validation correlates the first 10 covariates (including the target event) against each other to
-        understand the linear relationship between each pair of covariates. High values indicate strong linear relationship
+        Correlation Matrix Validation correlates the first 10 covariates (including the target event) against each
+        other
+        to
+        understand the linear relationship between each pair of covariates. High values indicate strong linear
+        relationship
         between two covariates where a low value indicates a poor linear relationship.
         <br><br>
         {{v3_matrix|safe}}
@@ -276,7 +299,7 @@
     <div class="modal-background"></div>
     <div class="modal-card">
       <header class="modal-card-head">
-        <p id="confirm_title" class="modal-card-title">Export</p>
+        <p id="confirm_title" class="modal-card-title">Export To Slides</p>
       </header>
       <section class="modal-card-body">
         <div class="columns align-middle">
@@ -339,12 +362,21 @@
               {{P_VALUE}} - The P Value calculated by the analysis<br>
               {{INCR_ACTIONS}} - The total incremental target events since the event date<br>
               {{RELATIVE_EFFECT}} - The percentage relative effect</br>{% endraw %}<br>
+              {{SUMMARY}} - The summary information
+              {{REPORT}} - The detailed report text
 
               For the chart, you must create a box shape for the size and position you want the chart and add the
               description CHART to it under alt text
             </span>
           </div>
         </div>
+        <div>
+          <label class="checkbox align-left">
+            <input id="slide_prepended" type="checkbox">
+            Remove prepended metric labels (cvs_, gads_, ga4_, bm_)
+          </label>
+        </div>
+        <br>
         <button id="export_to_slides" onclick="exportToSlides();" class="button is-success">
           <span class="material-symbols-outlined icon">
             present_to_all
@@ -357,8 +389,10 @@
         </span>
         <span id="created_slide" class="is-hidden">
           <span class="success">
-            Slides successfully created! The slides are available with the link below or visit <a href='https://slides.google.com'
-              target='_blank'>https://slides.google.com</a> to view this and previously generated ones.
+            Slides successfully created! The slides are available with the link below or visit <a
+              href='https://slides.google.com' target='_blank'>https://slides.google.com</a> to view this and
+            previously
+            generated ones.
           </span>
           <br>
           <span id="slide_link"></span>
@@ -445,12 +479,15 @@
     }
 
     function exportToSlides() {
-      {% include custom_inc+"_slide_tracker.html" %}
+      {% if (custom_inc == "internal") %}
+      gtag('event', 'generate_slide', {});
+      {% endif %}
       addDDSpinner('export_to_slides');
       document.getElementById('created_slide').classList.add('is-hidden');
       document.getElementById('loading_slides').classList.remove('is-hidden');
       document.getElementById('created_slide_error').classList.add('is-hidden');
       temp_id = document.getElementById('template_id').value;
+      prepend = document.getElementById('slide_prepended').checked;
       var client_name = document.getElementById('client_name').value;
       if (client_name == "") {
         document.getElementById('client_name_error').classList.remove('is-hidden');
@@ -458,7 +495,7 @@
       }
       else {
         document.getElementById('client_name_error').classList.add('is-hidden');
-        const api_url = "/_create_slide?client_name=" + client_name + "&temp_id=" + temp_id;
+        const api_url = "/_create_slide?client_name=" + client_name + "&temp_id=" + temp_id + "&prepend="+prepend;
         fetch(api_url)
           .then(response => response.json())
           .then(data => {
@@ -477,6 +514,35 @@
             }
           });
       }
+    }
+
+    function jsonToCsv() {
+      var all_data = main_spec["datasets"];
+      var first = true;
+      var csv;
+      var headerString;
+      var rowItems;
+      for (var set in all_data) {
+        var items = main_spec["datasets"][set];
+        const header = Object.keys(items[0]);
+        headerString = header.join(',');
+        const replacer = (key, value) => value ?? '';
+        rowItems = items.map((row) =>
+          header
+            .map((fieldName) => JSON.stringify(row[fieldName], replacer))
+            .join(',')
+        );
+      }
+      csv = [headerString, ...rowItems].join('\r\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "data.csv";
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     function reset_timer() {

@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json, os
+import json
 import textwrap
 from flask import session
 from google.ads.googleads.client import GoogleAdsClient
 from fs_storage import get_value_session
 import logging
-
+from project_secrets import get_secret
 
 def get_gads_client(mcc_id: str) -> GoogleAdsClient:
     try:
@@ -27,7 +27,7 @@ def get_gads_client(mcc_id: str) -> GoogleAdsClient:
         logging.exception(e)
         return f"Error: Session Expired"
     creds = {
-            "developer_token": os.environ["GOOGLE_ADS_DEVELOPER_TOKEN"],
+            "developer_token": get_secret("developer_token"),
             "refresh_token": main_creds["refresh_token"],
             "client_id": main_creds["client_id"],
             "client_secret": main_creds["client_secret"],

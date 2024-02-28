@@ -19,8 +19,13 @@ from fs_storage import get_value_session
 from flask import session
 import logging
 
-def get_raw_gsheet_data(sheet_id):
+def get_raw_gsheet_data(sheet_id, sheet_name=""):
   sheet_err=['error']
+  if sheet_name:
+     sheet_range = f"'{sheet_name}'!A:ZZ"
+  else:
+     sheet_range = "A:ZZ"
+
   try:
     creds_info = json.loads(get_value_session(session['session_id'], 'credentials'))
   except ValueError as e:
@@ -35,21 +40,23 @@ def get_raw_gsheet_data(sheet_id):
   sheet = service.spreadsheets()
   result = (
       sheet.values()
-      .get(spreadsheetId=sheet_id, range="A:ZZ")
+      .get(spreadsheetId=sheet_id, range=sheet_range)
       .execute()
   )
   values = result.get("values", [])
   final_gsheet = []
 
   headers = values.pop(0)
+  header_count = len(headers)
+
   for row in values:
       temp_data = {}
+      if len(row) is not header_count:
+        row.append('0')
       for inx, item in enumerate(headers):
-          temp_data[item] = row[inx]
+        if row[inx]=='':
+           row[inx]='0'
+        temp_data[item] = row[inx].replace(",", "")
       final_gsheet.append(temp_data)
       
   return final_gsheet
-
-  
-
-

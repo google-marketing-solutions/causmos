@@ -19,6 +19,23 @@ body {
   text-align: center;
 }
 
+.foot {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #EEE;
+  font-size: 10px;
+  padding: 11px; 
+  text-align: center;
+}
+
+
+.hr-tag {
+  border-bottom: 1px solid #aaa;
+  padding-bottom: 20px;
+  margin-bottom: 20px
+}
+
 .main-window {
   width: 1000px;
   background-color: #FFF;
@@ -34,6 +51,9 @@ body {
 .align-right {
   text-align: right;
 }
+.align-center-text {
+  text-align: center;
+}
 .align-center {
   margin: 0 auto;
 }
@@ -41,6 +61,19 @@ body {
 .align-middle {
   display : flex;
   align-items : center;
+}
+
+.slider-width
+{
+    width: 300px !important;
+}
+
+.slider-number {
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background-color: #07d;
+  padding: 5px;
 }
 
 .file-button {
@@ -58,7 +91,6 @@ body {
   border-radius: 5px;
   border-color: #ddd;
   margin: 5px 5px 5px 5px;
-  height: 400px;
 }
 
 .final-datasource {
@@ -90,6 +122,11 @@ body {
   font-style: italic;
 }
 
+.loading {
+  font-size: 14px;
+  font-style: italic;
+}
+
 .raw-data {
   text-align: center;
 }
@@ -103,6 +140,15 @@ body {
   height: 10px;
   padding: 5px;
   font-weight: normal;
+}
+
+.bordered-table td,
+.bordered-table th,
+.bordered-table tr {
+  height: 10px;
+  padding: 5px;
+  font-weight: normal;
+  border:1px solid #aaa;
 }
 
 
@@ -152,6 +198,7 @@ body {
   margin-left: -200px;
   opacity: 0;
   transition: opacity 0.3s;
+  padding: 3px;
 }
 
 .tooltip .tooltiptext::after {
@@ -168,4 +215,54 @@ body {
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
+}
+
+.success {
+  color: #73bd42;
+  font-weight:bold;
+  font-size: 12px;
+}
+.error {
+  color: red;
+  font-weight:bold;
+  font-size: 9px;
+}
+
+.main-info {
+  background-color: #EEE;
+  font-size: 10px;
+  padding: 11px;
+  text-align: center;
+}
+.opp {
+  font-size: 11px;
+}
+
+.banner {
+  background-color: #EEE;
+  color: #000;
+  font-size: 10px;
+  padding: 11px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.header {
+  font-size: 36px;
+  font-weight: bold;
+  text-align: center;
+  display : flex;
+  align-items : center;
+  justify-content: center;
+}
+
+.beta {
+  color: red;
+  font-weight: bold;
+  font-size: 0.3em;
+  vertical-align: super;
+}
+
+.date-picker {
+  width: 50px;
 }

@@ -32,9 +32,14 @@
                 Google Analytics 4
               </a>
               {% endif %}
-              <a id="csc_link" href="#" onclick="addCsvDatasource();" class="dropdown-item">
+              <a id="csv_link" href="#" onclick="addCsvDatasource();" class="dropdown-item">
                 CSV{% if auth_sheets=="true" %} & Google Sheet{% endif %}
               </a>
+              {% if (custom_inc == "internal" and auth_sheets=="true") %}
+              <a id="bm_link" href="#" onclick="addBmDatasource();" class="dropdown-item">
+                {{bm_name}} Data
+              </a>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -47,36 +52,43 @@
             export your results to Slides automatically.
           </span>
         </div>
-        <a href="oauth">
-          {% if auth_adwords=="false" and auth_analytics=="false" and auth_sheets=="false" and auth_slides=="false"
-          %}
-          <button class="button is-info float-right">
+        <div class="float-right">
+          <button class="button is-light" onclick="showAdvancedOptions();">
             <span class="material-symbols-outlined icon">
-              account_circle
-            </span>
-            <span>
-              Sign In
-            </span>
-            {% elif auth_adwords=="false" or auth_analytics=="false" or auth_sheets=="false" or auth_slides=="false"
+              settings
+            </span> <span>Settings</span>
+          </button>
+          <a href="oauth">
+            {% if auth_adwords=="false" and auth_analytics=="false" and auth_sheets=="false" and auth_slides=="false"
             %}
-            <button class="button is-info float-right">
+            <button class="button is-info">
               <span class="material-symbols-outlined icon">
                 account_circle
               </span>
               <span>
-                Partially Signed In
+                Sign In
               </span>
-              {% else %}
-              <button class="button is-light float-right">
+              {% elif auth_adwords=="false" or auth_analytics=="false" or auth_sheets=="false" or auth_slides=="false"
+              %}
+              <button class="button is-info">
                 <span class="material-symbols-outlined icon">
-                  verified
+                  account_circle
                 </span>
                 <span>
-                  Fully Signed In
+                  Partially Signed In
                 </span>
-                {% endif %}
-              </button>
-        </a>
+                {% else %}
+                <button class="button is-light">
+                  <span class="material-symbols-outlined icon">
+                    verified
+                  </span>
+                  <span>
+                    Fully Signed In
+                  </span>
+                  {% endif %}
+                </button>
+          </a>
+        </div>
         <div id="final_gads" class="is-hidden final-datasource">
           <div><strong>Google Ads Datasource</strong>
             <div class="float-right">
@@ -130,6 +142,25 @@
           <div id="final_csv_details"></div>
         </div>
 
+        {% if (custom_inc == "internal") %}
+        <div id="final_bm" class="is-hidden final-datasource">
+          <div><strong>{{bm_name}} Datasource</strong>
+            <div class="float-right">
+              <button class="button is-info" onclick="addBmDatasource();">
+                <span class="material-symbols-outlined icon">
+                  edit
+                </span>
+              </button>
+              <button class="button is-danger" onclick="deleteBmDatasource();">
+                <span class="material-symbols-outlined icon">
+                  delete_forever
+                </span>
+              </button>
+            </div>
+          </div>
+          <div id="final_bm_details"></div>
+        </div>
+        {% endif %}
 
         <div id="no_datasources" class="final-datasource">
           <i>There are no datasources currently added</i>
@@ -138,19 +169,62 @@
 
           <div class="columns align-middle">
             <div class="column is-narrow">
+              <label for="target_event_dd">Target Event</label>
+              <div class="tooltip float-right">
+                <span class="material-symbols-outlined is-small">
+                  help
+                </span>
+                <span class="tooltiptext">Target Event is the main event your want to model your causal impact again.
+                  e.g. sales, conversions or revenue.
+                </span>
+              </div><br>
+              <div id="target_event_div" class="select">
+                <select class="dd-width" id="target_event_dd" onchange="target_event_dd_change();">
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="columns align-middle">
+            <div class="column is-one-fifth">
               <label for="from_date">Date From</label>
+              <div class="tooltip float-right">
+                <span class="material-symbols-outlined is-small">
+                  help
+                </span>
+                <span class="tooltiptext">Date From is the beginning of your data period, also known as the first day of
+                  your 'Pre-Period'
+                </span>
+              </div>
+              <input id="from_date" class="input date-picker" type="date" onchange="validation();">
+              <div id="from_date_label" class="info float-right"></div>
             </div>
+            <div class="column is-one-fift info align-center-text">← Pre-period →</div>
             <div class="column is-one-fifth">
-              <div id="from_date_label" class="info"></div>
-              <input id="from_date" class="input" type="date" onchange="validation();">
+              <label for="event_date">Event Date</label>
+              <div class="tooltip float-right">
+                <span class="material-symbols-outlined is-small">
+                  help
+                </span>
+                <span class="tooltiptext">Event Date to is when your event/change started, also known as the first day
+                  of your 'Post-Period'
+                  and also defines your 'Pre-Period' last day minus 1
+                </span>
+              </div>
+              <input id="event_date" class="input" type="date" onchange="validation();">
             </div>
-            <div class="column is-narrow"></div>
-            <div class="column is-narrow">
+            <div class="column is-one-fift info align-center-text">← Post-period →</div>
+            <div class="column is-one-fifth">
               <label for="to_date">Date To</label>
-            </div>
-            <div class="column is-one-fifth">
-              <div id="to_date_label" class="info"></div>
+              <div class="tooltip float-right">
+                <span class="material-symbols-outlined is-small">
+                  help
+                </span>
+                <span class="tooltiptext">Date To to is the end of your data period, also known as the last date of your
+                  'Post-Period'
+                </span>
+              </div>
               <input id="to_date" class="input" type="date" onchange="validation();">
+              <div id="to_date_label" class="info float-right"></div>
             </div>
             <div class="column">
               <span id='date_error' class="tag is-danger is-hidden">
@@ -160,12 +234,14 @@
                 Date From must be before Date To
               </span>
             </div>
+          </div>
+          <div class="columns align-middle">
             <div class="column">
               <span id='csv_date_error' class="tag is-danger is-hidden">
                 <span class="material-symbols-outlined">
                   warning
                 </span>
-                When using CSV, selected dates must be in the CSV data
+                <span id="csv_date_error_msg"></span>
               </span>
               <span id='date_3_days' class="tag is-danger is-hidden">
                 <span class="material-symbols-outlined">
@@ -173,28 +249,6 @@
                 </span>
                 There must be at least 3 days between From date and Event date
               </span>
-            </div>
-          </div>
-
-
-          <div class="columns align-middle">
-            <div class="column is-narrow">
-              <label for="event_date">Event Date</label>
-            </div>
-            <div class="column is-one-fifth">
-              <input id="event_date" class="input" type="date" onchange="validation();">
-            </div>
-            <div class="column is-narrow"></div>
-            <div class="column is-narrow">
-              <label for="target_event_dd">Target Event</label>
-            </div>
-            <div class="column is-one-fifth">
-              <div id="target_event_div" class="select">
-                <select class="dd-width" id="target_event_dd" onchange="target_event_dd_change();">
-                </select>
-              </div>
-            </div>
-            <div class="column">
               <span id='event_date_error' class="tag is-danger is-hidden">
                 <span class="material-symbols-outlined">
                   warning
@@ -257,7 +311,7 @@
                   date period as your original Causal Impact analysis.
                   <br>
                   <br>
-                  Requires at least 3 Metrics to be selected in your data sources
+                  Requires at least 3 metrics to be available in your data sources
                 </span>
               </div>
               <div id="target_event_div" class="select">
@@ -267,7 +321,34 @@
             </div>
           </div>
         </div>
-        {% include custom_inc+"_presubmit.html" %}
+
+        {% if (custom_inc == "internal") %}
+        <div class="align-right single-level final-datasource">
+          <div class="columns align-middle">
+            <div class="column is-three-fifths">
+              <span class="opp">
+                Please enter your Opportunity ID from Connect Sales if you have one for this client/project. They help
+                us track the usage of these tools and allow us to continue to work on them. If you do not have an
+                Opportunity ID, then you can check the "I don't have an Opportunity ID" checkbox to skip it.
+              </span>
+            </div>
+            <div class="column is-narrow">
+              <span class="material-symbols-outlined">
+                arrow_forward_ios
+              </span>
+            </div>
+            <div class="column is-one-fith align-center-text">
+              <div class="align-middle align-center-text">
+                <label for="op_id">Opportunity ID</label>&nbsp
+                <input id="op_id" style="width: 200px;" class="input" type="text" onchange="validation();">
+              </div>
+              <label class="checkbox">
+                <input id="testing_only" type="checkbox" onchange="opp_validation();">
+                I don't have an Opportunity ID</label>
+            </div>
+          </div>
+        </div>
+        {% endif %}
         <div class="align-right single-level">
           <span id='three_metrics_error' class="tag is-warning is-hidden">
             <span class="material-symbols-outlined">
@@ -365,7 +446,7 @@
             <div class="level">
               <div class="level-item has-text-centered">
                 <div>
-                  <label for="gads_metric_dd" class="label">Metric</label>
+                  <label for="gads_metric_dd" class="label">Variable</label>
                   <div class="select">
                     <select class="dd-width" onchange="" id="gads_metric_dd">
                     </select>
@@ -384,7 +465,7 @@
               </div>
             </div>
             <div class="level">
-              Selected Metrics
+              Selected Variable(s)
             </div>
             <div class="level">
               <div id="gads_metrics_boxes" class="align-left"></div>
@@ -448,7 +529,7 @@
             <div class="level">
               <div class="level-item is-narrow">
                 <div>
-                  <label for="ga4_metric_dd" class="label">Metric</label>
+                  <label for="ga4_metric_dd" class="label">Variable</label>
                   <div class="select">
                     <select class="dd-width" onchange="" id="ga4_metric_dd">
                     </select>
@@ -465,7 +546,7 @@
               </div>
             </div>
             <div class="level">
-              Selected Metrics
+              Selected Variable(s)
             </div>
             <div class="level">
               <div id="ga4_metrics_boxes" class="align-left"></div>
@@ -594,7 +675,7 @@
               <div>
                 <label for="csv_date_dd" class="label">Date Column</label>
                 <div class="select">
-                  <select class="dd-width" id="csv_date_dd" onchange="checkDateColumn();">
+                  <select class="dd-width" id="csv_date_dd">
                   </select>
                 </div>
               </div>
@@ -602,7 +683,7 @@
             <div class="level">
               <div class="level-item is-narrow">
                 <div>
-                  <label for="csv_metric_dd" class="label">Metric</label>
+                  <label for="csv_metric_dd" class="label">Variable</label>
                   <div class="select">
                     <select class="dd-width" id="csv_metric_dd">
                     </select>
@@ -621,12 +702,18 @@
                     </span>
                     <span>Add All</span>
                   </button>
+                  <button id="clear_all_csv_metric" onclick="clearAllCsvMetric();" class="button is-danger is-light">
+                    <span class="material-symbols-outlined icon">
+                      delete_forever
+                    </span>
+                    <span>Clear All</span>
+                  </button>
                 </div>
               </div>
             </div>
             <div class="level">
               <div>
-                <span id='ds' class='tag'></span> Selected Metrics
+                <span id='ds' class='tag'></span> Selected Variable(s)
               </div>
             </div>
             <div class="level">
@@ -643,6 +730,285 @@
           <span>Save Datasource</span>
         </button>
         <button onclick="cancelCsvDatastore();" class="button">
+          <span>Cancel</span>
+          <span class="material-symbols-outlined icon">
+            cancel
+          </span>
+        </button>
+      </footer>
+    </div>
+  </div>
+  {% if (custom_inc == "internal") %}
+  <div id="bm_datasource_tab" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">
+          {{bm_name}} Datasource</p>
+      </header>
+      <section class="modal-card-body">
+        <div class="columns">
+          <div class="column is-one-fifth">
+            Datasource
+          </div>
+          <div class="column is-one-fifth">
+            <span id="bm_option_span" class="tag is-danger">{{bm_name}}</span>
+          </div>
+        </div>
+        <div id="bm_option">
+          <div class="columns">
+            <div class="column is-one-fifth"><label for="bmUrl">Google Sheet URL or ID</label><br>
+              <br>
+              <span id='bm_upload_error' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                <span id="bm_upload_error_msg"></span>
+              </span>
+            </div>
+            <div class="column is-three-fifths"><input class="input" type="text" id="bmUrl">
+            </div>
+            <div class="column is-one-fifth"><button id="getBmSheet" class="button is-info" onclick="uploadBm();">
+                <span class="material-symbols-outlined icon">
+                  download
+                </span>
+                <span>Get Sheet</span>
+              </button>
+            </div>
+          </div>
+          <div class="columns">
+            <div class="column is-full">
+              <div id="bm_url_email" class="info">
+                The sheet with the {{bm_name}} data in it must be named 'Data Breakdown'
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="bm_options" class="columns is-hidden">
+          <div class="column rounded-outline">
+            <div class="level">
+              <div id="bm_datasource_box"></div>
+            </div>
+            <div class="level">
+              <div class="level-item is-narrow ">
+                <div class="single-level">
+                  <label for="bm_date_dd" class="label">Date Column</label>
+                  <div class="select">
+                    <select class="dd-width" id="bm_date_dd">
+                    </select>
+                  </div>
+                </div>
+                <div class="single-level">
+                  <label for="bm_covariates_dd" class="label">Variable List
+                    <div class="tooltip float-right">
+                      <span class="material-symbols-outlined is-small">
+                        help
+                      </span>
+                      <span class="tooltiptext">This is the column that has your response variables or query sets
+                        in it. Causmos will take the values from this column and convert them to response variables
+                        for you to use as a target event or covariates
+                      </span>
+                    </div>
+                  </label>
+                  
+                  <div class="select">
+                    <select class="dd-width" id="bm_covariates_dd" onchange="bmCovChanged();">
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="level">
+              <div class="level-item is-narrow">
+                <div class="single-level">
+                  <label for="bm_metric_dd" class="label">Variable
+                    <div class="tooltip float-right">
+                      <span class="material-symbols-outlined is-small">
+                        help
+                      </span>
+                      <span class="tooltiptext">This are the variables you want to use as your target event or
+                        covariates
+                      </span>
+                    </div>
+                  </label>
+                  <div class="select" id="bm_metric_div">
+                    <select class="dd-width" id="bm_metric_dd">
+                    </select>
+                  </div>
+                </div>
+                <div class="single-level">
+                  <label for="bm_value_dd" class="label">Metric To Use
+                    <div class="tooltip float-right">
+                      <span class="material-symbols-outlined is-small">
+                        help
+                      </span>
+                      <span class="tooltiptext">This is the metric from the columns in your sheet that you want to
+                        use as the metric for your selected variable. Causmos will take the variable name and this
+                        metric and create a new column for your to use as a target event or covariate
+                      </span>
+                    </div>
+                  </label>
+                  <div class="select" id="bm_numbers_div">
+                    <select class="dd-width" id="bm_value_dd">
+                    </select>
+                  </div>
+                </div>
+                <div class="single-level">
+                  <button id="add_bm_metric" onclick="addBmMetric();" class="button is-info">
+                    <span class="material-symbols-outlined icon">
+                      add_box
+                    </span>
+                    <span>Add</span>
+                  </button>
+                  <button id="add_all_bm_metric" onclick="addAllBmMetric();" class="button is-info is-light">
+                    <span class="material-symbols-outlined icon">
+                      add_box
+                    </span>
+                    <span>Add All</span>
+                  </button>
+                  <button id="clear_all_bm_metric" onclick="clearAllBmMetric();" class="button is-danger is-light">
+                    <span class="material-symbols-outlined icon">
+                      delete_forever
+                    </span>
+                    <span>Clear All</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="level">
+              <div>
+                Selected Variables (Metric)
+              </div>
+            </div>
+            <div class="level">
+              <div id="bm_metrics_boxes" class="align-left"></div>
+            </div>
+            <hr>
+            <div class="level">
+              <div class="level-item is-narrow ">
+                <div class="single-level">
+                  <label for="bm_filter_column_dd" class="label">Filter Column
+                    <div class="tooltip float-right">
+                      <span class="material-symbols-outlined is-small">
+                        help
+                      </span>
+                      <span class="tooltiptext">You can filter your data by any text based column. If you add
+                        multiple filter columns, these will be treated as AND statements (as in both must be found
+                        in the row of data to be included)
+                      </span>
+                    </div>
+                  </label>
+                  <div class="select">
+                    <select class="dd-width" id="bm_filter_column_dd" onchange="bmFilterColumnChange();">
+                    </select>
+                  </div>
+                </div>
+                <div class="single-level">
+                  <label for="bm_filter_value_dd" class="label">Filter Value
+                    <div class="tooltip float-right">
+                      <span class="material-symbols-outlined is-small">
+                        help
+                      </span>
+                      <span class="tooltiptext">This is the value of the filter column you want to specify. If you
+                        select multiple values, these will be treated as OR statements (as rows cannot have more
+                        than one value each)
+                      </span>
+                    </div>
+                  </label>
+                  <div class="select" id="bm_filter_div">
+                    <select class="dd-width" id="bm_filter_value_dd">
+                    </select>
+                  </div>
+                </div>
+                <div class="single-level">
+                  <button id="bm_add_filter" onclick="addBmFilter();" class="button is-info">
+                    <span class="material-symbols-outlined icon">
+                      add_box
+                    </span>
+                    <span>Add</span>
+                  </button>
+                  <button id="clear_all_bm_filters" onclick="clearAllBmFilters();" class="button is-danger is-light">
+                    <span class="material-symbols-outlined icon">
+                      delete_forever
+                    </span>
+                    <span>Clear All</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="level">
+              <div>
+                Applied Filters
+              </div>
+            </div>
+            <div class="level">
+              <div id="bm_filters_boxes" class="align-left"><span class='tag is-dark'>All data</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <footer class="modal-card-foot">
+        <button id="bm_save_button" onclick="saveBmDatasource();" class="button is-success">
+          <span class="material-symbols-outlined icon">
+            save
+          </span>
+          <span>Save Datasource</span>
+        </button>
+        <button onclick="cancelBmDatastore();" class="button">
+          <span>Cancel</span>
+          <span class="material-symbols-outlined icon">
+            cancel
+          </span>
+        </button>
+      </footer>
+    </div>
+  </div>
+  {% endif %}
+  <div id="advanced_options" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Advanced Settings</p>
+      </header>
+      <section class="modal-card-body align-left">
+        <br><br><br><br><br>
+        <label>Credibility Interval</label>
+        <div class="slidecontainer">
+          <input type="range" min="80" max="95" value="95" step="5" class="slider slider-width" list="steplist"
+            id="credibility_slider" onchange="credibilitySliderChange();">
+          <datalist id="steplist">
+            <option>80</option>
+            <option>85</option>
+            <option>90</option>
+            <option>95</option>
+          </datalist>
+          <span class="slider-number" id="credibility_slider_value"></span>
+          <div class="tooltip">
+            <span class="material-symbols-outlined is-small">
+              help
+            </span>
+            <span class="tooltiptext">A credibility interval is commonly used in Bayesian statistics. It represents a
+              range of values for a parameter that are considered plausible
+              given both an initial assumption (our “prior” for what we expect the effect to be) and the observed
+              data.
+              Unlike confidence intervals, Bayesian credibility intervals
+              account for both the uncertainty in the data and the uncertainty in the prior information. Default is
+              95%
+              and this should only be adjusted if you know what it does.
+            </span>
+          </div>
+        </div>
+        <br><br><br><br><br>
+      </section>
+      <footer class="modal-card-foot">
+        <button id="save_advanced_options" onclick="saveAdvancedOptions();" class="button is-success">
+          <span class="material-symbols-outlined icon">
+            save
+          </span>
+          <span>Save</span>
+        </button>
+        <button onclick="cancelAdvancedOptions();" class="button">
           <span>Cancel</span>
           <span class="material-symbols-outlined icon">
             cancel
@@ -717,6 +1083,11 @@
       "userEngagementDuration": "Time on Site"
     };
 
+    //Global variables
+    var x_from_date = "";
+    var x_to_date = "";
+    var is_date_error = false;
+
     //CSV global variables
     var csv_data = { 'date_column': "", 'metrics': [], 'format': "" };
     var tmp_csv_data = {};
@@ -724,6 +1095,21 @@
     var csv_from_date = "";
     var csv_to_date = "";
     var csv_items_loaded = false;
+
+    {% if (custom_inc == "internal") %}
+    //BM global variables
+    var bm_data = { 'date_column': "", 'metrics': [] };
+    bm_data.filters = {};
+    var tmp_bm_data = {};
+    var bm_numbers = [];
+    var bm_metrics = [];
+    var bm_filter_col = [];
+    var bm_filters = [];
+    var bm_strings = [];
+    var bm_from_date = "";
+    var bm_to_date = "";
+    var bm_items_loaded = false;
+    {% endif %}
 
     count = 0;
     if (sessionStorage.getItem('gads_data')) {
@@ -751,8 +1137,7 @@
       csv_metrics = JSON.parse(sessionStorage.getItem('csv_metrics'));
       csv_from_date = JSON.parse(sessionStorage.getItem('csv_from_date'));
       csv_to_date = JSON.parse(sessionStorage.getItem('csv_to_date'));
-      document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
-      document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
+      _showMinMaxDates();
       if (sessionStorage.getItem('gsheet_url')) { document.getElementById('gsUrl').value = sessionStorage.getItem('gsheet_url'); }
 
       if (csv_data.format == "gsheet") {
@@ -762,6 +1147,19 @@
       _renderCsvDatasourceBox();
       count = +1
     }
+    {% if (custom_inc == "internal") %}
+    if (sessionStorage.getItem('bm_data')) {
+      bm_data = JSON.parse(sessionStorage.getItem('bm_data'));
+      bm_metrics = JSON.parse(sessionStorage.getItem('bm_metrics'));
+      bm_numbers = JSON.parse(sessionStorage.getItem('bm_numbers'));
+      bm_strings = JSON.parse(sessionStorage.getItem('bm_strings'));
+      bm_from_date = JSON.parse(sessionStorage.getItem('bm_from_date'));
+      bm_to_date = JSON.parse(sessionStorage.getItem('bm_to_date'));
+      if (sessionStorage.getItem('bm_url')) { document.getElementById('bmUrl').value = sessionStorage.getItem('bm_url'); }
+      _renderBmDatasourceBox();
+      count = +1
+    }
+    {% endif %}
     if (count > 0) { cleanUp(); }
     _populateGadsMetrics();
     _populateGa4Metrics();
@@ -771,7 +1169,8 @@
         document.getElementById('file_name').textContent = e.target.files[0].name;
       }
     });
-
+    if (sessionStorage.getItem('x_from_date')) { x_from_date = sessionStorage.getItem('x_from_date'); }
+    if (sessionStorage.getItem('x_to_date')) { x_to_date = sessionStorage.getItem('x_to_date');  _showMinMaxDates(); }
     if (sessionStorage.getItem('val_unef_check')) { document.getElementById('unaffectedness_check').checked = (sessionStorage.getItem('val_unef_check') == "true"); }
     if (sessionStorage.getItem('val_unef_option')) { document.getElementById('unef_dd').value = sessionStorage.getItem('val_unef_option'); }
     if (sessionStorage.getItem('val_matrix_check')) { document.getElementById('matrix_check').checked = (sessionStorage.getItem('val_matrix_check') == "true"); }
@@ -779,6 +1178,7 @@
     if (sessionStorage.getItem('to_date')) { document.getElementById('to_date').value = sessionStorage.getItem('to_date'); }
     if (sessionStorage.getItem('event_date')) { document.getElementById('event_date').value = sessionStorage.getItem('event_date'); }
     if (sessionStorage.getItem('val_pre_period_check')) { validation(); document.getElementById('pre_period_check').checked = (sessionStorage.getItem('val_pre_period_check') == "true"); }
+    if (sessionStorage.getItem('credibility')) { document.getElementById('credibility_slider').value = sessionStorage.getItem('credibility'); }
 
     //Google Ads code
     function addGoogleAdsDatasource() {
@@ -1000,7 +1400,7 @@
         final_gads_details.innerHTML += "<br>"
       }
 
-      final_gads_details.innerHTML += "<br>Metric(s)<br>";
+      final_gads_details.innerHTML += "<br>Variable(s)<br>";
       gads_data.metrics.forEach((metric) => {
         final_gads_details.innerHTML += "<span class='tag is-info'>" + gads_metrics_lkup[metric] + "</span> ";
       });
@@ -1171,7 +1571,7 @@
 
       ga4_data.metrics.forEach((item) => {
         ga4_metrics_boxes.innerHTML += "<span class='tag is-info'>" + ga4_metrics_lkup[item] + "<button onClick='deleteGa4Metric(\"" + item + "\");' class='delete is-small'></button></span> ";
-      })
+      });
     }
 
     function deleteGa4Metric(metric) {
@@ -1211,7 +1611,7 @@
       const final_ga4_details = document.getElementById('final_ga4_details');
       final_ga4_details.innerHTML = "Account and Property<br>";
       final_ga4_details.innerHTML += "<span class='tag is-info'>" + ga4_account_lkup[ga4_data.account] + "</span> <span class='tag is-info is-light'>" + ga4_property_lkup[ga4_data.property] + "</span><br><br>";
-      final_ga4_details.innerHTML += "Metric(s)<br>";
+      final_ga4_details.innerHTML += "Variable(s)<br>";
 
       ga4_data.metrics.forEach((metric) => {
         final_ga4_details.innerHTML += "<span class='tag is-info'>" + ga4_metrics_lkup[metric] + "</span> ";
@@ -1237,6 +1637,416 @@
         },
         function () { });
     }
+    {% if (custom_inc == "internal") %}
+    //BM Code
+    function addBmDatasource() {
+      tmp_bm_data = JSON.parse(JSON.stringify(bm_data));
+      _renderBmMetricsBoxes();
+      _renderBmFiltersBoxes();
+      openPopup('bm_datasource_tab');
+    }
+
+    function saveBmDatasource() {
+      bm_data.date_column = document.getElementById('bm_date_dd').value;
+      bm_data.cov = document.getElementById('bm_covariates_dd').value;
+      //bm_data.values = document.getElementById('bm_value_dd').value;
+      sessionStorage.setItem('bm_data', JSON.stringify(bm_data));
+      sessionStorage.setItem('bm_metrics', JSON.stringify(bm_metrics));
+      sessionStorage.setItem('bm_numbers', JSON.stringify(bm_numbers));
+      sessionStorage.setItem('bm_strings', JSON.stringify(bm_strings));
+      sessionStorage.setItem('bm_from_date', JSON.stringify(bm_from_date))
+      sessionStorage.setItem('bm_to_date', JSON.stringify(bm_to_date))
+
+      if (bm_data.metrics.length > 0) {
+        _renderBmDatasourceBox();
+      }
+      else {
+        closePopup('final_bm');
+      }
+      closePopup('bm_datasource_tab');
+      cleanUp();
+    }
+
+    function deleteBmDatasource() {
+      confirmBox("Delete {{bm_name}} Datasource",
+        "Are you sure you want to delete the {{bm_name}} datasource?",
+        function () {
+          bm_data = { 'date_column': "", 'metrics': [], 'filters': [], 'cov': "" };
+          tmp_bm_data = {};
+          bm_metrics = [];
+          bm_from_date = "";
+          bm_to_date = "";
+          sessionStorage.removeItem('bm_data');
+          sessionStorage.removeItem('bm_metrics');
+          sessionStorage.removeItem('bm_from_date');
+          sessionStorage.removeItem('bm_numbers');
+          sessionStorage.removeItem('bm_strings');
+          sessionStorage.removeItem('bm_to_date');
+          sessionStorage.removeItem('bm_url');
+          document.getElementById('bmUrl').value = "";
+          document.getElementById('from_date_label').innerHTML = "";
+          document.getElementById('to_date_label').innerHTML = "";
+          closePopup('final_bm');
+          cleanUp();
+        },
+        function () { });
+    }
+
+    function _renderBmDatasourceBox() {
+      const final_bm_details = document.getElementById('final_bm_details');
+      final_bm_details.innerHTML = `Datasource<br>
+      <span class='tag is-danger'>{{bm_name}}</span><br><br>
+      <div class='columns'><div class='column is-one-third'>Date Column<br>
+      <span class='tag is-info'>` + bm_data.date_column + `</span></div>
+      </div>
+      Variables (Metric)<br>`
+
+      bm_data.metrics.forEach((val) => {
+        final_bm_details.innerHTML += "<span class='tag is-info'>" + val[0] + "[" + val[1] + "]</span> ";
+      });
+      final_bm_details.innerHTML += "<br><br>Filters<br>"
+      for (const key in bm_data.filters) {
+        final_bm_details.innerHTML += "<span class='tag is-dark'>" + key + " = " + bm_data.filters[key].join(" OR ") + "</span> ";
+      }
+      if(Object.keys(bm_data.filters).length == 0) {
+        final_bm_details.innerHTML += "<span class='tag is-dark'>All data</span> ";
+      }
+      openPopup('final_bm');
+    }
+
+    function cancelBmDatastore() {
+      if (tmp_bm_data.date_column == "") {
+        tmp_bm_data.date_column = bm_data.date_column;
+      }
+
+      if (bm_data.metrics.length == 0) {
+        bm_data.date_column = "";
+        bm_metrics = [];
+        bm_numbers = [];
+        bm_from_date = "";
+        bm_to_date = "";
+      }
+      bm_data = JSON.parse(JSON.stringify(tmp_bm_data));
+      closePopup('bm_datasource_tab');
+      cleanUp();
+    }
+
+    function uploadBm() {
+      var bmUrl = document.getElementById('bmUrl').value;
+      if (bmUrl == "") {
+        openPopup('bm_upload_error');
+        document.getElementById('bm_upload_error_msg').textContent = "Must have a valid URL or Sheet ID";
+      }
+      else {
+        document.getElementById('bm_metrics_boxes').innerHTML = "";
+        sessionStorage.setItem('bm_url', bmUrl);
+        closePopup('bm_upload_error');
+        addDDSpinner('getBmSheet');
+        document.getElementById('bm_options').classList.add('div-disable');
+        bm_data.metrics = [];
+        const api_url = "/_get_bm_data?bm_url=" + bmUrl;
+        fetch(api_url)
+          .then(response => response.json())
+          .then(data => {
+            if (data.result[0] == "ok") {
+              bm_data.date_column = data.result[1];
+              bm_numbers = data.result[2];
+              bm_strings = data.result[3];
+              bm_from_date = data.result[4];
+              bm_to_date = data.result[5];
+              bm_metrics = data.result[6];
+              bm_items_loaded = false;
+
+              setValidDates();
+              _renderBmCovariatesBoxes();
+              closePopup('bm_upload_error');
+              removeDDSpinner('getBmSheet');
+            }
+            else {
+              document.getElementById('bm_upload_error_msg').textContent = data.result[1];
+              openPopup('bm_upload_error');
+              removeDDSpinner('getBmSheet');
+            }
+          });
+      }
+    }
+
+    function _renderBmCovariatesBoxes() {
+      const bm_date_dd = document.getElementById('bm_date_dd');
+      const bm_metric_dd = document.getElementById('bm_metric_dd');
+      const bm_covariates_dd = document.getElementById('bm_covariates_dd');
+      const bm_value_dd = document.getElementById('bm_value_dd');
+      const bm_filter_column_dd = document.getElementById('bm_filter_column_dd');
+      if (bm_metrics.length > 0 && !bm_items_loaded) {
+        bm_date_dd.innerHTML = "";
+        bm_date_dd.add(new Option(bm_data.date_column, bm_data.date_column));
+
+        bm_value_dd.innerHTML = "";
+        bm_numbers.forEach((metric) => {
+          bm_value_dd.add(new Option(metric, metric));
+        });
+
+        bm_covariates_dd.innerHTML = "";
+        bm_filter_column_dd.innerHTML = "";
+        bm_strings.forEach((string) => {
+          bm_covariates_dd.add(new Option(string, string));
+        });
+
+        var optionsArray = Array.from(bm_covariates_dd.options);
+        bm_filter_column_dd.innerHTML = "";
+
+        for (let i = 0; i < bm_covariates_dd.options.length; i++) {
+          const option = bm_covariates_dd.options[i];
+          if (!option.selected) {
+            const newOption = document.createElement("option");
+            newOption.value = option.value;
+            newOption.text = option.text;
+            bm_filter_column_dd.appendChild(newOption);
+          }
+        }
+        bmFilterColumnChange();
+
+        bm_metric_dd.innerHTML = "";
+        bm_metrics.forEach((metric) => {
+          bm_metric_dd.add(new Option(metric, metric));
+        });
+        document.getElementById('bm_options').classList.remove('div-disable');
+        openPopup('bm_options');
+        bm_items_loaded = true;
+      }
+      if (bm_metrics.length == 0) {
+        bm_date_dd.innerHTML = "";
+        bm_value_dd.innerHTML = "";
+        closePopup('bm_options');
+      }
+      bm_date_dd.disabled = true;
+    }
+
+    function bmFilterColumnChange() {
+      const bm_filter_column_dd = document.getElementById('bm_filter_column_dd');
+      const bm_filter_value_dd = document.getElementById('bm_filter_value_dd');
+      const bm_add_filter = document.getElementById('bm_add_filter');
+
+      addDDSpinner('bm_filter_div');
+      bm_filter_column_dd.disabled = true;
+      bm_filter_value_dd.disabled = true;
+      bm_add_filter.disabled = true;
+
+      const api_url = "/_get_bm_metrics?bm_covariates=" + bm_filter_column_dd.value;
+      fetch(api_url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.result != "") {
+            bm_filters = data.result;
+            bm_filter_value_dd.innerHTML = "";
+            bm_filters.forEach((metric) => {
+              bm_filter_value_dd.add(new Option(metric, metric));
+            });
+            bm_filter_column_dd.disabled = false;
+            bm_filter_value_dd.disabled = false;
+            bm_add_filter.disabled = false;
+            removeDDSpinner('bm_filter_div');
+          }
+          else {
+            document.getElementById('bm_upload_error_msg').textContent = "Could not get covariates from that column";
+            openPopup('bm_upload_error');
+            removeDDSpinner('getBmSheet');
+          }
+        });
+    }
+
+    function addBmFilter() {
+      const bm_filter_column_dd = document.getElementById('bm_filter_column_dd').value;
+      const bm_filter_value_dd = document.getElementById('bm_filter_value_dd').value;
+      if (bm_data.filters[bm_filter_column_dd]) {
+        if (!bm_data.filters[bm_filter_column_dd].includes(bm_filter_value_dd)) {
+          bm_data.filters[bm_filter_column_dd].push(bm_filter_value_dd);
+        }
+      }
+      else {
+        bm_data.filters[bm_filter_column_dd] = [bm_filter_value_dd];
+      }
+      _renderBmFiltersBoxes();
+    }
+
+    function _renderBmFiltersBoxes() {
+      const bm_filters_boxes = document.getElementById('bm_filters_boxes');
+      bm_filters_boxes.innerHTML = "";
+      if (Object.keys(bm_data.filters).length > 0) {
+        for (const key in bm_data.filters) {
+          var tmp_str = "<span class='tag is-dark'>" + key + " = ";
+          bm_data.filters[key].forEach((value, ind) => {
+            if(ind === bm_data.filters[key].length - 1) {
+              tmp_str += value + "<button onClick='deleteBmFilter(\"" + key + "|" + value + "\");' class='delete is-small'></button>";
+            }
+            else {
+              tmp_str += value + "<button onClick='deleteBmFilter(\"" + key + "|" + value + "\");' class='delete is-small'></button>&nbsp;&nbsp;OR ";
+            }
+          });
+          tmp_str += "</span> ";
+          bm_filters_boxes.innerHTML += tmp_str;
+        }
+      }
+      else {
+        bm_filters_boxes.innerHTML += "<span class='tag is-dark'>All data</span>";
+      }
+    }
+
+    function deleteBmFilter(name_value) {
+      var vals = name_value.split("|");
+      bm_data.filters[vals[0]].splice(bm_data.filters[vals[0]].indexOf(vals[1]), 1);
+      if (bm_data.filters[vals[0]].length == 0) {
+        delete bm_data.filters[vals[0]];
+      }
+      _renderBmFiltersBoxes();
+    }
+
+    function bmCovChanged() {
+      const bm_covariates = document.getElementById('bm_covariates_dd');
+      const bm_metric_dd = document.getElementById('bm_metric_dd');
+      const bm_metric_div = document.getElementById('bm_metric_div');
+      const bm_metric_button = document.getElementById('add_bm_metric');
+      const bm_all_metric_button = document.getElementById('add_all_bm_metric');
+      bm_data.metrics = [];
+      bm_data.filters = {};
+      addDDSpinner('bm_metric_div');
+      bm_covariates.disabled = true;
+      bm_metric_dd.disabled = true;
+      bm_metric_button.disabled = true;
+      bm_all_metric_button.disabled = true;
+
+      const api_url = "/_get_bm_metrics?bm_covariates=" + bm_covariates.value;
+      fetch(api_url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.result != "") {
+            bm_metrics = data.result;
+            bm_metric_dd.innerHTML = "";
+            bm_metrics.forEach((metric) => {
+              bm_metric_dd.add(new Option(metric, metric));
+            });
+            bm_covariates.disabled = false;
+            bm_metric_dd.disabled = false;
+            bm_metric_button.disabled = false;
+            bm_all_metric_button.disabled = false;
+            removeDDSpinner('bm_metric_div');
+
+            var optionsArray = Array.from(bm_covariates.options);
+            const bm_filter_column_dd = document.getElementById('bm_filter_column_dd');
+            bm_filter_column_dd.innerHTML = "";
+
+            for (let i = 0; i < bm_covariates.options.length; i++) {
+              const option = bm_covariates.options[i];
+              if (!option.selected) {
+                const newOption = document.createElement("option");
+                newOption.value = option.value;
+                newOption.text = option.text;
+                bm_filter_column_dd.appendChild(newOption);
+              }
+            }
+            bmFilterColumnChange();
+          }
+          else {
+            document.getElementById('bm_upload_error_msg').textContent = "Could not get covariates from that column";
+            openPopup('bm_upload_error');
+            removeDDSpinner('getBmSheet');
+          }
+        });
+      _renderBmMetricsBoxes();
+    }
+
+    function _renderBmMetricsBoxes() {
+      const bm_date_dd = document.getElementById('bm_date_dd');
+      const bm_metric_dd = document.getElementById('bm_metric_dd');
+      const bm_filter_column_dd = document.getElementById('bm_filter_column_dd');
+      if (bm_metrics.length > 0 && !bm_items_loaded) {
+        bm_date_dd.innerHTML = "";
+        bm_metric_dd.innerHTML = "";
+        bm_date_dd.add(new Option(bm_data.date_column, bm_data.date_column));
+        bm_value_dd.innerHTML = "";
+        bm_numbers.forEach((metric) => {
+          bm_value_dd.add(new Option(metric, metric));
+        });
+
+        bm_covariates_dd.innerHTML = "";
+        bm_filter_column_dd.innerHTML = "";
+        bm_strings.forEach((string) => {
+          bm_covariates_dd.add(new Option(string, string));
+          if (string != bm_data.cov) {
+            bm_filter_column_dd.add(new Option(string, string));
+          }
+        });
+        bm_covariates_dd.value = bm_data.cov;
+        bmFilterColumnChange();
+
+        bm_metrics.forEach((metric) => {
+          bm_metric_dd.add(new Option(metric, metric));
+          document.getElementById('bm_options').classList.remove('div-disable');
+        });
+        openPopup('bm_options');
+        bm_items_loaded = true;
+      }
+      if (bm_metrics.length == 0) {
+        bm_date_dd.innerHTML = "";
+        bm_metric_dd.innerHTML = "";
+        closePopup('bm_options');
+      }
+      bm_date_dd.disabled = true;
+
+      bm_metrics_boxes = document.getElementById('bm_metrics_boxes');
+      bm_metrics_boxes.innerHTML = "";
+
+      bm_data.metrics.forEach((val) => {
+        bm_metrics_boxes.innerHTML += "<span class='tag is-info'>" + val[0] + "[" + val[1] + "]<button onClick='deleteBmMetric(\"" + val[0] +"|"+val[1] + "\");' class='delete is-small'></button></span> ";
+      });
+
+    }
+
+    function deleteBmMetric(val) {
+      var vals = val.split("|");
+      bm_data.metrics.splice(bm_data.metrics.findIndex(innerArray => JSON.stringify(innerArray) === JSON.stringify([vals[0], vals[1]])), 1)
+      _renderBmMetricsBoxes();
+    }
+
+    function addBmMetric() {
+      const bm_metric = document.getElementById('bm_metric_dd').value;
+      const bm_value = document.getElementById('bm_value_dd').value;
+      if(bm_data.metrics.findIndex(innerArray => JSON.stringify(innerArray) === JSON.stringify([bm_metric, bm_value])) == -1) {
+          bm_data.metrics.push([bm_metric, bm_value]);
+        }
+      _renderBmMetricsBoxes();
+    }
+
+    function addAllBmMetric() {
+      const bm_value = document.getElementById('bm_value_dd').value;
+      bm_metrics.forEach((metric) => {
+        if(bm_data.metrics.findIndex(innerArray => JSON.stringify(innerArray) === JSON.stringify([metric, bm_value])) == -1) {
+          bm_data.metrics.push([metric, bm_value]);
+        }
+      });
+      _renderBmMetricsBoxes();
+    }
+
+    function clearAllBmMetric() {
+      confirmBox("Clear All Metrics",
+        "Are you sure you want to clear all the metrics?",
+        function () {
+          bm_data.metrics = [];
+          _renderBmMetricsBoxes();
+        },
+        function () { });
+    }
+
+    function clearAllBmFilters() {
+      confirmBox("Clear All Filters",
+        "Are you sure you want to clear all the filters?",
+        function () {
+          bm_data.filters = [];
+          _renderBmFiltersBoxes();
+        },
+        function () { });
+    }
+    {% endif %}
 
     //CSV Code
     function addCsvDatasource() {
@@ -1274,7 +2084,7 @@
       }
       final_csv_details.innerHTML += "Date Column<br>";
       final_csv_details.innerHTML += "<span class='tag is-info'>" + csv_data.date_column + "</span><br><br>";
-      final_csv_details.innerHTML += "Metric(s)<br>";
+      final_csv_details.innerHTML += "Variable(s)<br>";
 
       csv_data.metrics.forEach((metric) => {
         final_csv_details.innerHTML += "<span class='tag is-info'>" + metric + "</span> ";
@@ -1296,12 +2106,6 @@
       csv_data = JSON.parse(JSON.stringify(tmp_csv_data));
       closePopup('csv_datasource_tab');
       cleanUp();
-    }
-
-    function checkDateColumn() {
-      const csv_date_dd = document.getElementById('csv_date_dd');
-      csv_data.date_column = csv_date_dd.value;
-      deleteCsvMetric(csv_date_dd.value);
     }
 
     function uploadFile() {
@@ -1333,9 +2137,7 @@
                 csv_data.date_column = data.result[1];
                 csv_metrics = data.result[2];
                 csv_from_date = data.result[3];
-                document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
                 csv_to_date = data.result[4];
-                document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
                 csv_items_loaded = false;
                 csv_data.format = data.result[5];
                 _renderCsvMetricsBoxes();
@@ -1372,18 +2174,11 @@
               csv_data.date_column = data.result[1];
               csv_metrics = data.result[2];
               csv_from_date = data.result[3];
-              document.getElementById('from_date_label').innerHTML = "Min: " + csv_from_date.split("-")[2] + "/" + csv_from_date.split("-")[1] + "/" + csv_from_date.split("-")[0];
               csv_to_date = data.result[4];
-              document.getElementById('to_date_label').innerHTML = "Max: " + csv_to_date.split("-")[2] + "/" + csv_to_date.split("-")[1] + "/" + csv_to_date.split("-")[0];
               csv_items_loaded = false;
               csv_data.format = data.result[5];
 
-              var f_date = document.getElementById('from_date');
-              var t_date = document.getElementById('to_date');
-              if (csv_from_date != "" && csv_to_date != "") {
-                f_date.value = csv_from_date;
-                t_date.value = csv_to_date;
-              }
+              setValidDates();
 
               _renderCsvMetricsBoxes();
               closePopup('csv_upload_error');
@@ -1398,6 +2193,65 @@
       }
     }
 
+    function setValidDates() {
+      var f_date = document.getElementById('from_date');
+      var t_date = document.getElementById('to_date');
+      {% if (custom_inc == "internal") %}
+      if ((bm_from_date > csv_to_date || csv_from_date > bm_to_date) && (bm_from_date != "" && bm_to_date != "" && csv_from_date != "" && csv_to_date != "")) {
+        is_date_error = true;
+        openPopup('csv_date_error');
+        document.getElementById('csv_date_error_msg').innerHTML = "Date ranges in both sheets do not have any common dates and cannot be merged";
+      }
+      else {
+        closePopup('csv_date_error');
+        is_date_error = false;
+
+        if (!csv_from_date) {
+          f_date.value = x_from_date = bm_from_date;
+        }
+        else if (!bm_from_date) {
+          f_date.value = x_from_date = csv_from_date;
+        }
+        else if (csv_from_date > bm_from_date) {
+          f_date.value = x_from_date = csv_from_date;
+        }
+        else {
+          f_date.value = x_from_date = bm_from_date;
+        }
+
+        if (!csv_to_date) {
+          t_date.value = x_to_date = bm_to_date;
+        }
+        else if (!bm_to_date) {
+          t_date.value = x_to_date = csv_to_date;
+        }
+        else if (csv_to_date < bm_to_date) {
+          t_date.value = x_to_date = csv_to_date;
+        }
+        else {
+          t_date.value = x_to_date = bm_to_date;
+        }
+      }
+      {% else %}
+      if(csv_to_date && csv_from_date) {
+        t_date.value = x_to_date = csv_to_date;
+        f_date.value = x_from_date = csv_from_date;
+      }
+      {% endif %}
+       
+      sessionStorage.setItem('x_from_date', x_from_date);
+      sessionStorage.setItem('x_to_date', x_to_date);
+      _showMinMaxDates();
+
+      sessionStorage.setItem('from_date', f_date.value);
+      sessionStorage.setItem('to_date', t_date.value);
+    }
+
+    function _showMinMaxDates() {
+      document.getElementById('from_date_label').innerHTML = "Min: " + x_from_date;
+      document.getElementById('to_date_label').innerHTML = "Max: " + x_to_date;
+    }
+
     function addCsvMetric() {
       const csv_metric = document.getElementById('csv_metric_dd').value;
       const csv_date = document.getElementById('csv_date_dd').value;
@@ -1406,6 +2260,16 @@
         csv_data.date_column = csv_date;
       }
       _renderCsvMetricsBoxes();
+    }
+
+    function clearAllCsvMetric() {
+      confirmBox("Clear All Metrics",
+        "Are you sure you want to clear all the metrics?",
+        function () {
+          csv_data.metrics = [];
+          _renderCsvMetricsBoxes();
+        },
+        function () { });
     }
 
     function addAllCsvMetric() {
@@ -1426,13 +2290,9 @@
       if (csv_metrics.length > 0 && !csv_items_loaded) {
         csv_date_dd.innerHTML = "";
         csv_metric_dd.innerHTML = "";
+        csv_date_dd.add(new Option(csv_data.date_column, csv_data.date_column));
         csv_metrics.forEach((metric) => {
-          if (metric != csv_data.date_column) {
-            csv_metric_dd.add(new Option(metric, metric));
-          }
-          else {
-            csv_date_dd.add(new Option(metric, metric));
-          }
+          csv_metric_dd.add(new Option(metric, metric));
           document.getElementById('csv_options').classList.remove('div-disable');
           openPopup('csv_options');
         });
@@ -1443,7 +2303,6 @@
         csv_metric_dd.innerHTML = "";
         closePopup('csv_options');
       }
-      csv_date_dd.value = csv_data.date_column;
       csv_date_dd.disabled = true;
 
 
@@ -1541,6 +2400,7 @@
       data_to_send['unaffectedness_validation'] = document.getElementById('unaffectedness_check').checked;
       data_to_send['unaffectedness_option'] = document.getElementById('unef_dd').value;
       data_to_send['matrix_validation'] = document.getElementById('matrix_check').checked;
+      data_to_send['credibility'] = document.getElementById('credibility_slider').value;
 
       var data_sources = [];
       var mcc_id_ts = "";
@@ -1560,17 +2420,71 @@
         data_to_send['csv_format'] = csv_data.format;
         data_sources.push(csv_data.format);
       }
-      {% include custom_inc + "_gen_data.html" %}
+      {% if (custom_inc == "internal") %}
+      if (bm_data.metrics.length > 0) {
+        data_to_send['bm'] = bm_data;
+        data_sources.push("bm");
+      }
+
+      op_id = document.getElementById('op_id').value;
+      if (op_id == "") {
+        op_id = ""
+      }
+      gtag('event', 'generate_lead', {
+        'mcc_id': mcc_id_ts,
+        'ga4_id': ga4_id_ts,
+        'data_sources': data_sources.join(","),
+        'date_from': data_to_send['from_date'],
+        'date_to': data_to_send['to_date'],
+        'event_date': data_to_send['event_date'],
+        'target_event': data_to_send['target_event'],
+        'opportunity_id': op_id
+      });
+
+      sessionStorage.setItem('op_id', document.getElementById('op_id').value);
+      sessionStorage.setItem('testing_only', document.getElementById('testing_only').checked)
+      {% endif %}
+
       document.getElementById('data_to_send').value = JSON.stringify(data_to_send);
     }
 
-    {% include custom_inc + "_create_javascript.html" %}
+    {% if (custom_inc == "internal") %}
+    function opp_validation() {
+      document.getElementById('op_id').disabled = document.getElementById('testing_only').checked;
+      if (document.getElementById('testing_only').checked) { document.getElementById('op_id').value = ""; }
+      validation();
+    }
+
+    if (sessionStorage.getItem('testing_only')) { document.getElementById('testing_only').checked = (sessionStorage.getItem('testing_only') == "true"); validation(); }
+    document.getElementById('op_id').disabled = document.getElementById('testing_only').checked;
+    if (sessionStorage.getItem('op_id')) { document.getElementById('op_id').value = sessionStorage.getItem('op_id'); }
+    {% endif %}
+
+    //Advanced Options
+    function showAdvancedOptions() {
+      openPopup('advanced_options');
+      credibilitySliderChange();
+    }
+
+    function cancelAdvancedOptions() {
+      closePopup('advanced_options');
+    }
+
+    function credibilitySliderChange() {
+      var sliderVal = document.getElementById('credibility_slider_value');
+      sliderVal.innerHTML = document.getElementById('credibility_slider').value + "%";
+    }
+
+    function saveAdvancedOptions() {
+      sessionStorage.setItem('credibility', document.getElementById('credibility_slider').value);
+      closePopup('advanced_options');
+    }
 
     //General helpers
     function cleanUp() {
       target_event_dd = document.getElementById('target_event_dd');
       target_event_dd.innerHTML = "";
-      if (gads_data.metrics.length == 0 && ga4_data.metrics.length == 0 && csv_data.metrics.length == 0) {
+      if (gads_data.metrics.length == 0 && ga4_data.metrics.length == 0 && csv_data.metrics.length == 0 {% if (custom_inc == "internal") %}&& bm_data.metrics.length == 0{% endif %}) {
         openPopup('no_datasources');
       }
       else {
@@ -1586,16 +2500,18 @@
           var newOption = new Option("CSV : " + metric, "csv_" + metric);
           target_event_dd.add(newOption);
         });
+        {% if (custom_inc == "internal") %}
+        bm_data.metrics.forEach((metric) => {
+          var newOption = new Option("BM : " + metric[0] + "["+metric[1]+"]", "bm_" + metric[0] + "["+metric[1]+"]");
+          target_event_dd.add(newOption);
+        });
+        {% endif %}
+
         if (sessionStorage.getItem('target_event')) { document.getElementById('target_event_dd').value = sessionStorage.getItem('target_event'); }
         closePopup('no_datasources');
+        setValidDates();
         target_event_dd_change();
       }
-      // var f_date = document.getElementById('from_date');
-      // var t_date = document.getElementById('to_date');
-      // if (csv_from_date != "" && csv_to_date != "") {
-      //   f_date.value = csv_from_date;
-      //   t_date.value = csv_to_date;
-      // }
       validation();
     }
 
@@ -1676,12 +2592,15 @@
       if (target_event.value == "") {
         errors++;
       }
-      if ((csv_from_date != "" && csv_to_date != "") && (from_date < csv_from_date || to_date > csv_to_date)) {
-        errors++;
+
+      if (from_date < x_from_date || to_date > x_to_date) {
+        is_date_error = true;
         openPopup('csv_date_error');
+        document.getElementById('csv_date_error_msg').innerHTML = "When using multiple sheet based datasources, selected dates must be in the data sets";
       }
-      else {
-        closePopup('csv_date_error');
+
+      if (is_date_error) {
+        errors++;
       }
 
       if (event_date != "" && (event_date < from_date || event_date > to_date)) {
@@ -1692,7 +2611,13 @@
         closePopup('event_date_error');
       }
 
-      {% include custom_inc + "_validation.html" %}
+      {% if (custom_inc == "internal") %}
+      var op_id = document.getElementById('op_id').value;
+      var testing_only = document.getElementById('testing_only').checked;
+      if (op_id == "" && testing_only == false) {
+        errors++;
+      }
+      {% endif %}
 
       if (gads_data.length == 0 && ga4_metrics.length == 0) {
         errors++;
@@ -1742,6 +2667,8 @@
     window.onunload = function (event) {
       closePopup('loading_modal');
     }
+
+    //_showMinMaxDates();
 
     var intervalId = window.setInterval(function () {
       reset_timer();
