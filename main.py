@@ -22,25 +22,27 @@ from datetime import datetime, timedelta
 import json, os, socket, struct
 import math
 from causal import getCiChart, getCiObject, getCiReport, getCiSummary, getValidation, getDfMatrix
-from csv_data import csv_get_date_range, csv_merge_data, get_csv_columns, get_csv_data
-from flask import Flask, jsonify, redirect, render_template, request, session, send_file
+from csv_data import csv_get_date_range, csv_merge_data, get_csv_columns, get_csv_data, bm_merge_data
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, session, send_file
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
 from fs_storage import set_value_session, get_value_session, delete_field
 from gsheet_data import get_raw_gsheet_data
 from slides_api import create_slide
 from google_auth_oauthlib.flow import Flow
+from google.cloud import secretmanager
 import numpy as np
 import pandas as pd
 import re
 from uuid import uuid4
 import logging
+from project_secrets import get_secret
 
 app = Flask(__name__)
 
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY')
+app.secret_key = get_secret('flask_secret_key')
 PROJECT_ID = ""
 
 def is_loopback(host) -> bool:
@@ -69,8 +71,7 @@ if is_loopback('localhost'):
   
 else:
   PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-  #_MAIN_URL = f'https://{PROJECT_ID}.ew.r.appspot.com'
-  _MAIN_URL = 'https://causmos.googleplex.com'
+  _MAIN_URL = f'https://{PROJECT_ID}.ew.r.appspot.com'
   _REDIRECT_URI = f'{_MAIN_URL}/oauth_completed'
   app.config['SESSION_COOKIE_SECURE'] = True
   app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -89,6 +90,16 @@ CLIENT_SECRETS_PATH = os.getcwd() + '/client_secret.json'
 flow: Flow
 csv_data = {}
 
+@app.route('/favicon.ico')
+def fav():
+    return send_from_directory(os.path.join(app.root_path, 'static'),'favicon.ico')
+
+def check_session_id():
+  if 'session_id' in session:
+    return True
+  else:
+    return False
+  
 def get_session_id() -> str:
   if 'session_id' in session:
     return session['session_id']
@@ -111,9 +122,13 @@ def _create_slide():
     if request.args.get('client_name'):
       client_name = request.args.get('client_name', 0, type=str)
       slide_template_id = request.args.get('temp_id', 0, type=str)
-      return jsonify(result=create_slide(get_session_id(), slide_template_id, client_name, _MAIN_URL))   
+      prepend = request.args.get('prepend', 0, type=is_it_true)
+      return jsonify(result=create_slide(get_session_id(), slide_template_id, client_name, prepend, _MAIN_URL))   
     else:
       return jsonify(result="No client name")
+
+def is_it_true(value):
+  return value.lower() == 'true'
 
 @app.route("/_ah/warmup")
 def warmup():
@@ -147,7 +162,7 @@ def root():
   if slides:
     auth_slides = "true"
   
-  return render_template('index.html', authed=authed, auth_analytics=auth_analytics, auth_adwords=auth_adwords, auth_sheets=auth_sheets, auth_slides=auth_slides, project_id=PROJECT_ID, custom_inc=os.environ.get('CUSTOM_INCLUDES'))
+  return render_template('index.html', authed=authed, auth_analytics=auth_analytics, auth_adwords=auth_adwords, auth_sheets=auth_sheets, auth_slides=auth_slides, project_id=PROJECT_ID, custom_inc=os.environ.get('CUSTOM_INCLUDES'), bm_name=os.environ.get('BM_DATASOURCE'))
 
 
 @app.route('/oauth')
@@ -188,9 +203,10 @@ def report():
   if slides:
     auth_slides = "true"
   gads_responses = []
-  if request.form.get('data_to_send'):
+  if request.form.get('data_to_send') and check_session_id():
     data = json.loads(request.form.get('data_to_send', 0, type=str))
     raw_data = {}
+    credibility = 1-(int(data['credibility'])/100)
     warnings = ''
     if 'gads' in data:
       for key in data['gads']['query']:
@@ -209,7 +225,6 @@ def report():
           session.clear()
           return redirect('sessionExpired', custom_inc=os.environ.get('CUSTOM_INCLUDES')) 
       raw_data = process_gads_responses(gads_responses, data['gads']['metrics'])
-      print(f"RAW: {raw_data}")
 
     if 'ga4' in data:
       raw_data = get_ga4_data(
@@ -227,15 +242,19 @@ def report():
         csv_data = get_value_session(get_session_id(), 'csv_data')
       raw_data = csv_merge_data(csv_data, data['csv'], raw_data)
     
+    if 'bm' in data:
+      bm_data = get_raw_gsheet_data(get_value_session(get_session_id(), 'bm_sheet_id'), 'Data Breakdown')
+      raw_data = bm_merge_data(bm_data, data['bm'], raw_data)
+
     if raw_data:    
       idx = pd.date_range(data['from_date'], data['to_date'])
       df = pd.DataFrame.from_dict(raw_data).transpose()
       if data['target_event'] in df.columns:
         df.replace(np.NaN, 0, inplace=True)
         df.replace('', 0, inplace=True)
-        df = df.apply(pd.to_numeric, errors='ignore')
         df.index = pd.DatetimeIndex(df.index)
-        df = df.reindex(idx, fill_value=0)  # fills in any blank dates
+        df = df.sort_index()
+        df = df.apply(pd.to_numeric)
         df = df[
             [data['target_event']]
             + [c for c in df if c not in [data['target_event']]]
@@ -246,18 +265,36 @@ def report():
               'Some values have 0 in them which are from your data or where dates'
               ' were missing and were filled in automatically'
           )
-        from_d = datetime.strptime(data['from_date'], '%Y-%m-%d')
-        to_d = datetime.strptime(data['to_date'], '%Y-%m-%d')
-        event_d = datetime.strptime(data['event_date'], '%Y-%m-%d')
 
-        pre_delta = (event_d - from_d).days
-        post_delta = (to_d - event_d).days
-
-        pre_period = [0, pre_delta - 1]
-        post_period = [pre_delta, pre_delta + post_delta]
         try:
-          impact = getCiObject(df, pre_period, post_period)
+          from_d = df.index.get_loc(data['from_date'])
+          to_d = df.index.get_loc(data['to_date'])
+          event_d = df.index.get_loc(data['event_date'])
+        except KeyError:
+          return render_template(
+          'report.html',
+          custom_inc=os.environ.get('CUSTOM_INCLUDES'),
+          summary='-',
+          chart="-",
+          report="-",
+          raw_data="-",
+          warnings="One of your selected dates does not exist in your data set!",
+          validation="-",
+          v1_validation_chart="-",
+          v1_summary="-",
+          v2_validation_chart="-",
+          v2_summary="-",
+          v3_matrix="-",
+          slide_template="-",
+          auth_slides="false"
+      )
+
+        pre_period = [from_d, event_d-1]
+        post_period = [event_d, to_d]
+        try:
+          impact = getCiObject(df, pre_period, post_period, credibility)
         except ValueError as e:
+          logging.log(e)
           return render_template(
           'report.html',
           custom_inc=os.environ.get('CUSTOM_INCLUDES'),
@@ -275,13 +312,14 @@ def report():
           slide_template="-",
           auth_slides="false")
         
-        org_summary=getCiSummary(impact)
+        org_summary=getCiSummary(impact, credibility)
         image_name = get_value_session(get_session_id(), 'image_name')
         if not image_name:
           image_name = str(uuid4())+".png"
         set_value_session(get_session_id(), 'image_name', image_name)
         org_chart = getCiChart(impact=impact, img=True, image_name=image_name)
-        org_report=getCiReport(impact)
+        org_chart = org_chart.replace("var spec", "main_spec").replace(" spec,", " main_spec,")
+        org_report=getCiReport(impact, credibility)
         org_cov = (', ').join(df.columns[1:])
 
         dfhtml = df.to_html().replace("<th>", "<th class='full-table-border'>").replace("<tr>", "<tr class='full-table-border'>")
@@ -295,16 +333,16 @@ def report():
         #Pre-Period validation (v1)
         v1_validation_chart="-"
         v1_summary="-"
+        pre_delta = event_d - from_d
         if pre_delta > 4 and data['pre_period_validation']==True:
-          v1_post_delta = math.floor(pre_delta / 4)
-          v1_pre_delta = pre_delta - v1_post_delta
+          v1_quarter = math.floor(pre_delta / 4)
 
-          v1_pre_period = [0, v1_pre_delta - 1]
-          v1_post_period = [v1_pre_delta, v1_pre_delta + v1_post_delta]
+          v1_pre_period = [from_d, from_d+(v1_quarter*3) -1]
+          v1_post_period = [from_d + (v1_quarter*3), event_d-1]
 
-          impact = getCiObject(df, v1_pre_period, v1_post_period)
+          impact = getCiObject(df, v1_pre_period, v1_post_period, credibility)
           v1_validation_chart = getCiChart(impact=impact, div="vis_v1")
-          v1_summary = getCiSummary(impact)
+          v1_summary = getCiSummary(impact, credibility)
 
         #Unaffectedness Validation (v2)
         v2_validation_chart="-"
@@ -317,13 +355,22 @@ def report():
           ]
           df.drop(data['target_event'], axis=1, inplace=True)
           
-          impact = getCiObject(df, pre_period, post_period)
+          impact = getCiObject(df, pre_period, post_period, credibility)
           v2_validation_chart = getCiChart(impact=impact, div="vis_v2")
-          v2_summary = getCiSummary(impact)
-
+          v2_summary = getCiSummary(impact, credibility)
+        
         pval = re.search(r"p:\s+([0-9]+\.[0-9]+)", org_summary[13][0])
 
         delete_field(get_session_id(), 'output_data')
+        if len(org_summary[7])==3:
+          tot_inc = org_summary[7][2].split(" ")[0]
+        else:
+          tot_inc = org_summary[7][1].split(")")[1].split(" ")[0]
+        save_summary = ""
+        for x in org_summary:
+          save_summary += ("\t").join(x)
+          save_summary += "\n"
+
         output_data = {
           'from_date': data['from_date'],
           'to_date': data['to_date'],
@@ -331,10 +378,11 @@ def report():
           'target_event': data['target_event'],
           'covariates': org_cov,
           'p_value': pval.group(1),
-          'avg_inc': org_summary[7][1],
-          'tot_inc': org_summary[7][2].split(" ")[0],
+          'tot_inc': tot_inc,
           'rel_eff': org_summary[10][2].split(" ")[0],
-          'image_name': image_name
+          'image_name': image_name,
+          'summary': save_summary,
+          'report': org_report.replace('\n\n', '|').replace('\n', '').replace("|", "\n\n")
         }
         set_value_session(get_session_id(), 'output_data', output_data)
 
@@ -343,7 +391,7 @@ def report():
             custom_inc=os.environ.get('CUSTOM_INCLUDES'),
             summary=org_summary,
             chart=org_chart,
-            report=org_report,
+            report=org_report.replace('\n\n', '<br><br>'),
             raw_data=dfhtml,
             warnings=warnings,
             validation=df_val,
@@ -456,12 +504,12 @@ def _get_gs_data():
   
 def getCsvSettings(csv_data: dict, format: str) -> dict:
   csv_settings = []
-  try:
-    csv_columns, csv_date_column = get_csv_columns(csv_data)
-  except ValueError as e:
-    csv_settings.append('error')
-    csv_settings.append(f'Error - There is an error reading the sheet. Please check format and try again.')
-    return csv_settings
+  #try:
+  csv_columns, csv_date_column, string_columns = get_csv_columns(csv_data)
+  # except ValueError as e:
+  #   csv_settings.append('error')
+  #   csv_settings.append(f'Error - There is an error reading the sheet. Please check format and try again.')
+  #   return csv_settings
   if not csv_date_column:
     csv_settings.append('error')
     csv_settings.append(
@@ -470,7 +518,7 @@ def getCsvSettings(csv_data: dict, format: str) -> dict:
     )
 
   else:
-    start_date, end_date = csv_get_date_range(csv_data, csv_date_column)
+    start_date, end_date = csv_get_date_range(csv_data, csv_date_column, False)
     if _validate_date(start_date) and _validate_date(end_date):
       csv_settings.append('ok')
       csv_settings.append(csv_date_column)
@@ -485,6 +533,60 @@ def getCsvSettings(csv_data: dict, format: str) -> dict:
       )
   return csv_settings
 
+@app.route('/_get_bm_metrics')
+def _get_bm_metrics():
+  bm_covariates = request.args.get('bm_covariates', 0, type=str)
+  final_bm_sheet = get_raw_gsheet_data(get_value_session(get_session_id(), 'bm_sheet_id'), 'Data Breakdown')
+  metrics = set(val[bm_covariates] for val in final_bm_sheet if bm_covariates in val)
+  return jsonify(result=list(metrics))
+
+
+@app.route('/_get_bm_data')
+def _get_bm_data():
+  bm_settings = []
+  sheet_id = request.args.get('bm_url', 0, type=str)
+  if "https://" in sheet_id:
+    sheet_id = sheet_id.split("/")[5]
+  set_value_session(get_session_id(), 'bm_sheet_id', sheet_id)
+
+  final_bm_sheet = get_raw_gsheet_data(sheet_id, 'Data Breakdown')
+
+  if final_bm_sheet[0]!="error":
+    return jsonify(result=getBmSettings(final_bm_sheet))
+  else:
+    return jsonify(result=final_bm_sheet)
+  
+def getBmSettings(bm_data: dict) -> dict:
+  bm_settings = []
+  bm_columns, bm_date_column, bm_string_columns = get_csv_columns(bm_data)
+  bm_metrics = {}
+  if len(bm_string_columns) > 0:
+    bm_metrics = set(val[bm_string_columns[0]] for val in bm_data if bm_string_columns[0] in val)
+  
+  if not bm_date_column:
+    bm_settings.append('error')
+    bm_settings.append(
+        "'date' column not found. Add 'date' heading and use date format"
+        " 'yyyy-mm-dd' in the values"
+    )
+
+  else:
+    start_date, end_date = csv_get_date_range(bm_data, bm_date_column, True)
+    if _validate_date(start_date) and _validate_date(end_date):
+      bm_settings.append('ok')
+      bm_settings.append(bm_date_column)
+      bm_settings.append(bm_columns)
+      bm_settings.append(bm_string_columns)
+      bm_settings.append(start_date)
+      bm_settings.append(end_date)
+      bm_settings.append(list(bm_metrics))
+    else:
+      bm_settings.append('error')
+      bm_settings.append(
+          "'date' column found but some data does not match 'yyyy-mm-dd' format'"
+      )
+  return bm_settings
+  
 
 def _validate_date(date_text: str) -> bool:
   try:
@@ -498,8 +600,10 @@ def _validate_date(date_text: str) -> bool:
 
 
 def create_flow(scope) -> Flow:
-  with open(CLIENT_SECRETS_PATH, 'r') as json_file:
-    client_config = json.load(json_file)
+  # with open(CLIENT_SECRETS_PATH, 'r') as json_file:
+  #  client_config = json.load(json_file)
+
+  client_config = json.loads(get_secret('client_secret'))  
   global flow
   flow = Flow.from_client_config(client_config=client_config, scopes=scope)
   flow.redirect_uri = _REDIRECT_URI

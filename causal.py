@@ -12,21 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import pathlib
 import re
 from uuid import uuid4
 import causalimpact
 from google.cloud import storage
 from matplotlib.colors import LinearSegmentedColormap
+from project_secrets import get_secret
 
 _TEMP_FOLDER = "/tmp/"
 
-def getCiObject(df, pre_period: list, post_period: list):
-  return causalimpact.fit_causalimpact(df, pre_period, post_period)
+def getCiObject(df, pre_period: list, post_period: list, credibility: float):
+  return causalimpact.fit_causalimpact(data=df, pre_period=pre_period, post_period=post_period,  alpha=credibility)
 
-def getCiSummary(impact) -> list:
-  summary = causalimpact.summary(impact, output_format='summary')
+def getCiSummary(impact, credibility: float) -> list:
+  summary = causalimpact.summary(impact, output_format='summary', alpha=credibility)
   summary = re.sub('  +', '|', summary)
   return [r.split('|') for r in [r for r in summary.split('\n')]]
 
@@ -35,17 +34,16 @@ def getCiChart(impact, div="vis", img=False, image_name=""):
   if img:
     ci.save(_TEMP_FOLDER+image_name, engine="vl-convert")
     storage_client = storage.Client()
-    bucket = storage_client.bucket(os.environ.get('IMAGE_BUCKET'))
+    bucket = storage_client.bucket(get_secret('image_bucket'))
     blob = bucket.blob(image_name)
     blob.cache_control="private"
     blob.upload_from_filename(_TEMP_FOLDER+image_name)
   return ci.to_html().replace("vis", div)
 
-def getCiReport(impact) -> str:
-  report = causalimpact.summary(impact, output_format='report')
-  return report.replace('\n\n', '<br><br>')
+def getCiReport(impact, credibility: float) -> str:
+  return causalimpact.summary(impact, output_format='report',  alpha=credibility)
 
-def getDfMatrix(df):
+def getDfMatrix(df) -> str:
   df_matrix = df[df.columns[0:9]].corr(method='pearson', numeric_only=False)
   df_matrix = df_matrix.abs()
   segments = [(0, 'green'), (1, 'white')]

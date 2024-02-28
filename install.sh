@@ -50,6 +50,7 @@ gcloud services enable firestore.googleapis.com
 gcloud services enable sheets.googleapis.com
 gcloud services enable slides.googleapis.com
 gcloud services enable drive.googleapis.com
+gcloud services enable secretmanager.googleapis.com
 
 gcloud app create --region $GAE_LOCATION
 
