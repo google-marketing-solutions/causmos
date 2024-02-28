@@ -504,12 +504,12 @@ def _get_gs_data():
   
 def getCsvSettings(csv_data: dict, format: str) -> dict:
   csv_settings = []
-  #try:
-  csv_columns, csv_date_column, string_columns = get_csv_columns(csv_data)
-  # except ValueError as e:
-  #   csv_settings.append('error')
-  #   csv_settings.append(f'Error - There is an error reading the sheet. Please check format and try again.')
-  #   return csv_settings
+  try:
+    csv_columns, csv_date_column, string_columns = get_csv_columns(csv_data)
+  except ValueError as e:
+     csv_settings.append('error')
+     csv_settings.append(f'Error - There is an error reading the sheet. Please check format and try again.')
+     return csv_settings
   if not csv_date_column:
     csv_settings.append('error')
     csv_settings.append(
