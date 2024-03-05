@@ -8,7 +8,7 @@ Causmos is an open-source web app that streamlines the process of running a Caus
 
 The Causmos solution is a Web App on Google Cloud App Engine that uses the logged in user's credentials to connect to Google Ads, Google Analytics, and Google Sheets. A CSV upload option is provided should a user need to add additional data.
 
-[![Causmos One Pager](https://services.google.com/fh/files/misc/causmos-one-pager.png)]
+[Causmos One Pager](https://services.google.com/fh/files/misc/causmos-one-pager.png)
 
 
 ### Installation
