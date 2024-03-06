@@ -3,7 +3,7 @@ import os
 
 def get_secret(secret_id):
     client = secretmanager.SecretManagerServiceClient()
-    project_id = 'causmos' #os.getenv('GOOGLE_CLOUD_PROJECT')
+    project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
     name = client.secret_path(project_id, secret_id)
     name = f"{name}/versions/latest"
 

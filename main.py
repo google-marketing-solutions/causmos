@@ -89,6 +89,9 @@ CLIENT_SECRETS_PATH = os.getcwd() + '/client_secret.json'
 
 flow: Flow
 csv_data = {}
+custom_inc = ""
+if 'CUSTOM_INCLUDES' in os.environ:
+  custom_inc = os.environ.get('CUSTOM_INCLUDES')
 
 @app.route('/favicon.ico')
 def fav():
@@ -137,7 +140,7 @@ def warmup():
 @app.route('/sessionExpired')
 def sessionExpired():
   session.clear()
-  return render_template('sessionExpired.html', custom_inc=os.environ.get('CUSTOM_INCLUDES'))
+  return render_template('sessionExpired.html', custom_inc=custom_inc)
 
 @app.route('/')
 def root():
@@ -162,7 +165,7 @@ def root():
   if slides:
     auth_slides = "true"
   
-  return render_template('index.html', authed=authed, auth_analytics=auth_analytics, auth_adwords=auth_adwords, auth_sheets=auth_sheets, auth_slides=auth_slides, project_id=PROJECT_ID, custom_inc=os.environ.get('CUSTOM_INCLUDES'), bm_name=os.environ.get('BM_DATASOURCE'))
+  return render_template('index.html', authed=authed, auth_analytics=auth_analytics, auth_adwords=auth_adwords, auth_sheets=auth_sheets, auth_slides=auth_slides, project_id=PROJECT_ID, custom_inc=custom_inc, bm_name=os.environ.get('BM_DATASOURCE'))
 
 
 @app.route('/oauth')
@@ -223,7 +226,7 @@ def report():
         except ValueError as e:
           logging.exception(e)
           session.clear()
-          return redirect('sessionExpired', custom_inc=os.environ.get('CUSTOM_INCLUDES')) 
+          return redirect('sessionExpired', custom_inc=custom_inc) 
       raw_data = process_gads_responses(gads_responses, data['gads']['metrics'])
 
     if 'ga4' in data:
@@ -273,7 +276,7 @@ def report():
         except KeyError:
           return render_template(
           'report.html',
-          custom_inc=os.environ.get('CUSTOM_INCLUDES'),
+          custom_inc=custom_inc,
           summary='-',
           chart="-",
           report="-",
@@ -297,7 +300,7 @@ def report():
           logging.log(e)
           return render_template(
           'report.html',
-          custom_inc=os.environ.get('CUSTOM_INCLUDES'),
+          custom_inc=custom_inc,
           summary='-',
           chart="-",
           report="-",
@@ -388,7 +391,7 @@ def report():
 
         return render_template(
             'report.html',
-            custom_inc=os.environ.get('CUSTOM_INCLUDES'),
+            custom_inc=custom_inc,
             summary=org_summary,
             chart=org_chart,
             report=org_report.replace('\n\n', '<br><br>'),
@@ -406,7 +409,7 @@ def report():
       else:
         return render_template(
           'report.html',
-          custom_inc=os.environ.get('CUSTOM_INCLUDES'),
+          custom_inc=custom_inc,
           summary='-',
           chart="-",
           report="-",
@@ -424,7 +427,7 @@ def report():
     else:
       return render_template(
           'report.html',
-          custom_inc=os.environ.get('CUSTOM_INCLUDES'),
+          custom_inc=custom_inc,
           summary='-',
           chart="-",
           report="-",
@@ -441,7 +444,7 @@ def report():
       )  
   else:
     session.clear()
-    return redirect('sessionExpired', custom_inc=os.environ.get('CUSTOM_INCLUDES'))
+    return redirect('sessionExpired', custom_inc=custom_inc)
 
 @app.route('/_get_gads_mcc_ids')
 def _get_gads_mcc_ids():
