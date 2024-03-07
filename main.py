@@ -389,6 +389,10 @@ def report():
         }
         set_value_session(get_session_id(), 'output_data', output_data)
 
+        slide_temp = ""
+        if 'SLIDE_TEMPLATE' in os.environ:
+          slide_temp = os.environ.get('SLIDE_TEMPLATE')
+
         return render_template(
             'report.html',
             custom_inc=custom_inc,
@@ -403,7 +407,7 @@ def report():
             v2_validation_chart=v2_validation_chart,
             v2_summary=v2_summary,
             v3_matrix=v3_matrix,
-            slide_template=os.environ.get('SLIDE_TEMPLATE'),
+            slide_template=slide_temp,
             auth_slides=auth_slides
         )
       else:

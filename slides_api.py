@@ -39,9 +39,9 @@ def create_slide(session_id="", slide_id=os.environ.get('SLIDE_TEMPLATE'), clien
             drive_service.files().copy(fileId=slide_id, body=body).execute()
         )
         slide_copy_id = drive_response.get("id")
-    except ValueError as e:
+    except Exception as e:
         logging.exception(e)
-        return "Error creating copy of slides"
+        return "0"
     
     request_data = get_value_session(session_id, 'output_data')
 
@@ -106,9 +106,10 @@ def create_slide(session_id="", slide_id=os.environ.get('SLIDE_TEMPLATE'), clien
             },
         }
     }
-    add_img['createImage']['elementProperties']['size'] = final_element['size']
-    add_img['createImage']['elementProperties']['transform'] = final_element['transform']
-    requests.append(add_img)
+    if final_element:
+        add_img['createImage']['elementProperties']['size'] = final_element['size']
+        add_img['createImage']['elementProperties']['transform'] = final_element['transform']
+        requests.append(add_img)
     try:
         response = slides_service.presentations().batchUpdate(
             body={'requests': requests},
