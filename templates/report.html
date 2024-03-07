@@ -466,7 +466,8 @@
     }
 
     function viewSlideTemplate() {
-      window.open('https://docs.google.com/presentation/d/{{slide_template}}/', '_blank');
+      temp_id = document.getElementById('template_id').value;
+      window.open('https://docs.google.com/presentation/d/'+temp_id, '_blank');
     }
 
     function viewPlaceholders() {
