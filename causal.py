@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import re
-from uuid import uuid4
 import causalimpact
 from google.cloud import storage
 from matplotlib.colors import LinearSegmentedColormap
