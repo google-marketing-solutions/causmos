@@ -23,14 +23,13 @@ import json, os, socket, struct
 import math
 from causal import getCiChart, getCiObject, getCiReport, getCiSummary, getValidation, getDfMatrix
 from csv_data import csv_get_date_range, csv_merge_data, get_csv_columns, get_csv_data, bm_merge_data
-from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, session, send_file
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, session
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
 from fs_storage import set_value_session, get_value_session, delete_field
 from gsheet_data import get_raw_gsheet_data
 from slides_api import create_slide
 from google_auth_oauthlib.flow import Flow
-from google.cloud import secretmanager
 import numpy as np
 import pandas as pd
 import re
@@ -85,7 +84,6 @@ SCOPES = [
     'https://www.googleapis.com/auth/presentations',
     'https://www.googleapis.com/auth/drive'
 ]
-CLIENT_SECRETS_PATH = os.getcwd() + '/client_secret.json'
 
 flow: Flow
 csv_data = {}
@@ -385,7 +383,7 @@ def report():
           'rel_eff': org_summary[10][2].split(" ")[0],
           'image_name': image_name,
           'summary': save_summary,
-          'report': org_report.replace('\n\n', '|').replace('\n', '').replace("|", "\n\n")
+          'report': org_report.replace('\n\n', '|').replace('\n', ' ').replace("|", "\n\n")
         }
         set_value_session(get_session_id(), 'output_data', output_data)
 
@@ -607,9 +605,6 @@ def _validate_date(date_text: str) -> bool:
 
 
 def create_flow(scope) -> Flow:
-  # with open(CLIENT_SECRETS_PATH, 'r') as json_file:
-  #  client_config = json.load(json_file)
-
   client_config = json.loads(get_secret('client_secret'))  
   global flow
   flow = Flow.from_client_config(client_config=client_config, scopes=scope)
