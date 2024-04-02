@@ -19,13 +19,8 @@ from fs_storage import get_value_session
 from flask import session
 import logging
 
-def get_raw_gsheet_data(sheet_id, sheet_name=""):
+def get_raw_gsheet_data(sheet_id, sheet_name="", gid=0):
   sheet_err=['error']
-  if sheet_name:
-     sheet_range = f"'{sheet_name}'!A:ZZ"
-  else:
-     sheet_range = "A:ZZ"
-
   try:
     creds_info = json.loads(get_value_session(session['session_id'], 'credentials'))
   except ValueError as e:
@@ -38,6 +33,17 @@ def get_raw_gsheet_data(sheet_id, sheet_name=""):
 
   # Call the Sheets API
   sheet = service.spreadsheets()
+  sheets = sheet.get(spreadsheetId=sheet_id).execute().get('sheets', [])
+  sheet_names = [sheet['properties']['title'] for sheet in sheets]
+  if sheet_name:
+     sheet_range = f"'{sheet_name}'!A:ZZ"
+  elif gid > 0:
+     sheet_name = [sheet['properties']['title'] for sheet in sheets if sheet['properties']['sheetId'] == gid][0]
+     sheet_range = f"'{sheet_name}'!A:ZZ"
+  else:
+     sheet_name = ""
+     sheet_range = "A:ZZ"
+  
   result = (
       sheet.values()
       .get(spreadsheetId=sheet_id, range=sheet_range)
@@ -58,5 +64,5 @@ def get_raw_gsheet_data(sheet_id, sheet_name=""):
            row[inx]='0'
         temp_data[item] = row[inx].replace(",", "")
       final_gsheet.append(temp_data)
-      
-  return final_gsheet
+  
+  return final_gsheet, sheet_names, sheet_name

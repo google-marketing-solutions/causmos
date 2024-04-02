@@ -638,16 +638,9 @@
         </div>
         <div id="gsheet_option" class="is-hidden">
           <div class="columns">
-            <div class="column is-one-fifth"><label for="gsUrl">Google Sheet URL or ID</label><br>
-              <br>
-              <span id='gs_upload_error' class="tag is-danger is-hidden">
-                <span class="material-symbols-outlined">
-                  warning
-                </span>
-                <span id="gs_upload_error_msg"></span>
-              </span>
+            <div class="column is-one-fifth align-right"><label for="gsUrl">Google Sheet URL or ID</label>
             </div>
-            <div class="column is-three-fifths"><input class="input" type="text" id="gsUrl">
+            <div class="column is-three-fifths align-left"><input class="input" onchange="sheet_changed();" type="text" id="gsUrl">
             </div>
             <div class="column is-one-fifth"><button id="getGsSheet" class="button is-info" onclick="uploadGs();">
                 <span class="material-symbols-outlined icon">
@@ -657,10 +650,28 @@
               </button>
             </div>
           </div>
+          <div id="gsheet_tab_div" class="columns is-hidden">
+            <div class="column is-one-fifth align-right">
+              <label for="gsheet_tabs">Tab</label>
+            </div>
+            <div class="column is-narrow align-left">
+              <div class="select">
+                <select class="dd-width" onchange="uploadGs();" id="gsheet_tabs">
+                </select>
+              </div>
+              <br><br>
+              <span id='gs_upload_error' class="tag is-danger is-hidden">
+                <span class="material-symbols-outlined">
+                  warning
+                </span>
+                <span id="gs_upload_error_msg"></span>
+              </span>
+            </div>
+          </div>
           <div class="columns">
             <div class="column is-full">
               <div id="gs_url_email" class="info">
-                The data must be on the first tab, with 'date' column in yyyy-mm-dd format
+                There must be a 'date' column in yyyy-mm-dd format
               </div>
             </div>
           </div>
@@ -811,7 +822,7 @@
                       </span>
                     </div>
                   </label>
-                  
+
                   <div class="select">
                     <select class="dd-width" id="bm_covariates_dd" onchange="bmCovChanged();">
                     </select>
@@ -1095,6 +1106,8 @@
     var csv_from_date = "";
     var csv_to_date = "";
     var csv_items_loaded = false;
+    var gsheet_tab_visible = false;
+    var gs_sheet_changed = true;
 
     {% if (custom_inc == "internal") %}
     //BM global variables
@@ -1138,7 +1151,15 @@
       csv_from_date = JSON.parse(sessionStorage.getItem('csv_from_date'));
       csv_to_date = JSON.parse(sessionStorage.getItem('csv_to_date'));
       _showMinMaxDates();
-      if (sessionStorage.getItem('gsheet_url')) { document.getElementById('gsUrl').value = sessionStorage.getItem('gsheet_url'); }
+      if (sessionStorage.getItem('gsheet_url')) {
+        document.getElementById('gsUrl').value = sessionStorage.getItem('gsheet_url');
+        if (sessionStorage.getItem('gsheet_tabs')) {
+          sheets = []
+          sheets = JSON.parse(sessionStorage.getItem('gsheet_tabs'));
+          gs_sheet_changed = false;
+          _rendergSheetTabs(sheets, sessionStorage.getItem('gsheet_tab'));
+        }
+      }
 
       if (csv_data.format == "gsheet") {
         gsheet_option_click();
@@ -1170,7 +1191,7 @@
       }
     });
     if (sessionStorage.getItem('x_from_date')) { x_from_date = sessionStorage.getItem('x_from_date'); }
-    if (sessionStorage.getItem('x_to_date')) { x_to_date = sessionStorage.getItem('x_to_date');  _showMinMaxDates(); }
+    if (sessionStorage.getItem('x_to_date')) { x_to_date = sessionStorage.getItem('x_to_date'); _showMinMaxDates(); }
     if (sessionStorage.getItem('val_unef_check')) { document.getElementById('unaffectedness_check').checked = (sessionStorage.getItem('val_unef_check') == "true"); }
     if (sessionStorage.getItem('val_unef_option')) { document.getElementById('unef_dd').value = sessionStorage.getItem('val_unef_option'); }
     if (sessionStorage.getItem('val_matrix_check')) { document.getElementById('matrix_check').checked = (sessionStorage.getItem('val_matrix_check') == "true"); }
@@ -1179,6 +1200,7 @@
     if (sessionStorage.getItem('event_date')) { document.getElementById('event_date').value = sessionStorage.getItem('event_date'); }
     if (sessionStorage.getItem('val_pre_period_check')) { validation(); document.getElementById('pre_period_check').checked = (sessionStorage.getItem('val_pre_period_check') == "true"); }
     if (sessionStorage.getItem('credibility')) { document.getElementById('credibility_slider').value = sessionStorage.getItem('credibility'); }
+
 
     //Google Ads code
     function addGoogleAdsDatasource() {
@@ -1708,7 +1730,7 @@
       for (const key in bm_data.filters) {
         final_bm_details.innerHTML += "<span class='tag is-dark'>" + key + " = " + bm_data.filters[key].join(" OR ") + "</span> ";
       }
-      if(Object.keys(bm_data.filters).length == 0) {
+      if (Object.keys(bm_data.filters).length == 0) {
         final_bm_details.innerHTML += "<span class='tag is-dark'>All data</span> ";
       }
       openPopup('final_bm');
@@ -1876,7 +1898,7 @@
         for (const key in bm_data.filters) {
           var tmp_str = "<span class='tag is-dark'>" + key + " = ";
           bm_data.filters[key].forEach((value, ind) => {
-            if(ind === bm_data.filters[key].length - 1) {
+            if (ind === bm_data.filters[key].length - 1) {
               tmp_str += value + "<button onClick='deleteBmFilter(\"" + key + "|" + value + "\");' class='delete is-small'></button>";
             }
             else {
@@ -1997,7 +2019,7 @@
       bm_metrics_boxes.innerHTML = "";
 
       bm_data.metrics.forEach((val) => {
-        bm_metrics_boxes.innerHTML += "<span class='tag is-info'>" + val[0] + "[" + val[1] + "]<button onClick='deleteBmMetric(\"" + val[0] +"|"+val[1] + "\");' class='delete is-small'></button></span> ";
+        bm_metrics_boxes.innerHTML += "<span class='tag is-info'>" + val[0] + "[" + val[1] + "]<button onClick='deleteBmMetric(\"" + val[0] + "|" + val[1] + "\");' class='delete is-small'></button></span> ";
       });
 
     }
@@ -2011,16 +2033,16 @@
     function addBmMetric() {
       const bm_metric = document.getElementById('bm_metric_dd').value;
       const bm_value = document.getElementById('bm_value_dd').value;
-      if(bm_data.metrics.findIndex(innerArray => JSON.stringify(innerArray) === JSON.stringify([bm_metric, bm_value])) == -1) {
-          bm_data.metrics.push([bm_metric, bm_value]);
-        }
+      if (bm_data.metrics.findIndex(innerArray => JSON.stringify(innerArray) === JSON.stringify([bm_metric, bm_value])) == -1) {
+        bm_data.metrics.push([bm_metric, bm_value]);
+      }
       _renderBmMetricsBoxes();
     }
 
     function addAllBmMetric() {
       const bm_value = document.getElementById('bm_value_dd').value;
       bm_metrics.forEach((metric) => {
-        if(bm_data.metrics.findIndex(innerArray => JSON.stringify(innerArray) === JSON.stringify([metric, bm_value])) == -1) {
+        if (bm_data.metrics.findIndex(innerArray => JSON.stringify(innerArray) === JSON.stringify([metric, bm_value])) == -1) {
           bm_data.metrics.push([metric, bm_value]);
         }
       });
@@ -2053,6 +2075,7 @@
       tmp_csv_data = JSON.parse(JSON.stringify(csv_data));
       _renderCsvMetricsBoxes();
       openPopup('csv_datasource_tab');
+      gsheet_tab_visible = !document.getElementById('gsheet_tab_div').classList.contains('is-hidden');
     }
 
     function saveCsvDatasource() {
@@ -2104,6 +2127,9 @@
         csv_to_date = "";
       }
       csv_data = JSON.parse(JSON.stringify(tmp_csv_data));
+      if (!gsheet_tab_visible) {
+        document.getElementById('gsheet_tab_div').classList.add('is-hidden');
+      }
       closePopup('csv_datasource_tab');
       cleanUp();
     }
@@ -2154,8 +2180,22 @@
       }
     }
 
+    function sheet_changed() {
+      gs_sheet_changed = true;
+    }
+
     function uploadGs() {
       gsUrl = document.getElementById('gsUrl').value;
+      gsTab = "";
+      if (!gs_sheet_changed) {
+        if (document.getElementById('gsheet_tabs').options.length > 0) {
+          gsTab = document.getElementById('gsheet_tabs').value;
+          sessionStorage.setItem('gsheet_tab', gsTab);
+        }
+      }
+      else {
+        gs_sheet_changed = false;
+      }
       if (gsUrl == "") {
         openPopup('gs_upload_error');
         document.getElementById('gs_upload_error_msg').textContent = "Must have a valid URL or Sheet ID";
@@ -2166,7 +2206,7 @@
         addDDSpinner('getGsSheet');
         document.getElementById('csv_options').classList.add('div-disable');
         csv_data.metrics = [];
-        const api_url = "/_get_gs_data?gs_url=" + gsUrl;
+        const api_url = "/_get_gs_data?gs_tab=" + gsTab + "&gid=" +(gsUrl.split('gid=')[1] ?? 0) + "&gs_url=" + gsUrl;
         fetch(api_url)
           .then(response => response.json())
           .then(data => {
@@ -2177,19 +2217,44 @@
               csv_to_date = data.result[4];
               csv_items_loaded = false;
               csv_data.format = data.result[5];
-
+              gsTab = data.result[8];
+              sessionStorage.setItem('gsheet_tab', gsTab);
+              sessionStorage.setItem('gsheet_tabs', JSON.stringify(data.result[7]));
               setValidDates();
-
+              _rendergSheetTabs(data.result[7], gsTab);
               _renderCsvMetricsBoxes();
               closePopup('csv_upload_error');
+              removeDDSpinner('getGsSheet');
+            }
+            else if (data.result[0] == "error") {
+              gsTab = data.result[4];
+              sessionStorage.setItem('gsheet_tab', gsTab);
+              sessionStorage.setItem('gsheet_tabs', JSON.stringify(data.result[3]));
+              _rendergSheetTabs(data.result[3], gsTab);
+              document.getElementById('gs_upload_error_msg').textContent = data.result[1];
+              openPopup('gs_upload_error');
+              closePopup('csv_options');
               removeDDSpinner('getGsSheet');
             }
             else {
               document.getElementById('gs_upload_error_msg').textContent = data.result[1];
               openPopup('gs_upload_error');
+              closePopup('csv_options');
               removeDDSpinner('getGsSheet');
             }
           });
+      }
+    }
+
+    function _rendergSheetTabs(sheets, gsTab) {
+      document.getElementById('gsheet_tab_div').classList.remove('is-hidden');
+      gsheet_tabs = document.getElementById('gsheet_tabs');
+      gsheet_tabs.innerHTML = "";
+      sheets.forEach((tab) => {
+        gsheet_tabs.add(new Option(tab, tab));
+      });
+      if (gsTab != "") {
+        gsheet_tabs.value = gsTab;
       }
     }
 
@@ -2233,12 +2298,12 @@
         }
       }
       {% else %}
-      if(csv_to_date && csv_from_date) {
+      if (csv_to_date && csv_from_date) {
         t_date.value = x_to_date = csv_to_date;
         f_date.value = x_from_date = csv_from_date;
       }
       {% endif %}
-       
+
       sessionStorage.setItem('x_from_date', x_from_date);
       sessionStorage.setItem('x_to_date', x_to_date);
       _showMinMaxDates();
@@ -2347,9 +2412,12 @@
           sessionStorage.removeItem('csv_from_date');
           sessionStorage.removeItem('csv_to_date');
           sessionStorage.removeItem('gsheet_url');
+          sessionStorage.removeItem('gsheet_tab');
+          sessionStorage.removeItem('gsheet_tabs');
           document.getElementById('gsUrl').value = "";
           document.getElementById('from_date_label').innerHTML = "";
           document.getElementById('to_date_label').innerHTML = "";
+          document.getElementById('gsheet_tab_div').classList.add('is-hidden');
           closePopup('final_csv');
           cleanUp();
         },
@@ -2502,7 +2570,7 @@
         });
         {% if (custom_inc == "internal") %}
         bm_data.metrics.forEach((metric) => {
-          var newOption = new Option("BM : " + metric[0] + "["+metric[1]+"]", "bm_" + metric[0] + "["+metric[1]+"]");
+          var newOption = new Option("BM : " + metric[0] + "[" + metric[1] + "]", "bm_" + metric[0] + "[" + metric[1] + "]");
           target_event_dd.add(newOption);
         });
         {% endif %}
