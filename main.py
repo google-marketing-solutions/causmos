@@ -238,13 +238,13 @@ def report():
 
     if 'csv' in data:
       if(data['csv_format']=="gsheet"):
-        csv_data = get_raw_gsheet_data(get_value_session(get_session_id(), 'sheet_id'))
+        csv_data = get_raw_gsheet_data(get_value_session(get_session_id(), 'sheet_id'), get_value_session(get_session_id(), 'gs_tab'))[0]
       else:
         csv_data = get_value_session(get_session_id(), 'csv_data')
       raw_data = csv_merge_data(csv_data, data['csv'], raw_data)
     
     if 'bm' in data:
-      bm_data = get_raw_gsheet_data(get_value_session(get_session_id(), 'bm_sheet_id'), 'Data Breakdown')
+      bm_data = get_raw_gsheet_data(get_value_session(get_session_id(), 'bm_sheet_id'), 'Data Breakdown')[0]
       raw_data = bm_merge_data(bm_data, data['bm'], raw_data)
 
     if raw_data:    
@@ -495,15 +495,29 @@ def upload_file():
 
 @app.route('/_get_gs_data')
 def _get_gs_data():
-  csv_settings = []
   sheet_id = request.args.get('gs_url', 0, type=str)
+  gs_tab = request.args.get('gs_tab', 0, type=str)
+  gid = request.args.get('gid', 0, type=int)
   if "https://" in sheet_id:
     sheet_id = sheet_id.split("/")[5]
   set_value_session(get_session_id(), 'sheet_id', sheet_id)
 
-  final_gsheet = get_raw_gsheet_data(sheet_id)
-  if final_gsheet[0]!="error":
-    return jsonify(result=getCsvSettings(final_gsheet, "gsheet"))
+  final_gsheet, sheets, sheet_name = get_raw_gsheet_data(sheet_id, gs_tab, gid)
+  set_value_session(get_session_id(), 'gs_tab', sheet_name)
+
+  if len(final_gsheet) == 0:
+    res = []
+    res.append('error')
+    res.append('No valid data in current tab. Please try selecting another tab or upload a new sheet')
+    res.append('sheets')
+    res.append(sheets)
+    return jsonify(result=res)
+  elif final_gsheet[0]!="error":
+    res = getCsvSettings(final_gsheet, "gsheet")
+    res.append('sheets')
+    res.append(sheets)
+    res.append(sheet_name)
+    return jsonify(result=res)
   else:
     return jsonify(result=final_gsheet)
   
@@ -519,9 +533,8 @@ def getCsvSettings(csv_data: dict, format: str) -> dict:
     csv_settings.append('error')
     csv_settings.append(
         "'date' column not found. Add 'date' heading and use date format"
-        " 'yyyy-mm-dd' in the values"
+        " 'yyyy-mm-dd' in the values or try another tab"
     )
-
   else:
     start_date, end_date = csv_get_date_range(csv_data, csv_date_column, False)
     if _validate_date(start_date) and _validate_date(end_date):
@@ -541,7 +554,7 @@ def getCsvSettings(csv_data: dict, format: str) -> dict:
 @app.route('/_get_bm_metrics')
 def _get_bm_metrics():
   bm_covariates = request.args.get('bm_covariates', 0, type=str)
-  final_bm_sheet = get_raw_gsheet_data(get_value_session(get_session_id(), 'bm_sheet_id'), 'Data Breakdown')
+  final_bm_sheet = get_raw_gsheet_data(get_value_session(get_session_id(), 'bm_sheet_id'), 'Data Breakdown')[0]
   metrics = set(val[bm_covariates] for val in final_bm_sheet if bm_covariates in val)
   return jsonify(result=list(metrics))
 
@@ -554,7 +567,7 @@ def _get_bm_data():
     sheet_id = sheet_id.split("/")[5]
   set_value_session(get_session_id(), 'bm_sheet_id', sheet_id)
 
-  final_bm_sheet = get_raw_gsheet_data(sheet_id, 'Data Breakdown')
+  final_bm_sheet = get_raw_gsheet_data(sheet_id, 'Data Breakdown')[0]
 
   if final_bm_sheet[0]!="error":
     return jsonify(result=getBmSettings(final_bm_sheet))
