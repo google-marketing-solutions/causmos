@@ -640,7 +640,8 @@
           <div class="columns">
             <div class="column is-one-fifth align-right"><label for="gsUrl">Google Sheet URL or ID</label>
             </div>
-            <div class="column is-three-fifths align-left"><input class="input" onchange="sheet_changed();" type="text" id="gsUrl">
+            <div class="column is-three-fifths align-left"><input class="input" onchange="sheet_changed();" type="text"
+                id="gsUrl">
             </div>
             <div class="column is-one-fifth"><button id="getGsSheet" class="button is-info" onclick="uploadGs();">
                 <span class="material-symbols-outlined icon">
@@ -790,7 +791,7 @@
           <div class="columns">
             <div class="column is-full">
               <div id="bm_url_email" class="info">
-                The sheet with the {{bm_name}} data in it must be named 'Data Breakdown'
+                The tab with the {{bm_name}} data in it must be named 'Data Breakdown'
               </div>
             </div>
           </div>
@@ -2206,7 +2207,7 @@
         addDDSpinner('getGsSheet');
         document.getElementById('csv_options').classList.add('div-disable');
         csv_data.metrics = [];
-        const api_url = "/_get_gs_data?gs_tab=" + gsTab + "&gid=" +(gsUrl.split('gid=')[1] ?? 0) + "&gs_url=" + gsUrl;
+        const api_url = "/_get_gs_data?gs_tab=" + gsTab + "&gid=" + (gsUrl.split('gid=')[1] ?? 0) + "&gs_url=" + gsUrl;
         fetch(api_url)
           .then(response => response.json())
           .then(data => {
@@ -2261,6 +2262,7 @@
     function setValidDates() {
       var f_date = document.getElementById('from_date');
       var t_date = document.getElementById('to_date');
+      var event_date = document.getElementById('event_date');
       {% if (custom_inc == "internal") %}
       if ((bm_from_date > csv_to_date || csv_from_date > bm_to_date) && (bm_from_date != "" && bm_to_date != "" && csv_from_date != "" && csv_to_date != "")) {
         is_date_error = true;
@@ -2304,12 +2306,21 @@
       }
       {% endif %}
 
+      event_date.value = _getMiddleDate(t_date.value, f_date.value);
+
       sessionStorage.setItem('x_from_date', x_from_date);
       sessionStorage.setItem('x_to_date', x_to_date);
       _showMinMaxDates();
+    }
 
-      sessionStorage.setItem('from_date', f_date.value);
-      sessionStorage.setItem('to_date', t_date.value);
+    function _getMiddleDate(startDateStr, endDateStr) {
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+      const startTimestamp = startDate.getTime();
+      const endTimestamp = endDate.getTime();
+      const middleTimestamp = (startTimestamp + endTimestamp) / 2;
+
+      return (new Date(middleTimestamp)).toISOString().split("T")[0];
     }
 
     function _showMinMaxDates() {

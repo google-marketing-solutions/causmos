@@ -25,8 +25,8 @@ def get_raw_gsheet_data(sheet_id, sheet_name="", gid=0):
     creds_info = json.loads(get_value_session(session['session_id'], 'credentials'))
   except ValueError as e:
     logging.exception(e)
-    sheet_err.append(f'Error: {e}')
-    return sheet_err
+    sheet_err.append(f'Sheet does not exist or is invalid - Make sure the tab "{sheet_name}" exists')
+    return sheet_err, "error"
   
   creds = Credentials.from_authorized_user_info(creds_info)
   service = build("sheets", "v4", credentials=creds)
@@ -44,25 +44,30 @@ def get_raw_gsheet_data(sheet_id, sheet_name="", gid=0):
      sheet_name = ""
      sheet_range = "A:ZZ"
   
-  result = (
-      sheet.values()
-      .get(spreadsheetId=sheet_id, range=sheet_range)
-      .execute()
-  )
-  values = result.get("values", [])
-  final_gsheet = []
+  try:
+    result = (
+        sheet.values()
+        .get(spreadsheetId=sheet_id, range=sheet_range)
+        .execute()
+    )
+    values = result.get("values", [])
+    final_gsheet = []
 
-  headers = values.pop(0)
-  header_count = len(headers)
+    headers = values.pop(0)
+    header_count = len(headers)
 
-  for row in values:
-      temp_data = {}
-      if len(row) is not header_count:
-        row.append('0')
-      for inx, item in enumerate(headers):
-        if row[inx]=='':
-           row[inx]='0'
-        temp_data[item] = row[inx].replace(",", "")
-      final_gsheet.append(temp_data)
+    for row in values:
+        temp_data = {}
+        if len(row) is not header_count:
+          row.append('0')
+        for inx, item in enumerate(headers):
+          if row[inx]=='':
+            row[inx]='0'
+          temp_data[item] = row[inx].replace(",", "")
+        final_gsheet.append(temp_data)
+  except Exception as e:
+    logging.exception(e)
+    sheet_err.append(f'Sheet does not exist or is invalid - Make sure the tab "{sheet_name}" exists')
+    return sheet_err, "error"
   
   return final_gsheet, sheet_names, sheet_name
