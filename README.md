@@ -15,7 +15,7 @@ The Causmos solution is a Web App on Google Cloud App Engine that uses the logge
 
 1. Prepare Google Cloud project and check that billing is enabled
 
-2. Create [OAuth Client ID Credentials](https://pantheon.corp.google.com/apis/credentials) and download the JSON file (you may need to create the Consent screen first).
+2. Create [OAuth Client ID Credentials](https://console.cloud.google.com/apis/credentials) and download the JSON file (you may need to create the Consent screen first).
 
 3. Clone the repo in cloud console using the following command:
 ```
