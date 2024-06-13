@@ -339,7 +339,6 @@ def report() -> render_template:
   if request.form.get('data_to_send') and check_session_id():
     data = json.loads(request.form.get('data_to_send', 0, type=str))
 
-    print(data)
     raw_data = {}
     gads_responses = []
     credibility = 1 - (int(data['credibility']) / 100)
