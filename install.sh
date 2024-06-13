@@ -38,19 +38,21 @@ then
 fi
 
 echo -e "${COLOR}Enabling APIs...${NC}"
-gcloud services enable appengine.googleapis.com
-gcloud services enable iap.googleapis.com
-gcloud services enable cloudresourcemanager.googleapis.com
-gcloud services enable iamcredentials.googleapis.com
-gcloud services enable cloudbuild.googleapis.com
-gcloud services enable googleads.googleapis.com
-gcloud services enable analyticsadmin.googleapis.com
-gcloud services enable analyticsdata.googleapis.com
-gcloud services enable firestore.googleapis.com
-gcloud services enable sheets.googleapis.com
-gcloud services enable slides.googleapis.com
-gcloud services enable drive.googleapis.com
-gcloud services enable secretmanager.googleapis.com
+gcloud services enable \
+  appengine.googleapis.com \
+  iap.googleapis.com \
+  cloudresourcemanager.googleapis.com \
+  iamcredentials.googleapis.com \
+  cloudbuild.googleapis.com \
+  googleads.googleapis.com \
+  analyticsadmin.googleapis.com \
+  analyticsdata.googleapis.com \
+  firestore.googleapis.com \
+  sheets.googleapis.com \
+  slides.googleapis.com \
+  drive.googleapis.com \
+  secretmanager.googleapis.com \
+  bigquery.googleapis.com \
 
 gcloud app create --region $GAE_LOCATION
 

@@ -1,118 +1,227 @@
-{% include custom_inc+"_header.html" %}
+{% include "_header.html" %}
 <title>Causmos - Report</title>
 </head>
 
-<body>
-  {% include custom_inc+"_title.html" %}
-
-  <div class="columns">
-    <div class="column">
-    </div>
-    <div class="column">
-      <div id="all_content" class="align-left main-window">
-        <div>
-          <a href="/"><button class="button is-info">
-              <span class="material-symbols-outlined icon">
-                edit
+<body">
+  <div id="mainbody">
+    {% include "_title.html" %}
+    <div class="columns">
+      <div class="column">
+      </div>
+      <div class="column">
+        <div id="all_content" class="align-left main-window">
+          <div>
+            <a href="/"><button class="button is-info">
+                <span class="material-symbols-outlined icon">
+                  edit
+                </span>
+                <span>Edit Analysis</span>
+              </button></a>
+            <div class="dropdown">
+              <div class="dropdown-trigger">
+                <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
+                  <span class="material-symbols-outlined icon">
+                    database
+                  </span>
+                  <span>Data</span>
+                  <span class="material-symbols-outlined icon">
+                    arrow_drop_down
+                  </span>
+                </button>
+              </div>
+              <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                <div class="dropdown-content">
+                  <a id="v3_linkl" href="#" onclick="showRawData();" class="dropdown-item">
+                    Raw Data
+                  </a>
+                  <a id="v1_link" href="#" onclick="showDataOverview();" class="dropdown-item">
+                    Data Summary
+                  </a>
+                </div>
+              </div>
+            </div>
+            {% if v1_summary!="" or v2_summary!="" or v3_matrix!="" %}
+            <div class="dropdown">
+              <div class="dropdown-trigger">
+                <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
+                  <span class="material-symbols-outlined icon icon">
+                    verified
+                  </span>
+                  <span>Validation Tests</span>
+                  <span class="material-symbols-outlined icon">
+                    arrow_drop_down
+                  </span>
+                </button>
+              </div>
+              <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                <div class="dropdown-content">
+                  {% if v3_matrix!="" %}
+                  <a id="v3_linkl" href="#" onclick="showV3Data();" class="dropdown-item">
+                    Correlation Matrix
+                  </a>
+                  {% endif %}
+                  {% if v1_summary!="" %}
+                  <a id="v1_link" href="#" onclick="showV1Data();" class="dropdown-item">
+                    Pre-Period
+                  </a>
+                  {% endif %}
+                  {% if v2_summary!="" %}
+                  <a id="v2_link" href="#" onclick="showV2Data();" class="dropdown-item">
+                    Unaffectedness
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            {% if auth_slides=="true" %}
+            <div class="dropdown float-right">
+              <div class="dropdown-trigger">
+                <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
+                  <span class="material-symbols-outlined icon icon">
+                    share_windows
+                  </span>
+                  <span>Export to...</span>
+                  <span class="material-symbols-outlined icon">
+                    arrow_drop_down
+                  </span>
+                </button>
+              </div>
+              <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                <div class="dropdown-content">
+                  <a id="v3_linkl" href="#" onclick="exportData();" class="dropdown-item">
+                    Slides
+                  </a>
+                  <a id="v3_linkl" href="#" onclick="jsonToCsv();" class="dropdown-item">
+                    CSV
+                  </a>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          <p class="hr-tag"></p>
+          <div>
+            <span id='warnings' class="tag is-warning is-hidden">
+              <span class="material-symbols-outlined">
+                warning
               </span>
-              <span>Edit Analysis</span>
-            </button></a>
-          <div class="dropdown">
-            <div class="dropdown-trigger">
-              <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
-                <span class="material-symbols-outlined icon">
-                  database
-                </span>
-                <span>Data</span>
-                <span class="material-symbols-outlined icon">
-                  arrow_drop_down
-                </span>
-              </button>
-            </div>
-            <div class="dropdown-menu" id="dropdown-menu" role="menu">
-              <div class="dropdown-content">
-                <a id="v3_linkl" href="#" onclick="showRawData();" class="dropdown-item">
-                  Raw Data
-                </a>
-                <a id="v1_link" href="#" onclick="showDataOverview();" class="dropdown-item">
-                  Data Summary
-                </a>
-              </div>
-            </div>
-          </div>
-          {% if v1_summary!="-" or v2_summary!="-" or v3_matrix!="-" %}
-          <div class="dropdown">
-            <div class="dropdown-trigger">
-              <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
-                <span class="material-symbols-outlined icon icon">
-                  verified
-                </span>
-                <span>Validation Tests</span>
-                <span class="material-symbols-outlined icon">
-                  arrow_drop_down
-                </span>
-              </button>
-            </div>
-            <div class="dropdown-menu" id="dropdown-menu" role="menu">
-              <div class="dropdown-content">
-                {% if v3_matrix!="-" %}
-                <a id="v3_linkl" href="#" onclick="showV3Data();" class="dropdown-item">
-                  Correlation Matrix
-                </a>
-                {% endif %}
-                {% if v1_summary!="-" %}
-                <a id="v1_link" href="#" onclick="showV1Data();" class="dropdown-item">
-                  Pre-Period
-                </a>
-                {% endif %}
-                {% if v2_summary!="-" %}
-                <a id="v2_link" href="#" onclick="showV2Data();" class="dropdown-item">
-                  Unaffectedness
-                </a>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-          {% endif %}
-          {% if auth_slides=="true" %}
-          <div class="dropdown float-right">
-            <div class="dropdown-trigger">
-              <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
-                <span class="material-symbols-outlined icon icon">
-                  share_windows
-                </span>
-                <span>Export to...</span>
-                <span class="material-symbols-outlined icon">
-                  arrow_drop_down
-                </span>
-              </button>
-            </div>
-            <div class="dropdown-menu" id="dropdown-menu" role="menu">
-              <div class="dropdown-content">
-                <a id="v3_linkl" href="#" onclick="exportData();" class="dropdown-item">
-                  Slides
-                </a>
-                <a id="v3_linkl" href="#" onclick="jsonToCsv();" class="dropdown-item">
-                  CSV
-                </a>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-        </div>
-        <p class="hr-tag"></p>
-        <div>
-          <span id='warnings' class="tag is-warning is-hidden">
-            <span class="material-symbols-outlined">
-              warning
+              <span id="warnings_msg"></span>
             </span>
-            <span id="warnings_msg"></span>
+          </div>
+          <h4 class="title is-4">Analysis Quality</h4>
+          <span class="tag is-info">
+            Trend: {{lift}}
           </span>
+          {% if total_score == 10 %}
+          <span class="tag is-success">
+            Quality Score: {{total_score}}/10
+          </span>
+          {% elif total_score > 3 and total_score < 10 %} <span class="tag is-warning">
+            Quality Score: {{total_score}}/10
+            </span>
+            {% else %}
+            <span class="tag is-danger">
+              Quality Score: {{total_score}}/10
+            </span>
+            {% endif %}
+            <br>
+            {{tag_msg|safe}}
+            <br><br>
+            <h4 class="title is-4">Summary Report</h4>
+            <table>
+              {% for x in summary[1:15] %}
+              <tr class="table-border">
+                {% for y in x %}
+                <td>{{y}}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </table>
+            <br><br>
+
+            <h4 class="title is-4">Plotted Results</h4>
+            <script>
+              var main_spec;
+            </script>
+            {{chart|safe}}
+            <br><br>
+
+            <h4 class="title is-4">Detailed Report</h4>
+            {{report|safe}}
+            <br><br>
         </div>
-        <div class="summary-report">
-          <h4 class="title is-4">Summary Report</h4>
+      </div>
+      <div class="column">
+      </div>
+    </div>
+
+    <div id="raw_data" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Raw Data</p>
+        </header>
+        <section class="modal-card-body">
+          {{raw_data|safe}}
+        </section>
+        <footer class="modal-card-foot">
+          <button onclick="closePopups();" class="button is-danger">
+            <span>Close</span>
+            <span class="material-symbols-outlined icon">
+              close
+            </span>
+          </button>
+        </footer>
+      </div>
+      <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
+    </div>
+
+    <div id="data_overview" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Data Summary</p>
+        </header>
+        <section class="modal-card-body">
+          <table class="full-table-border">
+            {% for x in validation %}
+            <tr class="full-table-border">
+              {% for y in x %}
+              <td class="full-table-border">{{y}}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </table>
+        </section>
+        <footer class="modal-card-foot">
+          <button onclick="closePopups();" class="button is-danger">
+            <span>Close</span>
+            <span class="material-symbols-outlined icon">
+              close
+            </span>
+          </button>
+        </footer>
+      </div>
+      <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
+    </div>
+
+    {% if v1_summary!="" %}
+    <div id="v1_data" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p id="confirm_title" class="modal-card-title">Pre-Period Validation</p>
+        </header>
+        <section class="modal-card-body">
+          Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of
+          the
+          date range as a new pre and post-period to confirm if there are any natural causal impact during the period
+          before the target event happened.
+          <br><br>
+          <h4 class="title is-4">Summary</h4>
           <table>
-            {% for x in summary[1:15] %}
+            {% for x in v1_summary[1:15] %}
             <tr class="table-border">
               {% for y in x %}
               <td>{{y}}</td>
@@ -120,305 +229,233 @@
             </tr>
             {% endfor %}
           </table>
-        </div>
-        <br><br>
-
-        <h4 class="title is-4">Plotted Results</h4>
-        <script>
-          var main_spec;
-        </script>
-        {{chart|safe}}
-        <br><br>
-
-        <h4 class="title is-4">Detailed Report</h4>
-        {{report|safe}}
-        <br><br>
+          <br><br>
+          <h4 class="title is-4">Plotted Results</h4>
+          {{v1_validation_chart|safe}}
+        </section>
+        <footer class="modal-card-foot">
+          <button onclick="closeV1Data();" class="button is-danger">
+            <span>Close</span>
+            <span class="material-symbols-outlined icon">
+              close
+            </span>
+          </button>
+        </footer>
       </div>
     </div>
-    <div class="column">
-    </div>
-  </div>
+    {% endif %}
 
-  <div id="raw_data" class="modal">
-    <div class="modal-background"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Raw Data</p>
-      </header>
-      <section class="modal-card-body">
-        {{raw_data|safe}}
-      </section>
-      <footer class="modal-card-foot">
-        <button onclick="closePopups();" class="button is-danger">
-          <span>Close</span>
-          <span class="material-symbols-outlined icon">
-            close
-          </span>
-        </button>
-      </footer>
-    </div>
-    <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
-  </div>
-
-  <div id="data_overview" class="modal">
-    <div class="modal-background"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Data Summary</p>
-      </header>
-      <section class="modal-card-body">
-        <table class="full-table-border">
-          {% for x in validation %}
-          <tr class="full-table-border">
-            {% for y in x %}
-            <td class="full-table-border">{{y}}</td>
+    {% if v2_summary!="" %}
+    <div id="v2_data" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p id="confirm_title" class="modal-card-title">Unaffectedness Validation</p>
+        </header>
+        <section class="modal-card-body">
+          Unaffectedness Validation test removes the target event from the data, and checks the selected event to ensure
+          there is no natural causal impact with other events over the same date period as your original Causal Impact
+          analysis.
+          <br><br>
+          <h4 class="title is-4">Summary</h4>
+          <table>
+            {% for x in v2_summary[1:15] %}
+            <tr class="table-border">
+              {% for y in x %}
+              <td>{{y}}</td>
+              {% endfor %}
+            </tr>
             {% endfor %}
-          </tr>
-          {% endfor %}
-        </table>
-      </section>
-      <footer class="modal-card-foot">
-        <button onclick="closePopups();" class="button is-danger">
-          <span>Close</span>
-          <span class="material-symbols-outlined icon">
-            close
-          </span>
-        </button>
-      </footer>
-    </div>
-    <button class="modal-close is-large" onclick="closePopups();" aria-label="close"></button>
-  </div>
-
-  {% if v1_summary!="-" %}
-  <div id="v1_data" class="modal">
-    <div class="modal-background"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p id="confirm_title" class="modal-card-title">Pre-Period Validation</p>
-      </header>
-      <section class="modal-card-body">
-        Pre-Period Validation test takes the pre-period from your Causal Impact analysis and does a 75/25% split of
-        the
-        date range as a new pre and post-period to confirm if there are any natural causal impact during the period
-        before the target event happened.
-        <br><br>
-        <h4 class="title is-4">Summary</h4>
-        <table>
-          {% for x in v1_summary[1:15] %}
-          <tr class="table-border">
-            {% for y in x %}
-            <td>{{y}}</td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-        </table>
-        <br><br>
-        <h4 class="title is-4">Plotted Results</h4>
-        {{v1_validation_chart|safe}}
-      </section>
-      <footer class="modal-card-foot">
-        <button onclick="closeV1Data();" class="button is-danger">
-          <span>Close</span>
-          <span class="material-symbols-outlined icon">
-            close
-          </span>
-        </button>
-      </footer>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if v2_summary!="-" %}
-  <div id="v2_data" class="modal">
-    <div class="modal-background"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p id="confirm_title" class="modal-card-title">Unaffectedness Validation</p>
-      </header>
-      <section class="modal-card-body">
-        Unaffectedness Validation test removes the target event from the data, and checks the selected event to ensure
-        there is no natural causal impact with other events over the same date period as your original Causal Impact
-        analysis.
-        <br><br>
-        <h4 class="title is-4">Summary</h4>
-        <table>
-          {% for x in v2_summary[1:15] %}
-          <tr class="table-border">
-            {% for y in x %}
-            <td>{{y}}</td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-        </table>
-        <br><br>
-        <h4 class="title is-4">Plotted Results</h4>
-        {{v2_validation_chart|safe}}
-      </section>
-      <footer class="modal-card-foot">
-        <button onclick="closeV2Data();" class="button is-danger">
-          <span>Close</span>
-          <span class="material-symbols-outlined icon">
-            close
-          </span>
-        </button>
-      </footer>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if v3_matrix!="-" %}
-  <div id="v3_data" class="modal">
-    <div class="modal-background"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p id="confirm_title" class="modal-card-title">Correlation Matrix Validation</p>
-      </header>
-      <section class="modal-card-body">
-        Correlation Matrix Validation correlates the first 10 covariates (including the target event) against each
-        other
-        to
-        understand the linear relationship between each pair of covariates. High values indicate strong linear
-        relationship
-        between two covariates where a low value indicates a poor linear relationship.
-        <br><br>
-        {{v3_matrix|safe}}
-      </section>
-      <footer class="modal-card-foot">
-        <button onclick="closeV3Data();" class="button is-danger">
-          <span>Close</span>
-          <span class="material-symbols-outlined icon">
-            close
-          </span>
-        </button>
-      </footer>
-    </div>
-  </div>
-  {% endif %}
-
-  <div id="export_data" class="modal">
-    <div class="modal-background"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p id="confirm_title" class="modal-card-title">Export To Slides</p>
-      </header>
-      <section class="modal-card-body">
-        <div class="columns align-middle">
-          <div class="column is-4">
-            <label for="client_name">Client Name</label>
-          </div>
-          <div class="column is-5">
-            <input id="client_name" class="input" type="text">
-          </div>
-          <span id='client_name_error' class="tag is-danger is-hidden">
-            <span class="material-symbols-outlined">
-              warning
+          </table>
+          <br><br>
+          <h4 class="title is-4">Plotted Results</h4>
+          {{v2_validation_chart|safe}}
+        </section>
+        <footer class="modal-card-foot">
+          <button onclick="closeV2Data();" class="button is-danger">
+            <span>Close</span>
+            <span class="material-symbols-outlined icon">
+              close
             </span>
-            Must enter a client name
-          </span>
-        </div>
-        <div class="columns align-middle">
-          <div class="column is-4">
-            <label for="template_id">Slide Template ID</label>
-          </div>
-          <div class="column is-5">
-            <input id="template_id" class="input" width="100" type="text" value="{{slide_template}}">
-          </div>
-          <div class="column is-1">
-            <button onclick="viewPlaceholders();" title="View Placeholder Code" class="button is-small is-primary">
-              <span class="material-symbols-outlined">
-                data_object
-              </span>
-            </button>
-          </div>
-          <div class="column is-1">
-            <button onclick="restoreSlideTemplateId();" title="Restore default Template ID"
-              class="button is-small is-info">
-              <span class="material-symbols-outlined">
-                settings_backup_restore
-              </span>
-            </button>
-          </div>
-          <div class="column is-1">
-            <button onclick="viewSlideTemplate();" title="View Default Template Slides" class="button is-small is-link">
-              <span class="material-symbols-outlined">
-                visibility
-              </span>
-            </button>
-          </div>
-        </div>
-        <div id="template_info" class="columns main-info align-middle is-hidden">
-          <div class="column is-four-fiths">
-            <span class="raw-data">
-              You can specify your own Slide ID for any template and use the below placeholders in your template to be
-              filled in automatically by Causal Impact<br><br>
-              {% raw %}{{CLIENT_NAME}} - Client Name<br>
-              {{DATE}} - Todays date that the slides were created<br>
-              {{TARGET_EVENT}} - The target event selected for the analysis<br>
-              {{COVARIATES}} - A list of covariates separated by comma<br>
-              {{PREPERIOD-START}} - Preperiod start date<br>
-              {{PREPERIOD-END}} - Preperiod end date<br>
-              {{POSTPERIOD-START}} - Post-period start date<br>
-              {{POSTPERIOD-END}} - Post-period end date<br>
-              {{P_VALUE}} - The P Value calculated by the analysis<br>
-              {{INCR_ACTIONS}} - The total incremental target events since the event date<br>
-              {{RELATIVE_EFFECT}} - The percentage relative effect</br>{% endraw %}<br>
-              {{SUMMARY}} - The summary information
-              {{REPORT}} - The detailed report text
+          </button>
+        </footer>
+      </div>
+    </div>
+    {% endif %}
 
-              For the chart, you must create a box shape for the size and position you want the chart and add the
-              description CHART to it under alt text
+    {% if v3_matrix!="" %}
+    <div id="v3_data" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p id="confirm_title" class="modal-card-title">Correlation Matrix Validation</p>
+        </header>
+        <section class="modal-card-body">
+          Correlation Matrix Validation correlates the first 10 covariates (including the target event) against each
+          other
+          to
+          understand the linear relationship between each pair of covariates. High values indicate strong linear
+          relationship
+          between two covariates where a low value indicates a poor linear relationship.
+          <br><br>
+          {{v3_matrix|safe}}
+        </section>
+        <footer class="modal-card-foot">
+          <button onclick="closeV3Data();" class="button is-danger">
+            <span>Close</span>
+            <span class="material-symbols-outlined icon">
+              close
+            </span>
+          </button>
+        </footer>
+      </div>
+    </div>
+    {% endif %}
+
+    <div id="ai_modal" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p id="confirm_title" class="modal-card-title">AI generated Insights</p>
+        </header>
+        <section class="modal-card-body">
+          <span class="align-left" id="ai_gen_text"></span>
+        </section>
+        <footer class="modal-card-foot">
+          <button onclick="closeAiInsights();" class="button is-danger">
+            <span>Close</span>
+            <span class="material-symbols-outlined icon">
+              close
+            </span>
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="export_data" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p id="confirm_title" class="modal-card-title">Export To Slides</p>
+        </header>
+        <section class="modal-card-body">
+          <div class="columns align-middle">
+            <div class="column is-4">
+              <label for="client_name">Client Name</label>
+            </div>
+            <div class="column is-5">
+              <input id="client_name" class="input" type="text">
+            </div>
+            <span id='client_name_error' class="tag is-danger is-hidden">
+              <span class="material-symbols-outlined">
+                warning
+              </span>
+              Must enter a client name
             </span>
           </div>
-        </div>
-        <div>
-          <label class="checkbox align-left">
-            <input id="slide_prepended" type="checkbox">
-            Remove prepended metric labels (cvs_, gads_, ga4_, bm_)
-          </label>
-        </div>
-        <br>
-        <button id="export_to_slides" onclick="exportToSlides();" class="button is-success">
-          <span class="material-symbols-outlined icon">
-            present_to_all
-          </span>
-          <span>Export To Slides</span>
-        </button>
-        <br><br>
-        <span id="loading_slides" class="is-hidden loading">
-          Slides are being generated... Please wait...
-        </span>
-        <span id="created_slide" class="is-hidden">
-          <span class="success">
-            Slides successfully created! The slides are available with the link below or visit <a
-              href='https://slides.google.com' target='_blank'>https://slides.google.com</a> to view this and
-            previously
-            generated ones.
-          </span>
+          <div class="columns align-middle">
+            <div class="column is-4">
+              <label for="template_id">Slide Template ID</label>
+            </div>
+            <div class="column is-5">
+              <input id="template_id" class="input" width="100" type="text" value="{{slide_template}}">
+            </div>
+            <div class="column is-1">
+              <button onclick="viewPlaceholders();" title="View Placeholder Code" class="button is-small is-primary">
+                <span class="material-symbols-outlined">
+                  data_object
+                </span>
+              </button>
+            </div>
+            <div class="column is-1">
+              <button onclick="restoreSlideTemplateId();" title="Restore default Template ID"
+                class="button is-small is-info">
+                <span class="material-symbols-outlined">
+                  settings_backup_restore
+                </span>
+              </button>
+            </div>
+            <div class="column is-1">
+              <button onclick="viewSlideTemplate();" title="View Default Template Slides"
+                class="button is-small is-link">
+                <span class="material-symbols-outlined">
+                  visibility
+                </span>
+              </button>
+            </div>
+          </div>
+          <div id="template_info" class="columns main-info align-middle is-hidden">
+            <div class="column is-four-fiths">
+              <span class="raw-data">
+                You can specify your own Slide ID for any template and use the below placeholders in your template to be
+                filled in automatically by Causal Impact<br><br>
+                {% raw %}{{CLIENT_NAME}} - Client Name<br>
+                {{DATE}} - Todays date that the slides were created<br>
+                {{TARGET_EVENT}} - The target event selected for the analysis<br>
+                {{COVARIATES}} - A list of covariates separated by comma<br>
+                {{PREPERIOD-START}} - Preperiod start date<br>
+                {{PREPERIOD-END}} - Preperiod end date<br>
+                {{POSTPERIOD-START}} - Post-period start date<br>
+                {{POSTPERIOD-END}} - Post-period end date<br>
+                {{P_VALUE}} - The P Value calculated by the analysis<br>
+                {{INCR_ACTIONS}} - The total incremental target events since the event date<br>
+                {{RELATIVE_EFFECT}} - The percentage relative effect</br>{% endraw %}<br>
+                {{SUMMARY}} - The summary information
+                {{REPORT}} - The detailed report text
+
+                For the chart, you must create a box shape for the size and position you want the chart and add the
+                description CHART to it under alt text
+              </span>
+            </div>
+          </div>
+          <div>
+            <label class="checkbox align-left">
+              <input id="slide_prepended" type="checkbox">
+              Remove prepended metric labels (cvs_, bm_)
+            </label>
+          </div>
           <br>
-          <span id="slide_link"></span>
-        </span>
-        <span id="created_slide_error" class="is-hidden">
-          <span class="error">
-            There was an error creating the slide. This could be either you do not have access to the template, the
-            template
-            does not exist or your credentials have exired. Check you can access the template (eye icon above) and if
-            you
-            haven't refreshed your browser in a while, go back to the main screen and re-authenticate with Google and
-            try again.
+          <button id="export_to_slides" onclick="exportToSlides();" class="button is-success">
+            <span class="material-symbols-outlined icon">
+              present_to_all
+            </span>
+            <span>Export To Slides</span>
+          </button>
+          <br><br>
+          <span id="loading_slides" class="is-hidden loading">
+            Slides are being generated... Please wait...
           </span>
-        </span>
-      </section>
-      <footer class="modal-card-foot">
-        <button onclick="closeExportData();" class="button is-danger">
-          <span>Close</span>
-          <span class="material-symbols-outlined icon">
-            close
+          <span id="created_slide" class="is-hidden">
+            <span class="success">
+              Slides successfully created! The slides are available with the link below or visit <a
+                href='https://slides.google.com' target='_blank'>https://slides.google.com</a> to view this and
+              previously
+              generated ones.
+            </span>
+            <br>
+            <span id="slide_link"></span>
           </span>
-        </button>
-      </footer>
+          <span id="created_slide_error" class="is-hidden">
+            <span class="error">
+              There was an error creating the slide. This could be either you do not have access to the template, the
+              template
+              does not exist or your credentials have exired. Check you can access the template (eye icon above) and if
+              you
+              haven't refreshed your browser in a while, go back to the main screen and re-authenticate with Google and
+              try again.
+            </span>
+          </span>
+        </section>
+        <footer class="modal-card-foot">
+          <button onclick="closeExportData();" class="button is-danger">
+            <span>Close</span>
+            <span class="material-symbols-outlined icon">
+              close
+            </span>
+          </button>
+        </footer>
+      </div>
     </div>
-  </div>
-
   <script>
     function showRawData() {
       openPopup('raw_data');
@@ -444,6 +481,9 @@
     function closeV3Data() {
       closePopup('v3_data');
     }
+    function closeAiInsights() {
+      closePopup('ai_modal');
+    }
     function closePopups() {
       closePopup('raw_data');
       closePopup('data_overview');
@@ -467,7 +507,7 @@
 
     function viewSlideTemplate() {
       temp_id = document.getElementById('template_id').value;
-      window.open('https://docs.google.com/presentation/d/'+temp_id, '_blank');
+      window.open('https://docs.google.com/presentation/d/' + temp_id, '_blank');
     }
 
     function viewPlaceholders() {
@@ -479,10 +519,59 @@
       }
     }
 
+    ai_retrieved = false;
+    function get_ai_text() {
+      gtag('event', 'gemini_insights', {});
+      openPopup('ai_modal');
+      ai_text_span = document.getElementById('ai_gen_text');
+      if (!ai_retrieved) {
+        ai_text_span.innerHTML = "<img src=\"{{ url_for('static', filename='gemini.gif') }}\" width=\"800px\" />"
+        try {
+          const api_url = "/_get_ai_insights";
+          fetch(api_url)
+            .then(response => response.json())
+            .then(data => {
+              ai_text_span.innerHTML = "<span id='warnings' class='tag is-warning'><span class='material-symbols-outlined'>warning</span>Please note, these insights are generated using AI and are not a direct output of the model, therefore should be used as a guide only</span><br><br>"
+
+              var json_res = JSON.parse(data.result);
+              if (json_res.hasOwnProperty('properties')) {
+                json_res = json_res.properties;
+              }
+
+              if (json_res.hasOwnProperty('overall_conclusion')) {
+                var f_string = `<p class='title is-5'>Main Test Insights</p>
+              <p class="subtitle is-6">${json_res.insight_overview}</p><br>`
+
+                if (json_res.hasOwnProperty('pre_period_overview')) {
+                  f_string += `<p class='title is-5'>Pre-Period Insights</p>
+                <p class="subtitle is-6">${json_res.pre_period_overview}</p><br>`
+                }
+
+                if (json_res.hasOwnProperty('unaffectedness_overview')) {
+                  f_string += `<p class='title is-5'>Unaffectedness Insights</p>
+                <p class="subtitle is-6">${json_res.unaffectedness_overview}</p><br>`
+                }
+
+                f_string += `<p class='title is-5'>Overall Conclusion</p>
+              <p class="subtitle is-6">${json_res.overall_conclusion}</p>`
+
+                ai_text_span.innerHTML += f_string;
+                ai_retrieved = true;
+              }
+              else {
+                ai_text_span.innerHTML = "Oh no, it seems Gemini is havving a lazy day. <a onclick='get_ai_text();'>Click here</a> to try again."
+              }
+            })
+        }
+        catch (error) {
+          console.error(error);
+          ai_text_span.innerHTML = "Hmmm, Gemini is sleepy and not replying. Try it again."
+        }
+      }
+    }
+
     function exportToSlides() {
-      {% if (custom_inc == "internal") %}
       gtag('event', 'generate_slide', {});
-      {% endif %}
       addDDSpinner('export_to_slides');
       document.getElementById('created_slide').classList.add('is-hidden');
       document.getElementById('loading_slides').classList.remove('is-hidden');
@@ -496,7 +585,7 @@
       }
       else {
         document.getElementById('client_name_error').classList.add('is-hidden');
-        const api_url = "/_create_slide?client_name=" + client_name + "&temp_id=" + temp_id + "&prepend="+prepend;
+        const api_url = "/_create_slide?client_name=" + client_name + "&temp_id=" + temp_id + "&prepend=" + prepend;
         fetch(api_url)
           .then(response => response.json())
           .then(data => {
@@ -511,7 +600,7 @@
               document.getElementById('created_slide_error').classList.add('is-hidden');
               document.getElementById('created_slide').classList.remove('is-hidden');
               document.getElementById('loading_slides').classList.add('is-hidden');
-              document.getElementById('slide_link').innerHTML = "<a href='https://docs.google.com/presentation/d/" + slide_id + "/' target='_blank'><button class='button is-link'><span class='material-symbols-outlined icon'>slideshow</span><span>" + client_name + " - Causal Impact Insights</span></button></b></a>";
+              document.getElementById('slide_link').innerHTML = "<a href='https://docs.google.com/presentation/d/" + slide_id + "/' target='_blank'><button class='button is-link'><span class='material-symbols-outlined icon'>slideshow</span><span>" + client_name + " - Causal Impact Insights</span></button></a>";
             }
           });
       }
@@ -561,7 +650,6 @@
     var intervalId = window.setInterval(function () {
       reset_timer();
     }, 5000);
-
   </script>
 
-  {% include custom_inc+"_footer.html" %}
+  {% include "_footer.html" %}

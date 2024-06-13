@@ -27,7 +27,7 @@ handlers:
   secure: always
   redirect_http_response_code: 301
   http_headers:
-    Access-Control-Allow-Origin: https://{PROJECT_ID}.ew.r.appspot.com
+    Access-Control-Allow-Origin: https://causmos.googleplex.com/
     X-Content-Type-Options: nosniff
     X-Frame-Options: SAMEORIGIN
     SESSION_COOKIE_SECURE: true
@@ -50,9 +50,7 @@ inbound_services:
 - warmup
 
 env_variables:
-  CUSTOM_INCLUDES: "" #for custom build includes if you want to add your own code. Default is blank
-  BM_DATASOURCE: "" #custom name for any custom includes. Default is blank
-  SLIDE_TEMPLATE: "" #Google Slide template ID for the default template
+  SLIDE_TEMPLATE: "1WZbOi_dhUT5KS5F8VytQMBBvs5HoT-EYaD4N8nukDTw" #Google Slide template ID for the default template
 
 # Add the following secrets to your Google Secrets Manager
 #   client_secret - Upload your client_secret.json file to this

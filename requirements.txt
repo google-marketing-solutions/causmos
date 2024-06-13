@@ -16,3 +16,5 @@ vl-convert-python
 altair==5.0.0
 matplotlib
 google-cloud-secret-manager
+google-cloud-aiplatform==1.49.0
+google-cloud-bigquery
