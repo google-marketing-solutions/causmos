@@ -1,0 +1,32 @@
+{% include "_header.html" %}
+<title>Causmos - Invalid Report Request</title>
+</head>
+
+<body>
+  {% include "_title.html" %}
+
+  <div class="columns">
+    <div class="column">
+    </div>
+    <div class="column">
+      <div id="all_content" class="align-left main-window">
+        <div>
+          <br>
+          <h4 class="title is-4">Hmmm... something doesn't look right with your report</h4>
+          {{error_msg|safe}}<br><br>
+          <a href="/"><button class="button is-info">
+            <span class="material-symbols-outlined icon">
+              edit
+            </span>
+            <span>Edit Analysis</span>
+          </button></a>
+        </div>
+      </div>
+      <div class="column">
+      </div>
+    </div>
+    <div class="column">
+    </div>
+  </div>
+
+  {% include "_footer.html" %}

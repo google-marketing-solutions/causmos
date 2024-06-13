@@ -222,6 +222,12 @@ body {
   font-weight:bold;
   font-size: 12px;
 }
+.negative {
+  color: red;
+  font-weight:bold;
+  font-size: 12px;
+}
+
 .error {
   color: red;
   font-weight:bold;

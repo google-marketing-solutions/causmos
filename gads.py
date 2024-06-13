@@ -20,6 +20,8 @@ from fs_storage import get_value_session
 import logging
 from project_secrets import get_secret
 
+API_VERSION ='v16'
+
 def get_gads_client(mcc_id: str) -> GoogleAdsClient:
     try:
         main_creds = json.loads(get_value_session(session['session_id'], 'credentials'))
@@ -43,7 +45,7 @@ def get_gads_client(mcc_id: str) -> GoogleAdsClient:
 def get_gads_data(mcc_id: str, customer_id: str, campaign_ids: list, date_from: str, date_to: str) -> dict:
     try:
         client = get_gads_client(mcc_id)
-        ga_service = client.get_service("GoogleAdsService", version="v14")
+        ga_service = client.get_service("GoogleAdsService", version=API_VERSION)
     except ValueError as e:
         return "Error: Session expired"
     camp_filter = ""
@@ -199,16 +201,16 @@ def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
   query = textwrap.dedent("""
     SELECT
         campaign.id,
-        campaign.name 
+        campaign.name
     FROM campaign
     """)
   try:
-    ga_service = client.get_service("GoogleAdsService", version="v14")
+    ga_service = client.get_service("GoogleAdsService", version=API_VERSION)
     response = ga_service.search(customer_id=customer_id, query=query)
   except:
      campaigns.append(["No campaigns in account", 0])
      return campaigns
-  
+
   for googleads_row in response:
     campaign = googleads_row.campaign
     campaigns.append([campaign.name, campaign.id])
@@ -227,7 +229,7 @@ def get_gads_customer_ids(mcc_id: str) -> list:
     WHERE customer_client.level <= 1 AND customer_client.manager = FALSE
     """)
 
-  ga_service = client.get_service("GoogleAdsService", version="v14")
+  ga_service = client.get_service("GoogleAdsService", version=API_VERSION)
   try:
     response = ga_service.search(customer_id=mcc_id, query=query)
   except ValueError as e:
