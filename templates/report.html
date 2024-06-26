@@ -312,26 +312,6 @@
     </div>
     {% endif %}
 
-    <div id="ai_modal" class="modal">
-      <div class="modal-background"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <p id="confirm_title" class="modal-card-title">AI generated Insights</p>
-        </header>
-        <section class="modal-card-body">
-          <span class="align-left" id="ai_gen_text"></span>
-        </section>
-        <footer class="modal-card-foot">
-          <button onclick="closeAiInsights();" class="button is-danger">
-            <span>Close</span>
-            <span class="material-symbols-outlined icon">
-              close
-            </span>
-          </button>
-        </footer>
-      </div>
-    </div>
-
     <div id="export_data" class="modal">
       <div class="modal-background"></div>
       <div class="modal-card">
@@ -481,9 +461,7 @@
     function closeV3Data() {
       closePopup('v3_data');
     }
-    function closeAiInsights() {
-      closePopup('ai_modal');
-    }
+
     function closePopups() {
       closePopup('raw_data');
       closePopup('data_overview');
@@ -516,57 +494,6 @@
       }
       else {
         document.getElementById('template_info').classList.add('is-hidden');
-      }
-    }
-
-    ai_retrieved = false;
-    function get_ai_text() {
-      gtag('event', 'gemini_insights', {});
-      openPopup('ai_modal');
-      ai_text_span = document.getElementById('ai_gen_text');
-      if (!ai_retrieved) {
-        ai_text_span.innerHTML = "<img src=\"{{ url_for('static', filename='gemini.gif') }}\" width=\"800px\" />"
-        try {
-          const api_url = "/_get_ai_insights";
-          fetch(api_url)
-            .then(response => response.json())
-            .then(data => {
-              ai_text_span.innerHTML = "<span id='warnings' class='tag is-warning'><span class='material-symbols-outlined'>warning</span>Please note, these insights are generated using AI and are not a direct output of the model, therefore should be used as a guide only</span><br><br>"
-
-              var json_res = JSON.parse(data.result);
-              if (json_res.hasOwnProperty('properties')) {
-                json_res = json_res.properties;
-              }
-
-              if (json_res.hasOwnProperty('overall_conclusion')) {
-                var f_string = `<p class='title is-5'>Main Test Insights</p>
-              <p class="subtitle is-6">${json_res.insight_overview}</p><br>`
-
-                if (json_res.hasOwnProperty('pre_period_overview')) {
-                  f_string += `<p class='title is-5'>Pre-Period Insights</p>
-                <p class="subtitle is-6">${json_res.pre_period_overview}</p><br>`
-                }
-
-                if (json_res.hasOwnProperty('unaffectedness_overview')) {
-                  f_string += `<p class='title is-5'>Unaffectedness Insights</p>
-                <p class="subtitle is-6">${json_res.unaffectedness_overview}</p><br>`
-                }
-
-                f_string += `<p class='title is-5'>Overall Conclusion</p>
-              <p class="subtitle is-6">${json_res.overall_conclusion}</p>`
-
-                ai_text_span.innerHTML += f_string;
-                ai_retrieved = true;
-              }
-              else {
-                ai_text_span.innerHTML = "Oh no, it seems Gemini is havving a lazy day. <a onclick='get_ai_text();'>Click here</a> to try again."
-              }
-            })
-        }
-        catch (error) {
-          console.error(error);
-          ai_text_span.innerHTML = "Hmmm, Gemini is sleepy and not replying. Try it again."
-        }
       }
     }
 
