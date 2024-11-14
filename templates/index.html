@@ -1846,8 +1846,22 @@
       gs_sheet_changed = true;
     }
 
+    function removeGid(url) {
+      var gidMatches = url.match(/gid=\d+/g);
+      if (gidMatches && gidMatches.length >= 2) {
+        var firstGidIndex = url.indexOf(gidMatches[0]);
+        var precedingCharacter = url.charAt(firstGidIndex - 1);
+        if (precedingCharacter === "&") {
+          firstGidIndex--;
+        }
+        return url.substring(0, firstGidIndex) + url.substring(firstGidIndex + gidMatches[0].length);
+      }
+      return url;
+    }
+
     function uploadGs() {
       gsUrl = document.getElementById('gsUrl').value;
+      gsUrl = removeGid(gsUrl);
       gsTab = "";
       if (!gs_sheet_changed) {
         if (document.getElementById('gsheet_tabs').options.length > 0) {
