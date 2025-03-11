@@ -8,7 +8,7 @@ oauth2client
 python-dotenv
 google-auth-httplib2
 tensorflow-probability==0.22.1
-keras==2.15.0
+keras==3.9.0
 tfp-causalimpact
 firebase_admin
 html2image
