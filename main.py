@@ -104,10 +104,7 @@ if is_loopback('localhost'):
 
 else:
   PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-  if 'google.com' in PROJECT_ID:
-    _MAIN_URL = 'https://causmos.googleplex.com'
-  else:
-    _MAIN_URL = f'https://{PROJECT_ID}.ew.r.appspot.com'
+  _MAIN_URL = f'https://{PROJECT_ID}.ew.r.appspot.com'
 
   _REDIRECT_URI = f'{_MAIN_URL}/oauth_completed'
   app.config['SESSION_COOKIE_SECURE'] = True
