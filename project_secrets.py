@@ -22,17 +22,17 @@ import logging
 import os
 from google.cloud import secretmanager
 
-def get_secret(secret_id) -> str:
+def get_secret(project_id, secret_id) -> str:
   """Gets the client secret value from a provided ID.
 
   Args:
+    project_id: The GCP project ID where secrets are stored.
     secret_id: The name of the secret to retrieve.
 
   Returns:
     Secret value as a string.
   """
   client = secretmanager.SecretManagerServiceClient()
-  project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
   name = client.secret_path(project_id, secret_id)
   name = f'{name}/versions/latest'
   try:

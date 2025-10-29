@@ -61,14 +61,8 @@ from project_secrets import get_secret
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
 
-
-app = Flask(__name__)
-
-app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
-app.secret_key = get_secret('flask_secret_key')
 PROJECT_ID = '' #can set for local testing
-
+app = Flask(__name__)
 
 def is_loopback(host) -> bool:
   """Localhost check.
@@ -95,7 +89,6 @@ def is_loopback(host) -> bool:
         return False
   return True
 
-
 if is_loopback('localhost'):
   _SERVER = 'localhost'
   _PORT = 8080
@@ -111,6 +104,10 @@ else:
   app.config['SESSION_COOKIE_HTTPONLY'] = True
   app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
   app.config['SESSION_COOKIE_NAME'] = '__Host-causal-impact-session'
+
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
+app.secret_key = get_secret(PROJECT_ID, 'flask_secret_key')
 
 SCOPES = [
     'https://www.googleapis.com/auth/analytics.readonly',
@@ -206,7 +203,11 @@ def _create_slide() -> jsonify:
     prepend = request.args.get('prepend', 0, type=is_it_true)
     return jsonify(
       result=create_slide(
-        get_session_id(), slide_template_id, client_name, prepend
+        PROJECT_ID,
+        get_session_id(),
+        slide_template_id,
+        client_name,
+        prepend
       )
     )
   else:
@@ -345,6 +346,7 @@ def report() -> render_template:
         try:
           gads_responses.append(
               get_gads_data(
+                  PROJECT_ID,
                   data['gads']['mcc_id'],
                   key,
                   data['gads']['query'][key],
@@ -432,7 +434,10 @@ def report() -> render_template:
           image_name = str(uuid4()) + '.png'
         set_value_session(get_session_id(), 'image_name', image_name)
         org_chart = get_causal_impact_chart(
-          impact=impact, store_img=True, image_name=image_name
+          PROJECT_ID,
+          impact=impact,
+          store_img=True,
+          image_name=image_name
         )
         org_chart = org_chart.replace('var spec', 'main_spec').replace(
           ' spec,', ' main_spec,'
@@ -463,7 +468,9 @@ def report() -> render_template:
             df, v1_pre_period, v1_post_period, credibility
           )
           v1_validation_chart = get_causal_impact_chart(
-            impact=impact, div='vis_v1'
+            PROJECT_ID,
+            impact=impact,
+            div='vis_v1'
           )
           v1_summary = get_causal_impact_summary(impact, credibility)
 
@@ -482,7 +489,9 @@ def report() -> render_template:
             df, pre_period, post_period, credibility
           )
           v2_validation_chart = get_causal_impact_chart(
-            impact=impact, div='vis_v2'
+            PROJECT_ID,
+            impact=impact,
+            div='vis_v2'
           )
           v2_summary = get_causal_impact_summary(impact, credibility)
 
@@ -676,7 +685,7 @@ def report() -> render_template:
 @app.route('/_get_gads_mcc_ids')
 def _get_gads_mcc_ids():
   try:
-    return jsonify(result=get_gads_mcc_ids())
+    return jsonify(result=get_gads_mcc_ids(PROJECT_ID))
   except ValueError as e:
     logging.exception(e)
     return jsonify(result='error')
@@ -686,7 +695,7 @@ def _get_gads_mcc_ids():
 def _get_gads_customer_ids():
   try:
     mcc_id = request.args.get('mcc_id', 0, type=str)
-    return jsonify(result=get_gads_customer_ids(mcc_id))
+    return jsonify(result=get_gads_customer_ids(PROJECT_ID, mcc_id))
   except ValueError as e:
     logging.exception(e)
     return jsonify(result='error')
@@ -695,7 +704,8 @@ def _get_gads_customer_ids():
 @app.route('/_get_gads_campaigns')
 def _get_gads_campaigns():
   try:
-    return jsonify(result=get_gads_campaigns(request.args.get('mcc_id', 0, type=str), request.args.get('customer_id', 0, type=str)))
+    return jsonify(result=get_gads_campaigns(
+        PROJECT_ID, request.args.get('mcc_id', 0, type=str), request.args.get('customer_id', 0, type=str)))
   except ValueError as e:
     logging.exception(e)
     return jsonify(result='error')
@@ -908,7 +918,7 @@ def create_flow(scope) -> Flow:
   Returns:
     Flow object with all the relevant scopes and approvals.
   """
-  client_config = json.loads(get_secret('client_secret'))
+  client_config = json.loads(get_secret(PROJECT_ID, 'client_secret'))
   global flow
   flow = Flow.from_client_config(client_config=client_config, scopes=scope)
   flow.redirect_uri = _REDIRECT_URI

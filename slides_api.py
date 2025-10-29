@@ -31,6 +31,7 @@ from project_secrets import get_secret
 
 
 def create_slide(
+  project_id,
   session_id='',
   slide_id=os.environ.get('SLIDE_TEMPLATE'),
   client_name='',
@@ -41,6 +42,7 @@ def create_slide(
   access to the file.
 
   Args:
+    project_id: The GCP project ID where secrets are stored.
     session_id: The ID of the session.
     slide_id: The ID of the template slide to make a copy of.
     client_name: The name of the client to put into the new slide.
@@ -122,7 +124,7 @@ def create_slide(
           final_element = element
           break
   image_location = f'https://storage.googleapis.com/' \
-    f'{get_secret("image_bucket")}/{request_data["image_name"]}'
+    f'{get_secret(project_id, "image_bucket")}/{request_data["image_name"]}'
   add_img = {
     'createImage': {
       'objectId': 'my_id',

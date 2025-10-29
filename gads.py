@@ -20,16 +20,16 @@ from fs_storage import get_value_session
 import logging
 from project_secrets import get_secret
 
-API_VERSION ='v16'
+API_VERSION ='v22'
 
-def get_gads_client(mcc_id: str) -> GoogleAdsClient:
+def get_gads_client(project_id: str, mcc_id: str) -> GoogleAdsClient:
     try:
         main_creds = json.loads(get_value_session(session['session_id'], 'credentials'))
     except ValueError as e:
         logging.exception(e)
         return f"Error: Session Expired"
     creds = {
-            "developer_token": get_secret("developer_token"),
+            "developer_token": get_secret(project_id, "developer_token"),
             "refresh_token": main_creds["refresh_token"],
             "client_id": main_creds["client_id"],
             "client_secret": main_creds["client_secret"],
@@ -42,9 +42,9 @@ def get_gads_client(mcc_id: str) -> GoogleAdsClient:
     return google_ads_client
 
 
-def get_gads_data(mcc_id: str, customer_id: str, campaign_ids: list, date_from: str, date_to: str) -> dict:
+def get_gads_data(project_id: str, mcc_id: str, customer_id: str, campaign_ids: list, date_from: str, date_to: str) -> dict:
     try:
-        client = get_gads_client(mcc_id)
+        client = get_gads_client(project_id, mcc_id)
         ga_service = client.get_service("GoogleAdsService", version=API_VERSION)
     except ValueError as e:
         return "Error: Session expired"
@@ -53,7 +53,7 @@ def get_gads_data(mcc_id: str, customer_id: str, campaign_ids: list, date_from: 
         camp_filter = "AND campaign.id IN (" + (",").join(campaign_ids) + ")"
 
     query = textwrap.dedent(f"""
-        SELECT segments.date, metrics.impressions, metrics.clicks, metrics.video_views, metrics.cost_micros, metrics.conversions, metrics.view_through_conversions FROM campaign
+        SELECT segments.date, metrics.impressions, metrics.clicks, metrics.video_trueview_views, metrics.cost_micros, metrics.conversions, metrics.view_through_conversions FROM campaign
         WHERE segments.date BETWEEN '{date_from}' AND '{date_to}' {camp_filter}
         ORDER BY segments.date ASC
         """)
@@ -89,7 +89,7 @@ def process_gads_responses(responses, metrics: list):
               {
                   "gads_video_views": (
                       final_d[row.segments.date]["gads_video_views"]
-                      + row.metrics.video_views
+                      + row.metrics.video_trueview_views
                   )
               }
           )
@@ -170,7 +170,7 @@ def process_gads_responses(responses, metrics: list):
           final_d[row.segments.date] = {
               "gads_impressions": row.metrics.impressions,
               "gads_clicks": row.metrics.clicks,
-              "gads_video_views": row.metrics.video_views,
+              "gads_video_views": row.metrics.video_trueview_views,
               "gads_cost_micros": row.metrics.cost_micros,
               "gads_conversions": row.metrics.conversions,
               "gads_view_through_conversions": (
@@ -195,8 +195,8 @@ def process_gads_responses(responses, metrics: list):
         final_d[key].pop(metric)
   return final_d
 
-def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
-  client = get_gads_client(mcc_id)
+def get_gads_campaigns(project_id: str,mcc_id: str, customer_id: str) -> list:
+  client = get_gads_client(project_id, mcc_id)
   campaigns = []
   query = textwrap.dedent("""
     SELECT
@@ -218,8 +218,8 @@ def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
   return campaigns
 
 
-def get_gads_customer_ids(mcc_id: str) -> list:
-  client = get_gads_client(mcc_id)
+def get_gads_customer_ids(project_id: str,mcc_id: str) -> list:
+  client = get_gads_client(project_id, mcc_id)
   all_customer_ids = []
   query = textwrap.dedent("""
     SELECT
@@ -245,8 +245,8 @@ def get_gads_customer_ids(mcc_id: str) -> list:
   return all_customer_ids
 
 
-def get_gads_mcc_ids() -> list:
-  client = get_gads_client("")
+def get_gads_mcc_ids(project_id: str) -> list:
+  client = get_gads_client(project_id, "")
   all_mcc_ids = []
   customer_service = client.get_service("CustomerService")
 

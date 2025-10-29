@@ -78,7 +78,7 @@ def get_causal_impact_summary(impact: list, credibility: float) -> list:
   return output
 
 
-def get_causal_impact_chart(impact, div="vis", store_img=False, image_name="") -> str:
+def get_causal_impact_chart(project_id, impact, div="vis", store_img=False, image_name="") -> str:
   """Gets a HTML Chart output of the created Causal Impact model.
 
   Args:
@@ -94,7 +94,7 @@ def get_causal_impact_chart(impact, div="vis", store_img=False, image_name="") -
   if store_img:
     ci.save(_TEMP_FOLDER + image_name, engine="vl-convert")
     storage_client = storage.Client()
-    bucket = storage_client.bucket(get_secret("image_bucket"))
+    bucket = storage_client.bucket(get_secret(project_id, "image_bucket"))
     blob = bucket.blob(image_name)
     blob.cache_control = "private"
     blob.upload_from_filename(_TEMP_FOLDER + image_name)
