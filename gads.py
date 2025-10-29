@@ -20,7 +20,7 @@ from fs_storage import get_value_session
 import logging
 from project_secrets import get_secret
 
-API_VERSION ='v16'
+API_VERSION ='v22'
 
 def get_gads_client(mcc_id: str) -> GoogleAdsClient:
     try:
@@ -53,7 +53,7 @@ def get_gads_data(mcc_id: str, customer_id: str, campaign_ids: list, date_from: 
         camp_filter = "AND campaign.id IN (" + (",").join(campaign_ids) + ")"
 
     query = textwrap.dedent(f"""
-        SELECT segments.date, metrics.impressions, metrics.clicks, metrics.video_views, metrics.cost_micros, metrics.conversions, metrics.view_through_conversions FROM campaign
+        SELECT segments.date, metrics.impressions, metrics.clicks, metrics.video_trueview_views, metrics.cost_micros, metrics.conversions, metrics.view_through_conversions FROM campaign
         WHERE segments.date BETWEEN '{date_from}' AND '{date_to}' {camp_filter}
         ORDER BY segments.date ASC
         """)
@@ -89,7 +89,7 @@ def process_gads_responses(responses, metrics: list):
               {
                   "gads_video_views": (
                       final_d[row.segments.date]["gads_video_views"]
-                      + row.metrics.video_views
+                      + row.metrics.video_trueview_views
                   )
               }
           )
@@ -170,7 +170,7 @@ def process_gads_responses(responses, metrics: list):
           final_d[row.segments.date] = {
               "gads_impressions": row.metrics.impressions,
               "gads_clicks": row.metrics.clicks,
-              "gads_video_views": row.metrics.video_views,
+              "gads_video_views": row.metrics.video_trueview_views,
               "gads_cost_micros": row.metrics.cost_micros,
               "gads_conversions": row.metrics.conversions,
               "gads_view_through_conversions": (
