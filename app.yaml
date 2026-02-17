@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-runtime: python39
+runtime: python311
 entrypoint: gunicorn -b :$PORT main:app -w 2 --timeout=300
 instance_class: F4_1G
 automatic_scaling:
