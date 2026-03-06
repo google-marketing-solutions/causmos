@@ -16,7 +16,7 @@ vl-convert-python
 matplotlib
 google-cloud-secret-manager
 python-jose
-google-cloud-aiplatform==1.49.0
+google-cloud-aiplatform==1.133.0
 google-cloud-bigquery
 google-auth>=2.29.0
 google-auth-oauthlib>=1.2.0
