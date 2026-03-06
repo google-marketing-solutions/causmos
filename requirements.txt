@@ -9,7 +9,7 @@ python-dotenv
 google-auth-httplib2>=0.2.0
 tensorflow>=2.15.0
 tensorflow-probability==0.22.1
-keras==2.15.0
+keras==3.13.2
 firebase_admin
 html2image
 vl-convert-python
