@@ -73,3 +73,18 @@ function addDDSpinner(div_id) {
 function removeDDSpinner(div_id) {
   document.getElementById(div_id).classList.remove('is-loading');
 }
+function showGadsError(message) {
+  const el = document.getElementById('gads_selection_error');
+  if (el) {
+    el.textContent = message;
+    el.classList.remove('is-hidden');
+  } else {
+    alert(message);
+  }
+}
+function hideGadsError() {
+  const el = document.getElementById('gads_selection_error');
+  if (el) {
+    el.classList.add('is-hidden');
+  }
+}
