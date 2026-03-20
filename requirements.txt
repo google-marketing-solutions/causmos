@@ -21,6 +21,6 @@ google-cloud-bigquery
 google-auth>=2.29.0
 google-auth-oauthlib>=1.2.0
 numpy==1.26.4
-pandas==2.2.0
+pandas==2.2.3
 protobuf>=4.25.0
 tfp-causalimpact

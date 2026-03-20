@@ -1080,6 +1080,7 @@
 
     //Google Ads code
     function addGoogleAdsDatasource() {
+      hideGadsError();
       tmp_gads_data = JSON.parse(JSON.stringify(gads_data));
 
       if (mcc_ids == null) {
@@ -1088,8 +1089,17 @@
         fetch(api_url)
           .then(response => response.json())
           .then(data => {
-            mcc_ids = data.result;
-            _populateMccIds();
+            if (data.result === "error") {
+              showGadsError(data.message || "Could not load MCC IDs. Please refresh and try again.");
+            } else {
+              mcc_ids = data.result;
+              _populateMccIds();
+            }
+            removeDDSpinner('gads_mcc_div');
+          })
+          .catch((e) => {
+            console.error(e);
+            showGadsError('Could not load MCC IDs. Please refresh and try again.');
             removeDDSpinner('gads_mcc_div');
           });
       }
@@ -1126,8 +1136,8 @@
     }
 
     function getGadsCustomerList(mcc_id = 0) {
+      hideGadsError();
       addDDSpinner('gads_customer_div');
-      //addDDSpinner('gads_campaign_div');
       mcc_dd = document.getElementById('gads_mcc_id_dd');
       mcc_dd.disabled = true;
       if (mcc_id == 0) {
@@ -1142,30 +1152,46 @@
       fetch(api_url)
         .then(response => response.json())
         .then(data => {
-          customers = data.result;
-          if (customers != "error") {
-            customers.forEach((value) => {
-              var newOption = new Option(value[0] + " (" + value[1] + ")", value[1]);
-              gads_customer_dd.add(newOption);
-              if (first && value[1] != 0) {
-                getCampaignList(mcc_id, value[1]);
-                first = false;
-              }
-            })
-          }
-          if (first) {
+          if (data.result === "error") {
+            var message = data.message || "Could not load customers. Please try a different MCC.";
+            showGadsError(message);
+            removeDDSpinner('gads_customer_div');
             removeDDSpinner('gads_campaign_div');
             mcc_dd.disabled = false;
-            removeDDSpinner('gads_customer_div');
             gads_customer_dd.disabled = false;
+            gads_campaign_dd.disabled = false;
+            return;
+          }
+          customers = data.result;
+          customers.forEach((value) => {
+            var newOption = new Option(value[0] + " (" + value[1] + ")", value[1]);
+            gads_customer_dd.add(newOption);
+            if (first && value[1] != 0) {
+              getCampaignList(mcc_id, value[1]);
+              first = false;
+            }
+          });
+          if (first) {
             var newOption = new Option("No accounts in MCC", 0);
             gads_customer_dd.add(newOption);
           }
           removeDDSpinner('gads_customer_div');
+          mcc_dd.disabled = false;
+          gads_customer_dd.disabled = false;
+        })
+        .catch((e) => {
+          showGadsError('Could not load GAds customers. Please try again.');
+          console.error(e);
+          removeDDSpinner('gads_customer_div');
+          removeDDSpinner('gads_campaign_div');
+          mcc_dd.disabled = false;
+          gads_customer_dd.disabled = false;
+          gads_campaign_dd.disabled = false;
         });
     }
 
     function getCampaignList(mcc_id = 0, customer_id = 0) {
+      hideGadsError();
       mcc_dd = document.getElementById('gads_mcc_id_dd');
       customer_dd = document.getElementById('gads_customer_dd');
       customer_dd.disabled = true;
@@ -1186,21 +1212,34 @@
         fetch(api_url)
           .then(response => response.json())
           .then(data => {
-            campaigns = data.result;
-            if (campaigns != "error") {
-              campaigns.forEach((value) => {
-                if (first && value[1] != 0) {
-                  var newOption = new Option("-- All --", customer_id + "-0");
-                  gads_campaign_dd.add(newOption);
-                  first = false;
-                }
-                var newOption = new Option(value[0], value[1]);
-                gads_campaign_dd.add(newOption);
-              })
+            if (data.result === "error") {
+              var message = data.message || "Could not load campaigns. Please try another account or try again.";
+              showGadsError(message);
+              removeDDSpinner('gads_campaign_div');
+              mcc_dd.disabled = false;
+              customer_dd.disabled = false;
+              return;
             }
+            campaigns = data.result;
+            campaigns.forEach((value) => {
+              if (first && value[1] != 0) {
+                var newOption = new Option("-- All --", customer_id + "-0");
+                gads_campaign_dd.add(newOption);
+                first = false;
+              }
+              var newOption = new Option(value[0], value[1]);
+              gads_campaign_dd.add(newOption);
+            });
             removeDDSpinner('gads_campaign_div');
             mcc_dd.disabled = false;
             removeDDSpinner('gads_customer_div');
+            customer_dd.disabled = false;
+          })
+          .catch((e) => {
+            showGadsError('Could not load campaigns. Please try again.');
+            console.error(e);
+            removeDDSpinner('gads_campaign_div');
+            mcc_dd.disabled = false;
             customer_dd.disabled = false;
           });
       }

@@ -286,8 +286,12 @@ def oauth() -> redirect:
     The authentication page for Google authentication.
   """
   flow = create_flow(SCOPES)
-  authorization_url = flow.authorization_url(prompt='consent')
-  return redirect(authorization_url[0])
+  authorization_url, state = flow.authorization_url(
+      prompt='consent', code_challenge_method='S256'
+  )
+  session['oauth_state'] = state
+  session['code_verifier'] = flow.code_verifier
+  return redirect(authorization_url)
 
 
 @app.route('/oauth_completed')
@@ -311,12 +315,13 @@ def oauth_complete() -> redirect:
     if 'presentations' in scope:
       set_value_session(get_session_id(), 'slides', 'true')
 
-    scope = scope.split(' ')
-    flow = create_flow(scope)
+    code_verifier = session.get('code_verifier')
+    flow = create_flow(scope, code_verifier=code_verifier)
     flow.fetch_token(code=code)
     credentials = flow.credentials
 
     set_value_session(get_session_id(), 'credentials', credentials.to_json())
+    session.pop('code_verifier', None)
   return redirect('/')
 
 
@@ -677,28 +682,34 @@ def report() -> render_template:
 def _get_gads_mcc_ids():
   try:
     return jsonify(result=get_gads_mcc_ids())
-  except ValueError as e:
+  except Exception as e:
     logging.exception(e)
-    return jsonify(result='error')
+    return jsonify(result='error', message='Could not load MCC IDs. Please try again.')
 
 
 @app.route('/_get_gads_customer_ids')
 def _get_gads_customer_ids():
   try:
     mcc_id = request.args.get('mcc_id', 0, type=str)
-    return jsonify(result=get_gads_customer_ids(mcc_id))
-  except ValueError as e:
+    result = get_gads_customer_ids(mcc_id)
+    if isinstance(result, dict) and result.get('error'):
+      return jsonify(result='error', message=result.get('message', 'Failed to load customers.'))
+    return jsonify(result=result)
+  except Exception as e:
     logging.exception(e)
-    return jsonify(result='error')
+    return jsonify(result='error', message='Could not load Google Ads customer accounts. Please try again.')
 
 
 @app.route('/_get_gads_campaigns')
 def _get_gads_campaigns():
   try:
-    return jsonify(result=get_gads_campaigns(request.args.get('mcc_id', 0, type=str), request.args.get('customer_id', 0, type=str)))
-  except ValueError as e:
+    result = get_gads_campaigns(request.args.get('mcc_id', 0, type=str), request.args.get('customer_id', 0, type=str))
+    if isinstance(result, dict) and result.get('error'):
+      return jsonify(result='error', message=result.get('message', 'Failed to load campaigns.'))
+    return jsonify(result=result)
+  except Exception as e:
     logging.exception(e)
-    return jsonify(result='error')
+    return jsonify(result='error', message='Could not load Google Ads campaigns. Please try again.')
 
 
 @app.route('/_get_ga4_account_ids')
@@ -899,11 +910,12 @@ def _validate_date(date_text: str) -> bool:
     return False
 
 
-def create_flow(scope) -> Flow:
+def create_flow(scope, code_verifier=None) -> Flow:
   """Creates a Flow object for user authentication with Google services.
 
   Args:
     scope: The scope the user has allowed.
+    code_verifier: Optional PKCE code verifier for token exchange.
 
   Returns:
     Flow object with all the relevant scopes and approvals.
@@ -912,6 +924,8 @@ def create_flow(scope) -> Flow:
   global flow
   flow = Flow.from_client_config(client_config=client_config, scopes=scope)
   flow.redirect_uri = _REDIRECT_URI
+  if code_verifier:
+    flow.code_verifier = code_verifier
   return flow
 
 

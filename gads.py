@@ -16,6 +16,7 @@ import json
 import textwrap
 from flask import session
 from google.ads.googleads.client import GoogleAdsClient
+from google.ads.googleads.errors import GoogleAdsException
 from fs_storage import get_value_session
 import logging
 from project_secrets import get_secret
@@ -195,7 +196,7 @@ def process_gads_responses(responses, metrics: list):
         final_d[key].pop(metric)
   return final_d
 
-def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
+def get_gads_campaigns(mcc_id: str, customer_id: str):
   client = get_gads_client(mcc_id)
   campaigns = []
   query = textwrap.dedent("""
@@ -207,9 +208,15 @@ def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
   try:
     ga_service = client.get_service("GoogleAdsService", version=API_VERSION)
     response = ga_service.search(customer_id=customer_id, query=query)
-  except:
-     campaigns.append(["No campaigns in account", 0])
-     return campaigns
+  except GoogleAdsException as ge:
+    logging.exception(ge)
+    message = "Google Ads API error while loading campaigns."
+    if "CUSTOMER_NOT_ENABLED" in str(ge):
+      message = "Selected Google Ads account is not enabled for API. Please activate the account or choose a different account."
+    return {"error": "CUSTOMER_NOT_ENABLED" if "CUSTOMER_NOT_ENABLED" in str(ge) else "api_error", "message": message}
+  except Exception as e:
+    logging.exception(e)
+    return {"error": "api_error", "message": "Could not load campaigns right now. " + str(e)}
 
   for googleads_row in response:
     campaign = googleads_row.campaign
@@ -218,7 +225,7 @@ def get_gads_campaigns(mcc_id: str, customer_id: str) -> list:
   return campaigns
 
 
-def get_gads_customer_ids(mcc_id: str) -> list:
+def get_gads_customer_ids(mcc_id: str):
   client = get_gads_client(mcc_id)
   all_customer_ids = []
   query = textwrap.dedent("""
@@ -232,10 +239,16 @@ def get_gads_customer_ids(mcc_id: str) -> list:
   ga_service = client.get_service("GoogleAdsService", version=API_VERSION)
   try:
     response = ga_service.search(customer_id=mcc_id, query=query)
-  except ValueError as e:
-     logging.exception(e)
-     all_customer_ids.append(["No clients or MCC access", 0])
-     return all_customer_ids
+  except GoogleAdsException as ge:
+    logging.exception(ge)
+    message = "Google Ads API error while loading customer accounts."
+    if "CUSTOMER_NOT_ENABLED" in str(ge):
+      message = "This Google Ads account is not enabled for API. Please activate it in Google Ads or select another account."
+    return {"error": "CUSTOMER_NOT_ENABLED" if "CUSTOMER_NOT_ENABLED" in str(ge) else "api_error", "message": message}
+  except Exception as e:
+    logging.exception(e)
+    return {"error": "api_error", "message": "Could not load customer accounts right now. " + str(e)}
+
   for googleads_row in response:
     customer_client = googleads_row.customer_client
     all_customer_ids.append(
