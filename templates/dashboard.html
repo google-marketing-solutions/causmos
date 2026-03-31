@@ -1,0 +1,320 @@
+{% include "_header.html" %}
+<title>Causmos - Client Dashboard</title>
+<style>
+  .client-card {
+    border: 1px solid #dbdbdb;
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: box-shadow 0.3s;
+  }
+  .client-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .analysis-item {
+    padding: 0.75rem;
+    border-left: 3px solid #00d1b2;
+    background-color: #f5f5f5;
+    margin-bottom: 0.5rem;
+    border-radius: 3px;
+  }
+  .analysis-item:hover {
+    background-color: #efefef;
+  }
+  .stat-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .stat-box h2 {
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+</style>
+</head>
+
+<body>
+  {% include "_title.html" %}
+
+  <div class="columns">
+    <div class="column is-1"></div>
+    <div class="column is-10">
+
+      <!-- Header Section -->
+      <section class="section">
+        <div class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <h1 class="title">Client Dashboard</h1>
+            </div>
+          </div>
+          <div class="level-right">
+            <div class="level-item">
+              <button class="button is-success" onclick="showAddClientModal()">
+                <span class="material-symbols-outlined icon">add_circle</span>
+                <span>Add New Client</span>
+              </button>
+            </div>
+            <div class="level-item">
+              <a href="/" class="button is-info">
+                <span class="material-symbols-outlined icon">analytics</span>
+                <span>New Analysis</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats Section -->
+      <section class="section">
+        <div class="columns">
+          <div class="column">
+            <div class="stat-box">
+              <h2 class="is-size-1">{{ stats.total_clients }}</h2>
+              <p class="is-size-5">Total Clients</p>
+            </div>
+          </div>
+          <div class="column">
+            <div class="stat-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <h2 class="is-size-1">{{ stats.total_analyses }}</h2>
+              <p class="is-size-5">Total Analyses</p>
+            </div>
+          </div>
+          <div class="column">
+            <div class="stat-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+              <h2 class="is-size-1">{{ stats.recent_analyses }}</h2>
+              <p class="is-size-5">This Month</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Analyses Section -->
+      <section class="section">
+        <h2 class="title is-4">Recent Analyses</h2>
+        {% if recent_analyses %}
+          {% for analysis in recent_analyses %}
+            <div class="analysis-item">
+              <div class="level">
+                <div class="level-left">
+                  <div class="level-item">
+                    <strong>{{ analysis.client_name }}</strong> - {{ analysis.name }}
+                  </div>
+                </div>
+                <div class="level-right">
+                  <div class="level-item">
+                    <small>{{ analysis.created_at }}</small>
+                  </div>
+                  <div class="level-item">
+                    <button class="button is-small is-info" onclick="loadAnalysis('{{ analysis.id }}')">
+                      <span class="material-symbols-outlined icon is-small">visibility</span>
+                      <span>View</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="has-text-grey">No recent analyses. Start by creating a new analysis!</p>
+        {% endif %}
+      </section>
+
+      <!-- Clients Section -->
+      <section class="section">
+        <h2 class="title is-4">Your Clients</h2>
+
+        <!-- Search Box -->
+        <div class="field">
+          <div class="control has-icons-left">
+            <input class="input" type="text" id="searchClients" placeholder="Search clients..." onkeyup="filterClients()">
+            <span class="icon is-left">
+              <span class="material-symbols-outlined">search</span>
+            </span>
+          </div>
+        </div>
+
+        <div id="clientsList">
+          {% if clients %}
+            {% for client in clients %}
+              <div class="client-card" data-client-name="{{ client.name }}">
+                <div class="level">
+                  <div class="level-left">
+                    <div class="level-item">
+                      <div>
+                        <h3 class="title is-5">{{ client.name }}</h3>
+                        {% if client.industry %}
+                          <p class="subtitle is-6 has-text-grey">{{ client.industry }}</p>
+                        {% endif %}
+                        <p class="is-size-7 has-text-grey">
+                          Created: {{ client.created_at }} |
+                          Analyses: {{ client.analysis_count | default(0) }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="level-right">
+                    <div class="level-item">
+                      <div class="buttons">
+                        <button class="button is-info is-small" onclick="selectClient('{{ client.id }}', '{{ client.name }}')">
+                          <span class="material-symbols-outlined icon is-small">analytics</span>
+                          <span>New Analysis</span>
+                        </button>
+                        <button class="button is-light is-small" onclick="viewClientAnalyses('{{ client.id }}')">
+                          <span class="material-symbols-outlined icon is-small">history</span>
+                          <span>History</span>
+                        </button>
+                        <button class="button is-warning is-small" onclick="editClient('{{ client.id }}')">
+                          <span class="material-symbols-outlined icon is-small">edit</span>
+                        </button>
+                        <button class="button is-danger is-small" onclick="deleteClient('{{ client.id }}', '{{ client.name }}')">
+                          <span class="material-symbols-outlined icon is-small">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="notification is-info">
+              <p>No clients yet. Click "Add New Client" to get started!</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+    </div>
+    <div class="column is-1"></div>
+  </div>
+
+  <!-- Add Client Modal -->
+  <div class="modal" id="addClientModal">
+    <div class="modal-background" onclick="closeAddClientModal()"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Add New Client</p>
+        <button class="delete" aria-label="close" onclick="closeAddClientModal()"></button>
+      </header>
+      <section class="modal-card-body">
+        <div class="field">
+          <label class="label">Client Name *</label>
+          <div class="control">
+            <input class="input" type="text" id="clientName" placeholder="e.g., Acme Corporation" required>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Industry</label>
+          <div class="control">
+            <input class="input" type="text" id="clientIndustry" placeholder="e.g., E-commerce">
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Notes</label>
+          <div class="control">
+            <textarea class="textarea" id="clientNotes" placeholder="Additional notes..."></textarea>
+          </div>
+        </div>
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-success" onclick="submitNewClient()">Add Client</button>
+        <button class="button" onclick="closeAddClientModal()">Cancel</button>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    function showAddClientModal() {
+      document.getElementById('addClientModal').classList.add('is-active');
+    }
+
+    function closeAddClientModal() {
+      document.getElementById('addClientModal').classList.remove('is-active');
+      document.getElementById('clientName').value = '';
+      document.getElementById('clientIndustry').value = '';
+      document.getElementById('clientNotes').value = '';
+    }
+
+    function submitNewClient() {
+      const name = document.getElementById('clientName').value;
+      const industry = document.getElementById('clientIndustry').value;
+      const notes = document.getElementById('clientNotes').value;
+
+      if (!name) {
+        alert('Client name is required!');
+        return;
+      }
+
+      fetch('/_add_client', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, industry, notes})
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          closeAddClientModal();
+          location.reload();
+        } else {
+          alert('Error adding client: ' + data.error);
+        }
+      })
+      .catch(error => {
+        alert('Error: ' + error);
+      });
+    }
+
+    function selectClient(clientId, clientName) {
+      sessionStorage.setItem('selected_client_id', clientId);
+      sessionStorage.setItem('selected_client_name', clientName);
+      window.location.href = '/';
+    }
+
+    function viewClientAnalyses(clientId) {
+      window.location.href = '/client/' + clientId + '/analyses';
+    }
+
+    function editClient(clientId) {
+      // TODO: Implement edit functionality
+      alert('Edit functionality coming soon!');
+    }
+
+    function deleteClient(clientId, clientName) {
+      if (confirm('Are you sure you want to delete client "' + clientName + '"?')) {
+        fetch('/_delete_client/' + clientId, {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert('Error deleting client: ' + data.error);
+          }
+        });
+      }
+    }
+
+    function loadAnalysis(analysisId) {
+      // TODO: Implement analysis loading
+      alert('Loading analysis: ' + analysisId);
+    }
+
+    function filterClients() {
+      const searchTerm = document.getElementById('searchClients').value.toLowerCase();
+      const clients = document.querySelectorAll('.client-card');
+
+      clients.forEach(card => {
+        const clientName = card.getAttribute('data-client-name').toLowerCase();
+        if (clientName.includes(searchTerm)) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+
+{% include "_footer.html" %}
+</body>
+</html>

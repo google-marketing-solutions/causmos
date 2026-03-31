@@ -17,6 +17,12 @@
                 </span>
                 <span>Edit Analysis</span>
               </button></a>
+            <button class="button is-success" onclick="showSaveAnalysisModal()" style="margin-left: 0.5rem;">
+              <span class="material-symbols-outlined icon">
+                save
+              </span>
+              <span>Save to Client</span>
+            </button>
             <div class="dropdown">
               <div class="dropdown-trigger">
                 <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
@@ -576,6 +582,53 @@
     var intervalId = window.setInterval(function () {
       reset_timer();
     }, 5000);
+
+    // Save Analysis to Client Modal
+    function showSaveAnalysisModal() {
+      // Check if client is already selected from session storage
+      const savedClientId = sessionStorage.getItem('selected_client_id');
+      const savedClientName = sessionStorage.getItem('selected_client_name');
+
+      if (savedClientId) {
+        // Auto-fill if client was selected
+        const analysisName = prompt('Enter a name for this analysis:', 'Campaign Impact Analysis');
+        if (analysisName) {
+          saveAnalysisToClient(savedClientId, analysisName);
+        }
+      } else {
+        alert('Please go back and select a client first, or use the Dashboard to select a client.');
+      }
+    }
+
+    function saveAnalysisToClient(clientId, analysisName) {
+      // Gather analysis data from current session
+      const analysisData = {
+        // Add relevant data from the report page
+        timestamp: new Date().toISOString(),
+        // TODO: Add more analysis details as needed
+      };
+
+      fetch('/_save_analysis', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          client_id: clientId,
+          analysis_name: analysisName,
+          analysis_data: analysisData
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Analysis saved successfully!');
+        } else {
+          alert('Error saving analysis: ' + data.error);
+        }
+      })
+      .catch(error => {
+        alert('Error: ' + error);
+      });
+    }
   </script>
 
   {% include "_footer.html" %}

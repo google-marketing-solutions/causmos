@@ -9,6 +9,32 @@
     </div>
     <div class="column">
       <div id="all_content" class="align-left main-window">
+
+        <!-- Client Selector Section -->
+        {% if clients %}
+        <div class="box" style="margin-bottom: 1.5rem; background-color: #f0f7ff;">
+          <div class="field">
+            <label class="label">
+              <span class="material-symbols-outlined icon">business</span>
+              Select Client (Optional)
+            </label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select id="clientSelector" onchange="handleClientSelection()">
+                  <option value="">-- No Client Selected --</option>
+                  {% for client in clients %}
+                    <option value="{{ client.id }}" {% if client.id == selected_client_id %}selected{% endif %}>
+                      {{ client.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <p class="help">Selecting a client will save this analysis to their history</p>
+          </div>
+        </div>
+        {% endif %}
+
         <div class="dropdown">
           <div class="dropdown-trigger">
             <button class="button is-success" aria-haspopup="true" aria-controls="dropdown-menu">
@@ -2380,5 +2406,27 @@
     var intervalId = window.setInterval(function () {
       reset_timer();
     }, 5000);
+
+    // Client Selection Handler
+    function handleClientSelection() {
+      const clientId = document.getElementById('clientSelector').value;
+      // Store in session storage for use when saving analysis
+      if (clientId) {
+        sessionStorage.setItem('selected_client_id', clientId);
+        const selectedOption = document.getElementById('clientSelector').selectedOptions[0];
+        sessionStorage.setItem('selected_client_name', selectedOption.text);
+      } else {
+        sessionStorage.removeItem('selected_client_id');
+        sessionStorage.removeItem('selected_client_name');
+      }
+    }
+
+    // Load client selection from session storage on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      const savedClientId = sessionStorage.getItem('selected_client_id');
+      if (savedClientId && document.getElementById('clientSelector')) {
+        document.getElementById('clientSelector').value = savedClientId;
+      }
+    });
   </script>
   {% include "_footer.html" %}

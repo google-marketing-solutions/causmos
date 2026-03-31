@@ -60,6 +60,17 @@ from slides_api import create_slide
 from project_secrets import get_secret
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
+from client_manager import (
+  create_client,
+  get_client,
+  get_user_clients,
+  update_client,
+  delete_client,
+  save_analysis,
+  get_client_analyses,
+  get_analysis,
+  get_user_recent_analyses,
+)
 
 
 app = Flask(__name__)
@@ -266,6 +277,13 @@ def root() -> render_template:
   auth_sheets = 'true' if sheets else 'false'
   auth_slides = 'true' if slides else 'false'
 
+  # Get user's clients for dropdown
+  user_id = get_session_id()
+  clients = get_user_clients(user_id)
+
+  # Check if client_id is passed in URL
+  selected_client_id = request.args.get('client_id', '')
+
   return render_template(
     'index.html',
     authed=authed,
@@ -274,6 +292,8 @@ def root() -> render_template:
     auth_sheets=auth_sheets,
     auth_slides=auth_slides,
     bq_name=os.environ.get('bq_DATASOURCE'),
+    clients=clients,
+    selected_client_id=selected_client_id,
   )
 
 
@@ -913,6 +933,138 @@ def create_flow(scope) -> Flow:
   flow = Flow.from_client_config(client_config=client_config, scopes=scope)
   flow.redirect_uri = _REDIRECT_URI
   return flow
+
+
+# Multi-Client Dashboard Routes
+
+@app.route('/dashboard')
+def dashboard() -> render_template:
+  """Renders the multi-client dashboard.
+
+  Returns:
+    The dashboard template with client and analysis data.
+  """
+  user_id = get_session_id()
+  clients = get_user_clients(user_id)
+  recent_analyses = get_user_recent_analyses(user_id, limit=10)
+
+  # Format dates for display
+  for analysis in recent_analyses:
+    if 'created_at' in analysis and analysis['created_at']:
+      analysis['created_at'] = analysis['created_at'].strftime('%Y-%m-%d %H:%M')
+
+  for client in clients:
+    if 'created_at' in client and client['created_at']:
+      client['created_at'] = client['created_at'].strftime('%Y-%m-%d')
+    # Get analysis count for each client
+    client['analysis_count'] = len(get_client_analyses(client['id'], limit=1000))
+
+  # Calculate stats
+  stats = {
+    'total_clients': len(clients),
+    'total_analyses': len(recent_analyses),
+    'recent_analyses': sum(1 for a in recent_analyses if 'created_at' in a)
+  }
+
+  return render_template(
+    'dashboard.html',
+    clients=clients,
+    recent_analyses=recent_analyses,
+    stats=stats
+  )
+
+
+@app.route('/_add_client', methods=['POST'])
+def add_client() -> jsonify:
+  """API endpoint to add a new client.
+
+  Returns:
+    JSON response with success status and client ID.
+  """
+  try:
+    data = request.get_json()
+    user_id = get_session_id()
+
+    client_info = {}
+    if data.get('industry'):
+      client_info['industry'] = data['industry']
+    if data.get('notes'):
+      client_info['notes'] = data['notes']
+
+    client_id = create_client(user_id, data['name'], client_info)
+
+    return jsonify({'success': True, 'client_id': client_id})
+  except Exception as e:
+    return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/_delete_client/<client_id>', methods=['DELETE'])
+def remove_client(client_id: str) -> jsonify:
+  """API endpoint to delete a client.
+
+  Args:
+    client_id: The client document ID.
+
+  Returns:
+    JSON response with success status.
+  """
+  try:
+    success = delete_client(client_id, hard_delete=False)
+    return jsonify({'success': success})
+  except Exception as e:
+    return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/_save_analysis', methods=['POST'])
+def save_analysis_endpoint() -> jsonify:
+  """API endpoint to save an analysis to a client's history.
+
+  Returns:
+    JSON response with success status and analysis ID.
+  """
+  try:
+    data = request.get_json()
+    user_id = get_session_id()
+
+    analysis_id = save_analysis(
+      client_id=data['client_id'],
+      session_id=user_id,
+      analysis_name=data['analysis_name'],
+      analysis_data=data['analysis_data'],
+      user_id=user_id
+    )
+
+    return jsonify({'success': True, 'analysis_id': analysis_id})
+  except Exception as e:
+    return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/client/<client_id>/analyses')
+def client_analyses(client_id: str) -> render_template:
+  """Shows all analyses for a specific client.
+
+  Args:
+    client_id: The client document ID.
+
+  Returns:
+    Template showing client's analysis history.
+  """
+  client = get_client(client_id)
+  if not client:
+    return redirect('/dashboard')
+
+  analyses = get_client_analyses(client_id, limit=100)
+
+  # Format dates
+  for analysis in analyses:
+    if 'created_at' in analysis and analysis['created_at']:
+      analysis['created_at'] = analysis['created_at'].strftime('%Y-%m-%d %H:%M')
+
+  return render_template(
+    'client_analyses.html',
+    client=client,
+    analyses=analyses
+  )
 
 
 if __name__ == '__main__':

@@ -1,0 +1,133 @@
+{% include "_header.html" %}
+<title>Causmos - {{ client.name }} Analyses</title>
+</head>
+
+<body>
+  {% include "_title.html" %}
+
+  <div class="columns">
+    <div class="column is-1"></div>
+    <div class="column is-10">
+
+      <!-- Header Section -->
+      <section class="section">
+        <nav class="breadcrumb" aria-label="breadcrumbs">
+          <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li class="is-active"><a href="#" aria-current="page">{{ client.name }}</a></li>
+          </ul>
+        </nav>
+
+        <div class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <div>
+                <h1 class="title">{{ client.name }}</h1>
+                {% if client.industry %}
+                  <p class="subtitle">{{ client.industry }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="level-right">
+            <div class="level-item">
+              <button class="button is-success" onclick="window.location.href='/?client_id={{ client.id }}'">
+                <span class="material-symbols-outlined icon">add_circle</span>
+                <span>New Analysis</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analyses List -->
+      <section class="section">
+        <h2 class="title is-4">Analysis History</h2>
+
+        {% if analyses %}
+          <div class="table-container">
+            <table class="table is-fullwidth is-hoverable">
+              <thead>
+                <tr>
+                  <th>Analysis Name</th>
+                  <th>Date Created</th>
+                  <th>Data Sources</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for analysis in analyses %}
+                  <tr>
+                    <td>
+                      <strong>{{ analysis.name }}</strong>
+                    </td>
+                    <td>{{ analysis.created_at }}</td>
+                    <td>
+                      {% if analysis.data %}
+                        {% if analysis.data.gads %}<span class="tag is-info">Google Ads</span>{% endif %}
+                        {% if analysis.data.ga4 %}<span class="tag is-success">GA4</span>{% endif %}
+                        {% if analysis.data.csv %}<span class="tag is-warning">CSV</span>{% endif %}
+                        {% if analysis.data.sheets %}<span class="tag is-link">Sheets</span>{% endif %}
+                      {% endif %}
+                    </td>
+                    <td>
+                      <div class="buttons are-small">
+                        <button class="button is-info" onclick="viewAnalysis('{{ analysis.id }}')">
+                          <span class="material-symbols-outlined icon is-small">visibility</span>
+                          <span>View</span>
+                        </button>
+                        <button class="button is-light" onclick="duplicateAnalysis('{{ analysis.id }}')">
+                          <span class="material-symbols-outlined icon is-small">content_copy</span>
+                          <span>Duplicate</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="notification is-info">
+            <p>No analyses yet for this client. Create your first analysis!</p>
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- Client Details -->
+      <section class="section">
+        <h2 class="title is-4">Client Details</h2>
+        <div class="box">
+          <div class="content">
+            <p><strong>Created:</strong> {{ client.created_at if client.created_at else 'N/A' }}</p>
+            {% if client.industry %}
+              <p><strong>Industry:</strong> {{ client.industry }}</p>
+            {% endif %}
+            {% if client.notes %}
+              <p><strong>Notes:</strong> {{ client.notes }}</p>
+            {% endif %}
+            <p><strong>Total Analyses:</strong> {{ analyses|length }}</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+    <div class="column is-1"></div>
+  </div>
+
+  <script>
+    function viewAnalysis(analysisId) {
+      // TODO: Implement view functionality
+      alert('Viewing analysis: ' + analysisId);
+      // window.location.href = '/analysis/' + analysisId;
+    }
+
+    function duplicateAnalysis(analysisId) {
+      // TODO: Implement duplicate functionality
+      alert('Duplicate functionality coming soon!');
+    }
+  </script>
+
+{% include "_footer.html" %}
+</body>
+</html>
