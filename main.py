@@ -834,19 +834,30 @@ def _get_bq_data() -> jsonify:
   bq_project_id = request.args.get('bq_project_id', 0, type=str)
   bq_dataset = request.args.get('bq_dataset', 0, type=str)
   bq_table = request.args.get('bq_table', 0, type=str)
-  final_bq_data = []
+  bq_full_location = f'{bq_project_id}.{bq_dataset}.{bq_table}'
   try:
-    bq_full_location = f'{bq_project_id}.{bq_dataset}.{bq_table}'
-    set_value_session(get_session_id(), 'bq_full_location', bq_full_location)
-
     final_bq_data = _get_raw_bq_data(bq_full_location)
   except Exception as e:
-    final_bq_data = ['error', 'Cannot find table. Check you have entered your project ID, Dataset and Table name correctly and try again']
+    logging.exception(e)
+    return jsonify(
+      result=[
+        'error',
+        'Cannot find table. Check you have entered your project ID, Dataset '
+        'and Table name correctly and try again',
+      ]
+    )
 
-  if final_bq_data[0] != 'error':
-    return jsonify(result=_get_bq_settings(final_bq_data))
-  else:
-    return jsonify(result=final_bq_data)
+  if not final_bq_data:
+    return jsonify(
+      result=[
+        'error',
+        'The table was found but returned no rows. Check the table contains '
+        'data and try again',
+      ]
+    )
+
+  set_value_session(get_session_id(), 'bq_full_location', bq_full_location)
+  return jsonify(result=_get_bq_settings(final_bq_data))
 
 
 def _get_bq_settings(bq_data: dict) -> dict:
