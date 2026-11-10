@@ -52,6 +52,7 @@ from flask import (
   request,
   send_from_directory,
   session,
+  abort,
 )
 from bigquery_data import _get_raw_bq_data
 from fs_storage import set_value_session, get_value_session, delete_field
@@ -61,14 +62,13 @@ from project_secrets import get_secret
 from ga4 import get_ga4_account_ids, get_ga4_data, get_ga4_property_ids
 from gads import get_gads_campaigns, get_gads_customer_ids, get_gads_data, get_gads_mcc_ids, process_gads_responses
 
-
 app = Flask(__name__)
 
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
 app.secret_key = get_secret('flask_secret_key')
 PROJECT_ID = '' #can set for local testing
-
+VALIDATE_PATTERN = re.compile(r'^[A-Za-z0-9_-]+$')
 
 def is_loopback(host) -> bool:
   """Localhost check.
@@ -822,6 +822,13 @@ def _get_csv_settings(csv_data: dict, format: str) -> dict:
   return csv_settings
 
 
+def validate_string(value: str) -> str:
+    """Validates a string against the regex, aborting if invalid or missing."""
+    if not value or not IDENTIFIER_PATTERN.fullmatch(value):
+        abort(400, description="Invalid or missing parameter.")
+    return value
+
+
 @app.route('/_get_bq_data')
 def _get_bq_data() -> jsonify:
   """Gets the headers, dates and available options from the BigQuery data
@@ -831,9 +838,9 @@ def _get_bq_data() -> jsonify:
     List of headers the Google sheet has for use as covariates, target events
     along with the available dates.
   """
-  bq_project_id = request.args.get('bq_project_id', 0, type=str)
-  bq_dataset = request.args.get('bq_dataset', 0, type=str)
-  bq_table = request.args.get('bq_table', 0, type=str)
+  bq_project_id = validate_string(request.args.get('bq_project_id', type=str))
+  bq_dataset = validate_string(request.args.get('bq_dataset', type=str))
+  bq_table = validate_string(request.args.get('bq_table', type=str))
   bq_full_location = f'{bq_project_id}.{bq_dataset}.{bq_table}'
   try:
     final_bq_data = _get_raw_bq_data(bq_full_location)
