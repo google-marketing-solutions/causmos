@@ -126,7 +126,13 @@
             </span>
             {% endif %}
             <br>
-            {{tag_msg|safe}}
+            {% if tag_items %}
+            {% for item in tag_items %}
+            <span class="{{ 'success' if item.status == 'success' else 'negative' }}"><span class="material-symbols-outlined">{{ 'add_circle' if item.status == 'success' else 'do_not_disturb_on' }}</span></span> {{ item.text }}<br>
+            {% endfor %}
+            {% elif tag_msg %}
+            {{tag_msg}}
+            {% endif %}
             <br><br>
             <h4 class="title is-4">Summary Report</h4>
             <table>
@@ -469,9 +475,9 @@
     function closeExportData() {
       closePopup('export_data');
     }
-    var warnings = '{{warnings}}';
+    var warnings = {{ warnings | default("") | tojson }};
     if (warnings != "") {
-      document.getElementById('warnings_msg').innerHTML = warnings;
+      document.getElementById('warnings_msg').textContent = warnings;
       openPopup('warnings');
     }
 
@@ -480,7 +486,7 @@
     }
 
     function restoreSlideTemplateId() {
-      document.getElementById('template_id').value = '{{slide_template}}';
+      document.getElementById('template_id').value = {{ slide_template | default("") | tojson }};
     }
 
     function viewSlideTemplate() {
@@ -511,7 +517,7 @@
       }
       else {
         document.getElementById('client_name_error').classList.add('is-hidden');
-        const api_url = "/_create_slide?client_name=" + client_name + "&temp_id=" + temp_id + "&prepend=" + prepend;
+        const api_url = "/_create_slide?client_name=" + encodeURIComponent(client_name) + "&temp_id=" + encodeURIComponent(temp_id) + "&prepend=" + encodeURIComponent(prepend);
         fetch(api_url)
           .then(response => response.json())
           .then(data => {
@@ -526,7 +532,22 @@
               document.getElementById('created_slide_error').classList.add('is-hidden');
               document.getElementById('created_slide').classList.remove('is-hidden');
               document.getElementById('loading_slides').classList.add('is-hidden');
-              document.getElementById('slide_link').innerHTML = "<a href='https://docs.google.com/presentation/d/" + slide_id + "/' target='_blank'><button class='button is-link'><span class='material-symbols-outlined icon'>slideshow</span><span>" + client_name + " - Causal Impact Insights</span></button></a>";
+              const slideLinkContainer = document.getElementById('slide_link');
+              slideLinkContainer.textContent = '';
+              const link = document.createElement('a');
+              link.href = 'https://docs.google.com/presentation/d/' + encodeURIComponent(slide_id) + '/';
+              link.target = '_blank';
+              const btn = document.createElement('button');
+              btn.className = 'button is-link';
+              const icon = document.createElement('span');
+              icon.className = 'material-symbols-outlined icon';
+              icon.textContent = 'slideshow';
+              const label = document.createElement('span');
+              label.textContent = client_name + ' - Causal Impact Insights';
+              btn.appendChild(icon);
+              btn.appendChild(label);
+              link.appendChild(btn);
+              slideLinkContainer.appendChild(link);
             }
           });
       }

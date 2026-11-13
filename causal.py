@@ -78,6 +78,23 @@ def get_causal_impact_summary(impact: list, credibility: float) -> list:
   return output
 
 
+def _escape_vega_html(chart_html: str) -> str:
+  """Escapes HTML/script-breaking sequences inside Altair's inline JSON spec."""
+  return re.sub(
+    r"^(\s*var\s+spec\s*=\s*)(.*);$",
+    lambda m: (
+      m.group(1)
+      + m.group(2)
+      .replace("&", "\\u0026")
+      .replace("<", "\\u003c")
+      .replace(">", "\\u003e")
+      + ";"
+    ),
+    chart_html,
+    flags=re.MULTILINE,
+  )
+
+
 def get_causal_impact_chart(impact, div="vis", store_img=False, image_name="") -> str:
   """Gets a HTML Chart output of the created Causal Impact model.
 
@@ -90,6 +107,8 @@ def get_causal_impact_chart(impact, div="vis", store_img=False, image_name="") -
   Returns:
     The HTML output of the Casual Impact charts.
   """
+  if not re.fullmatch(r"[A-Za-z0-9_-]+", div):
+    raise ValueError("Invalid chart container ID.")
   ci = causalimpact.plot(impact, static_plot=False, chart_width=800)
   if store_img:
     ci.save(_TEMP_FOLDER + image_name, engine="vl-convert")
@@ -98,7 +117,7 @@ def get_causal_impact_chart(impact, div="vis", store_img=False, image_name="") -
     blob = bucket.blob(image_name)
     blob.cache_control = "private"
     blob.upload_from_filename(_TEMP_FOLDER + image_name)
-  return ci.to_html().replace("vis", div)
+  return _escape_vega_html(ci.to_html()).replace("vis", div)
 
 
 def get_causal_impact_report(impact, credibility: float) -> str:
@@ -127,8 +146,11 @@ def get_df_matrix(df) -> str:
   df_matrix = df_matrix.abs()
   segments = [(0, "green"), (1, "white")]
   cmap = LinearSegmentedColormap.from_list("", segments)
-  df_matrix = df_matrix.style.background_gradient(
-    cmap=cmap, low=1, high=0, axis=None)
+  df_matrix = (
+    df_matrix.style.background_gradient(cmap=cmap, low=1, high=0, axis=None)
+    .format_index(escape="html", axis=0)
+    .format_index(escape="html", axis=1)
+  )
 
   return df_matrix.to_html().replace(
     "<table", '<table class="bordered-table opp"')

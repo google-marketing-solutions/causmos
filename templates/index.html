@@ -2110,10 +2110,19 @@
       }
 
       csv_metrics_boxes = document.getElementById('csv_metrics_boxes');
-      csv_metrics_boxes.innerHTML = "";
+      csv_metrics_boxes.textContent = "";
 
       csv_data.metrics.forEach((item) => {
-        csv_metrics_boxes.innerHTML += "<span class='tag is-info'>" + item + "<button onClick='deleteCsvMetric(\"" + item + "\");' class='delete is-small'></button></span> ";
+        const tag = document.createElement('span');
+        tag.className = 'tag is-info';
+        tag.appendChild(document.createTextNode(item));
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete is-small';
+        delBtn.type = 'button';
+        delBtn.addEventListener('click', () => deleteCsvMetric(item));
+        tag.appendChild(delBtn);
+        csv_metrics_boxes.appendChild(tag);
+        csv_metrics_boxes.appendChild(document.createTextNode(' '));
       })
     }
 

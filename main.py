@@ -19,6 +19,7 @@ Analytics. Information can be augmented by uploading a CSV file.
 """
 
 from datetime import datetime, timedelta
+import html
 import json
 import os
 import socket
@@ -189,6 +190,9 @@ def add_header(response) -> any:
   response.headers['Referrer-Policy'] = 'strict-origin'
   response.headers['Strict-Transport-Security'] = (
     'max-age=31536000; includeSubDomains'
+  )
+  response.headers['Content-Security-Policy'] = (
+    "object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
   )
   return response
 
@@ -371,20 +375,30 @@ def report() -> render_template:
           data['ga4']['metrics'],
           raw_data,
       )
-    if 'csv' in data:
-      if data['csv_format'] == 'gsheet':
-        csv_data = get_raw_gsheet_data(
-          get_value_session(get_session_id(), 'sheet_id'),
-          get_value_session(get_session_id(), 'gs_tab'),
-        )[0]
-      else:
-        csv_data = get_value_session(get_session_id(), 'csv_data')
-      raw_data = csv_merge_data(csv_data, data['csv'], raw_data, 'csv')
+    try:
+      if 'csv' in data:
+        if data['csv_format'] == 'gsheet':
+          csv_data = get_raw_gsheet_data(
+            get_value_session(get_session_id(), 'sheet_id'),
+            get_value_session(get_session_id(), 'gs_tab'),
+          )[0]
+        else:
+          csv_data = get_value_session(get_session_id(), 'csv_data')
+        raw_data = csv_merge_data(csv_data, data['csv'], raw_data, 'csv')
 
-    if 'bq' in data:
-      bq_data = _get_raw_bq_data(
-        get_value_session(get_session_id(), 'bq_full_location'))
-      raw_data = csv_merge_data(bq_data, data['bq'], raw_data, 'bq')
+      if 'bq' in data:
+        bq_data = _get_raw_bq_data(
+          get_value_session(get_session_id(), 'bq_full_location'))
+        raw_data = csv_merge_data(bq_data, data['bq'], raw_data, 'bq')
+    except ValueError as e:
+      logging.exception(e)
+      return render_template(
+        'error.html',
+        error_msg=(
+          'Invalid column headers in data source. Column names must not '
+          'contain HTML angle brackets or control characters.'
+        ),
+      )
 
     if raw_data:
       df = pd.DataFrame.from_dict(raw_data).transpose()
@@ -445,7 +459,7 @@ def report() -> render_template:
         org_report = get_causal_impact_report(impact, credibility)
         org_cov = (', ').join(df.columns[1:])
 
-        dfhtml = df.to_html().replace('<th>',
+        dfhtml = df.to_html(escape=True).replace('<th>',
                     '<th class="full-table-border">').replace('<tr>', '<tr class="full-table-border">')
         df_val = get_validation(df)
 
@@ -515,6 +529,7 @@ def report() -> render_template:
 
         total_score = 1
         tag_msg = ''
+        tag_items = []
         lift = ''
         if main_abs_eff > 0:
           lift = 'Uplift'
@@ -535,15 +550,20 @@ def report() -> render_template:
           if (pre_ci[1] > 0 and pre_abs_eff <= 0) or \
           (pre_ci[0] < 0 and pre_abs_eff > 0):
             total_score += 3
-            pre_test = 'Pre-period  \
-                        validation doesn not show any causal \
-                        impact before the intervention date'
+            pre_test = (
+              'Pre-period validation does not show any causal impact before '
+              'the intervention date'
+            )
+            tag_items.append({'status': 'success', 'text': pre_test})
             tag_msg += f'<span class="success"> \
                         <span class="material-symbols-outlined"> \
                         add_circle</span></span> {pre_test}<br>'
           else:
-            pre_test = 'Pre-period validation shows causal impact  \
-            which means there was an impact before the intervention date'
+            pre_test = (
+              'Pre-period validation shows causal impact which means there '
+              'was an impact before the intervention date'
+            )
+            tag_items.append({'status': 'negative', 'text': pre_test})
             tag_msg += f'<span class="negative"><span \
                 class="material-symbols-outlined">do_not_disturb_on \
               </span></span> {pre_test}<br>'
@@ -551,6 +571,12 @@ def report() -> render_template:
             save_v1_summary += ('\t').join(x)
             save_v1_summary += '\n'
         else:
+          no_pre_text = (
+            'No Pre-period validation is reducing your score. Consider '
+            'running a Pre-period validation to improve your score and '
+            'validate your results'
+          )
+          tag_items.append({'status': 'negative', 'text': no_pre_text})
           tag_msg += '<span class="negative"><span class="material-symbols-outlined">do_not_disturb_on</span> \
             </span> No Pre-period validation is reducing your score. \
                 Consider running a Pre-preiod validation \
@@ -560,6 +586,8 @@ def report() -> render_template:
         unaff_abs_eff = 0.0
         unaff_ci = [0.0, 0.0]
         if v2_summary:
+          raw_unaff_option = str(data['unaffectedness_option'])
+          safe_unaff_option = html.escape(raw_unaff_option, quote=True)
           if len(v2_summary[7]) > 2:
             unaff_abs_eff = float((v2_summary[7][2].strip().split(' ')[0]))
           if len(v2_summary[8]) > 2:
@@ -570,15 +598,28 @@ def report() -> render_template:
           if (unaff_ci[1] > 0 and unaff_abs_eff <= 0) or \
           (unaff_ci[0] < 0 and unaff_abs_eff > 0):
             total_score += 3
-            unaff_test = f'Unaffectedness validation shows your covariate \
-            {data["unaffectedness_option"]} has no causal impact'
+            unaff_text_plain = (
+              f'Unaffectedness validation shows your covariate '
+              f'{raw_unaff_option} has no causal impact'
+            )
+            unaff_test = (
+              f'Unaffectedness validation shows your covariate '
+              f'{safe_unaff_option} has no causal impact'
+            )
+            tag_items.append({'status': 'success', 'text': unaff_text_plain})
             tag_msg += f'<span class="success"><span \
               class="material-symbols-outlined">add_circle</span> \
               </span> {unaff_test}<br>'
           else:
-            unaff_test = f'Unaffectedness validation shows your covariate \
-              {data["unaffectedness_option"]} \
-                was impacted by the event'
+            unaff_text_plain = (
+              f'Unaffectedness validation shows your covariate '
+              f'{raw_unaff_option} was impacted by the event'
+            )
+            unaff_test = (
+              f'Unaffectedness validation shows your covariate '
+              f'{safe_unaff_option} was impacted by the event'
+            )
+            tag_items.append({'status': 'negative', 'text': unaff_text_plain})
             tag_msg += f'<span class="negative"><span \
               class="material-symbols-outlined">do_not_disturb_on</span> \
               </span> {unaff_test}<br>'
@@ -586,6 +627,12 @@ def report() -> render_template:
             save_v2_summary += ('\t').join(x)
             save_v2_summary += '\n'
         else:
+          no_unaff_text = (
+            'No Unaffectedness validation is reducing your score. Consider '
+            'running an Unaffectedness validation to improve your score and '
+            'validate your results'
+          )
+          tag_items.append({'status': 'negative', 'text': no_unaff_text})
           tag_msg += '<span class="negative"><span \
             class="material-symbols-outlined">do_not_disturb_on</span> \
             </span> No Unaffectedness validation is reducing your score. \
@@ -594,21 +641,26 @@ def report() -> render_template:
 
         if main_ci[0] > 0 and lift == 'Uplift':
           total_score += 3
-          main_test = 'Main test shows a significant uplift based on your \
-            parameters'
+          main_test = (
+            'Main test shows a significant uplift based on your parameters'
+          )
+          tag_items.append({'status': 'success', 'text': main_test})
           tag_msg += f'<span class="success"><span \
             class="material-symbols-outlined">add_circle</span></span> \
             {main_test}<br>'
         elif main_ci[1] < 0 and lift == 'Downlift':
           total_score += 3
-          main_test = 'Main test shows a significant downlift based on your \
-            parameters'
+          main_test = (
+            'Main test shows a significant downlift based on your parameters'
+          )
+          tag_items.append({'status': 'success', 'text': main_test})
           tag_msg += f'<span class="success"><span \
             class="material-symbols-outlined">add_circle</span></span> \
             {main_test}<br>'
         else:
           total_score = 1
           main_test = 'Main test does not show a significant result'
+          tag_items.append({'status': 'negative', 'text': main_test})
           tag_msg += f'<span class="negative"><span \
             class="material-symbols-outlined">do_not_disturb_on</span> \
             </span> {main_test}<br>'
@@ -643,7 +695,7 @@ def report() -> render_template:
           'report.html',
           summary=org_summary,
           chart=org_chart,
-          report=org_report.replace('\n\n', '<br><br>'),
+          report=html.escape(org_report, quote=True).replace('\n\n', '<br><br>'),
           raw_data=dfhtml,
           warnings=warnings,
           validation=df_val,
@@ -656,6 +708,7 @@ def report() -> render_template:
           auth_slides=auth_slides,
           lift=lift,
           total_score=total_score,
+          tag_items=tag_items,
           tag_msg=tag_msg,
         )
       else:
@@ -824,7 +877,7 @@ def _get_csv_settings(csv_data: dict, format: str) -> dict:
 
 def validate_string(value: str) -> str:
     """Validates a string against the regex, aborting if invalid or missing."""
-    if not value or not IDENTIFIER_PATTERN.fullmatch(value):
+    if not value or not VALIDATE_PATTERN.fullmatch(value):
         abort(400, description="Invalid or missing parameter.")
     return value
 
