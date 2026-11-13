@@ -21,7 +21,19 @@ the metrics and dimensions.
 import csv
 from datetime import datetime
 import logging
+import re
 import pandas as pd
+
+_UNSAFE_COLUMN_CHARS = re.compile(r"[<>\x00-\x1f\x7f]")
+
+
+def validate_column_name(column_name: str) -> str:
+  """Rejects column names containing HTML angle brackets or control chars."""
+  if not isinstance(column_name, str) or not column_name.strip():
+    raise ValueError("Column header must be a non-empty string.")
+  if _UNSAFE_COLUMN_CHARS.search(column_name):
+    raise ValueError("Column header contains disallowed characters.")
+  return column_name
 
 
 def get_csv_data(file) -> dict:
@@ -59,7 +71,7 @@ def get_csv_columns_by_type(data: dict) -> tuple[list, str, list]:
     List of dates, list of numerical columns and list of text based columns as
     a Tuple.
   """
-  keys_list = list(data[0].keys())
+  keys_list = [validate_column_name(k) for k in data[0].keys()]
   date_column = ""
   string_columns = []
   for key in keys_list:
@@ -117,20 +129,22 @@ def csv_merge_data(csv_data: dict, csv_settings: dict, raw_data: dict, pre_tag: 
   Returns:
       The raw data with all CSV/sheet data merged.
   """
+  date_col = validate_column_name(csv_settings["date_column"])
+  metrics = [validate_column_name(col) for col in csv_settings["metrics"]]
   for item in csv_data:
-    if item[csv_settings["date_column"]] in raw_data:
-      for col in csv_settings["metrics"]:
-        raw_data[item[csv_settings["date_column"]]].update(
+    if item[date_col] in raw_data:
+      for col in metrics:
+        raw_data[item[date_col]].update(
           {f"{pre_tag}_{col}": item[col]}
         )
     else:
-      for col in csv_settings["metrics"]:
-        if item[csv_settings["date_column"]] in raw_data:
-          raw_data[item[csv_settings["date_column"]]].update(
+      for col in metrics:
+        if item[date_col] in raw_data:
+          raw_data[item[date_col]].update(
             {f"{pre_tag}_{col}": item[col]}
           )
         else:
-          raw_data[item[csv_settings["date_column"]]] = {
+          raw_data[item[date_col]] = {
             f"{pre_tag}_{col}": item[col]
           }
   return raw_data
